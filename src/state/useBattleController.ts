@@ -15,8 +15,10 @@ import { battleConfig } from '../config/battleConfig';
 import type { StarLevel } from '../types/stats';
 
 export interface UseBattleControllerArgs {
-  player: CharacterDefinition;
-  enemy: EnemyDefinition;
+  /** 1〜3 characters (spec §4.1). */
+  players: CharacterDefinition[];
+  /** 1 or more enemies (spec §2.1). */
+  enemies: EnemyDefinition[];
   questions: readonly QuestionDefinition[];
   spellsById: Record<string, SpellDefinition>;
   initialItems: ItemBattleSlot[];
@@ -28,6 +30,7 @@ export interface BattleController {
   listSubjects: () => string[];
   listStars: (subject: string) => StarLevel[];
   selectCommand: (command: QuestionCommandKind) => void;
+  selectTarget: (targetId: string) => void;
   selectSubjectAndStar: (subject: string, star: StarLevel) => void;
   submitAnswer: (answer: MultipleChoiceAnswer) => void;
   useSpell: () => void;
@@ -41,8 +44,8 @@ export interface BattleController {
  * the resulting snapshot. No combat calculation happens here.
  */
 export function useBattleController({
-  player,
-  enemy,
+  players,
+  enemies,
   questions,
   spellsById,
   initialItems,
@@ -52,8 +55,8 @@ export function useBattleController({
     const random = createRandomService(seed);
     const questionEngine = createQuestionEngine(questions, random);
     const battleEngine: BattleEngine = createBattleEngine({
-      player,
-      enemy,
+      players,
+      enemies,
       questionEngine,
       config: battleConfig,
       random,
@@ -74,6 +77,14 @@ export function useBattleController({
   const selectCommand = useCallback(
     (command: QuestionCommandKind) => {
       engines.battleEngine.selectCommand(command);
+      sync();
+    },
+    [engines, sync],
+  );
+
+  const selectTarget = useCallback(
+    (targetId: string) => {
+      engines.battleEngine.selectTarget(targetId);
       sync();
     },
     [engines, sync],
@@ -121,6 +132,7 @@ export function useBattleController({
     listSubjects,
     listStars,
     selectCommand,
+    selectTarget,
     selectSubjectAndStar,
     submitAnswer,
     useSpell,

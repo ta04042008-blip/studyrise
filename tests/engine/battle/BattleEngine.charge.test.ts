@@ -11,7 +11,7 @@ describe('BattleEngine — Charge', () => {
     engine.advance();
 
     const state = engine.getState();
-    expect(state.player.currentMp).toBe(battleConfig.chargeMpGainNormal);
+    expect(state.players[0].currentMp).toBe(battleConfig.chargeMpGainNormal);
     const outcome = state.lastPlayerOutcome;
     if (outcome?.command === 'charge') {
       expect(outcome.mpGained).toBe(1);
@@ -26,7 +26,7 @@ describe('BattleEngine — Charge', () => {
     engine.submitAnswer({ type: 'multiple_choice', selectedIndex: 1 });
     engine.advance();
 
-    expect(engine.getState().player.currentMp).toBe(battleConfig.chargeMpGainGreatSuccess);
+    expect(engine.getState().players[0].currentMp).toBe(battleConfig.chargeMpGainGreatSuccess);
   });
 
   it('on an incorrect/dont_know answer, MP does not change', () => {
@@ -37,7 +37,7 @@ describe('BattleEngine — Charge', () => {
     engine.advance();
 
     const state = engine.getState();
-    expect(state.player.currentMp).toBe(0);
+    expect(state.players[0].currentMp).toBe(0);
     const outcome = state.lastPlayerOutcome;
     if (outcome?.command === 'charge') {
       expect(outcome.mpGained).toBe(0);
@@ -57,7 +57,7 @@ describe('BattleEngine — Charge', () => {
     engineStar5.submitAnswer({ type: 'multiple_choice', selectedIndex: 1 });
     engineStar5.advance();
 
-    expect(engineStar1.getState().player.currentMp).toBe(engineStar5.getState().player.currentMp);
+    expect(engineStar1.getState().players[0].currentMp).toBe(engineStar5.getState().players[0].currentMp);
   });
 
   it('MP is clamped at maxMp (5) even when repeated great-success charges would overflow it', () => {
@@ -72,6 +72,6 @@ describe('BattleEngine — Charge', () => {
       engine.advance(); // -> back to COMMAND_SELECT (player is faster here, no enemy action yet)
     }
 
-    expect(engine.getState().player.currentMp).toBe(5);
+    expect(engine.getState().players[0].currentMp).toBe(5);
   });
 });

@@ -12,7 +12,7 @@ describe('BattleEngine — Spell', () => {
       engine.advance();
       engine.advance();
     }
-    expect(engine.getState().player.currentMp).toBeGreaterThanOrEqual(testSpell.mpCost);
+    expect(engine.getState().players[0].currentMp).toBeGreaterThanOrEqual(testSpell.mpCost);
 
     engine.useSpell();
     const state = engine.getState();
@@ -30,14 +30,14 @@ describe('BattleEngine — Spell', () => {
       engine.advance();
       engine.advance();
     }
-    const mpBefore = engine.getState().player.currentMp;
-    const hpBefore = engine.getState().enemy.currentHp;
+    const mpBefore = engine.getState().players[0].currentMp;
+    const hpBefore = engine.getState().enemies[0].currentHp;
 
     engine.useSpell();
 
     const state = engine.getState();
-    expect(state.player.currentMp).toBe(mpBefore - testSpell.mpCost);
-    expect(state.enemy.currentHp).toBe(hpBefore - 15); // testSpell: DAMAGE 15
+    expect(state.players[0].currentMp).toBe(mpBefore - testSpell.mpCost);
+    expect(state.enemies[0].currentHp).toBe(hpBefore - 15); // testSpell: DAMAGE 15
   });
 
   it('a self-targeted HEAL spell applies to the caster, not the enemy', () => {
@@ -59,8 +59,8 @@ describe('BattleEngine — Spell', () => {
     engine.useSpell();
     const after = engine.getState();
 
-    expect(after.enemy.currentHp).toBe(before.enemy.currentHp); // untouched — HEAL never targets the enemy
-    expect(after.player.currentHp).toBe(before.player.currentHp); // was already full HP, HEAL clamps at maxHp
+    expect(after.enemies[0].currentHp).toBe(before.enemies[0].currentHp); // untouched — HEAL never targets the enemy
+    expect(after.players[0].currentHp).toBe(before.players[0].currentHp); // was already full HP, HEAL clamps at maxHp
   });
 
   it('is rejected (no-op) when the player does not have enough MP', () => {
@@ -70,8 +70,8 @@ describe('BattleEngine — Spell', () => {
     const after = engine.getState();
 
     expect(after.phase).toBe(before.phase); // still COMMAND_SELECT
-    expect(after.player.currentMp).toBe(before.player.currentMp);
-    expect(after.enemy.currentHp).toBe(before.enemy.currentHp);
+    expect(after.players[0].currentMp).toBe(before.players[0].currentMp);
+    expect(after.enemies[0].currentHp).toBe(before.enemies[0].currentHp);
   });
 
   it('is rejected (no-op) when not the player\'s turn', () => {

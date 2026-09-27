@@ -80,6 +80,10 @@ export function setup(opts?: {
   initialSpellId?: string;
   initialItems?: ItemBattleSlot[];
   config?: BattleConfig;
+  /** Overrides the default single-player roster entirely (MVP-3 party tests). */
+  players?: CharacterDefinition[];
+  /** Overrides the default single-enemy roster entirely (MVP-3 multi-enemy tests). */
+  enemies?: EnemyDefinition[];
 }) {
   const playerDef: CharacterDefinition = {
     id: 'player',
@@ -106,8 +110,8 @@ export function setup(opts?: {
   const random = opts?.random ?? createRandomService(opts?.seed ?? 1);
   const questionEngine = createQuestionEngine(opts?.questions ?? [mc()], random);
   const engine = createBattleEngine({
-    player: playerDef,
-    enemy: enemyDef,
+    players: opts?.players ?? [playerDef],
+    enemies: opts?.enemies ?? [enemyDef],
     questionEngine,
     config: opts?.config ?? battleConfig,
     random,
@@ -154,12 +158,12 @@ describe('BattleEngine — player Attack flow', () => {
 
     const afterSubmit = engine.getState();
     expect(afterSubmit.phase).toBe('COMMAND_ANIMATION');
-    expect(afterSubmit.enemy.currentHp).toBe(30); // unchanged
+    expect(afterSubmit.enemies[0].currentHp).toBe(30); // unchanged
 
     engine.advance();
     const afterApply = engine.getState();
     expect(afterApply.phase).toBe('EXPLANATION');
-    expect(afterApply.enemy.currentHp).toBeLessThan(30);
+    expect(afterApply.enemies[0].currentHp).toBeLessThan(30);
     const outcome = afterApply.lastPlayerOutcome;
     expect(outcome?.correct).toBe(true);
     expect(outcome?.command).toBe('attack');
@@ -179,7 +183,7 @@ describe('BattleEngine — player Attack flow', () => {
 
     const state = engine.getState();
     expect(state.phase).toBe('EXPLANATION');
-    expect(state.enemy.currentHp).toBe(30);
+    expect(state.enemies[0].currentHp).toBe(30);
     const outcome = state.lastPlayerOutcome;
     expect(outcome?.correct).toBe(false);
     if (outcome?.command === 'attack') {
@@ -195,7 +199,7 @@ describe('BattleEngine — player Attack flow', () => {
     engine.advance();
 
     const state = engine.getState();
-    expect(state.enemy.currentHp).toBe(30);
+    expect(state.enemies[0].currentHp).toBe(30);
     expect(state.lastPlayerOutcome?.correct).toBe(false);
     expect(state.lastPlayerOutcome?.selectedAnswerIndex).toBeNull();
   });
@@ -205,8 +209,8 @@ describe('BattleEngine — MP starts at 0 (spec §8: MP resets to 0 at zone star
   it('player MP is 0 at battle start, not maxMp', () => {
     const engine = setup({ playerMaxMp: 5 });
     const state = engine.getState();
-    expect(state.player.currentMp).toBe(0);
-    expect(state.player.maxMp).toBe(5);
+    expect(state.players[0].currentMp).toBe(0);
+    expect(state.players[0].maxMp).toBe(5);
   });
 });
 
@@ -239,7 +243,7 @@ describe('BattleEngine — enemy turn and win/loss', () => {
     const state = engine.getState();
 
     expect(state.enemyActionLog).toHaveLength(4);
-    expect(state.player.currentHp).toBeLessThan(500);
+    expect(state.players[0].currentHp).toBeLessThan(500);
     expect(state.phase).toBe('COMMAND_SELECT');
     expect(state.outcome).toBeNull();
   });
@@ -257,7 +261,7 @@ describe('BattleEngine — enemy turn and win/loss', () => {
     const state = engine.getState();
 
     expect(state.enemyActionLog.length).toBeGreaterThan(0);
-    expect(state.player.currentHp).toBeLessThan(500);
+    expect(state.players[0].currentHp).toBeLessThan(500);
     expect(state.phase).toBe('COMMAND_SELECT');
     expect(state.outcome).toBeNull();
   });
@@ -269,7 +273,7 @@ describe('BattleEngine — enemy turn and win/loss', () => {
     engine.submitAnswer({ type: 'multiple_choice', selectedIndex: 1 }); // correct, will surely kill a 1-HP enemy
     engine.advance(); // RESULT_APPLY -> EXPLANATION
 
-    expect(engine.getState().enemy.currentHp).toBe(0);
+    expect(engine.getState().enemies[0].currentHp).toBe(0);
 
     engine.advance(); // EXPLANATION -> BATTLE_END(win)
     const state = engine.getState();
@@ -287,7 +291,7 @@ describe('BattleEngine — enemy turn and win/loss', () => {
 
     expect(state.phase).toBe('BATTLE_END');
     expect(state.outcome).toBe('lose');
-    expect(state.player.currentHp).toBe(0);
+    expect(state.players[0].currentHp).toBe(0);
 
     engine.selectCommand('attack');
     expect(engine.getState().phase).toBe('BATTLE_END');

@@ -1,6 +1,8 @@
 import type { BattleController } from '../../state/useBattleController';
 import type { SpellDefinition } from '../../engine/battle/BattleEngine.types';
 import { HpBar } from './HpBar';
+import { TurnOrderView } from './TurnOrderView';
+import { TargetSelectView } from './TargetSelectView';
 import { CommandMenu } from './CommandMenu';
 import { SubjectStarSelect } from './SubjectStarSelect';
 import { QuestionView } from './QuestionView';
@@ -13,8 +15,8 @@ import { BattleEndView } from './BattleEndView';
 
 interface BattleScreenProps {
   controller: BattleController;
-  /** The player's one known spell, or null if none is defined. */
-  spell: SpellDefinition | null;
+  /** Each player's one known spell, keyed by character id (null if none defined). */
+  spellByPlayerId: Record<string, SpellDefinition | null>;
 }
 
 /**
@@ -22,32 +24,56 @@ interface BattleScreenProps {
  * only reads `state` and dispatches to the controller. No damage/crit/HP
  * calculation happens in this component.
  */
-export function BattleScreen({ controller, spell }: BattleScreenProps) {
+export function BattleScreen({ controller, spellByPlayerId }: BattleScreenProps) {
   const { state } = controller;
-  const actorNameById = { [state.player.id]: state.player.name, [state.enemy.id]: state.enemy.name };
+  const allActors = [...state.players, ...state.enemies];
+  const actorNameById = Object.fromEntries(allActors.map((a) => [a.id, a.name]));
+  const actorHpById = Object.fromEntries(allActors.map((a) => [a.id, { current: a.currentHp, max: a.maxHp }]));
+  const currentActor = allActors.find((a) => a.id === state.currentActorId);
+  const currentSpell = spellByPlayerId[state.currentActorId] ?? null;
 
   return (
     <div className="battle-screen">
-      <div className="battle-screen__hp">
-        <HpBar label={state.player.name} current={state.player.currentHp} max={state.player.maxHp} />
-        <HpBar label={state.enemy.name} current={state.enemy.currentHp} max={state.enemy.maxHp} />
+      <div className="battle-screen__hp battle-screen__hp--players">
+        {state.players.map((p) => (
+          <HpBar key={p.id} label={p.name} current={p.currentHp} max={p.maxHp} isCurrentActor={p.id === state.currentActorId} />
+        ))}
       </div>
+      <div className="battle-screen__hp battle-screen__hp--enemies">
+        {state.enemies.map((e) => (
+          <HpBar key={e.id} label={e.name} current={e.currentHp} max={e.maxHp} />
+        ))}
+      </div>
+
+      <TurnOrderView
+        currentActorName={currentActor?.name ?? state.currentActorId}
+        upcomingActorNames={state.upcomingActorIds.map((id) => actorNameById[id] ?? id)}
+      />
 
       <SearchInfoPanel searchByEnemyId={state.searchByEnemyId} actorNameById={actorNameById} />
 
       {state.phase === 'COMMAND_SELECT' && (
         <>
-          <EnemyActionLog log={state.enemyActionLog} />
+          <EnemyActionLog log={state.enemyActionLog} actorNameById={actorNameById} />
           <CommandMenu
             enabled
-            spell={spell}
-            playerMp={state.player.currentMp}
-            items={state.availableItems}
+            spell={currentSpell}
+            playerMp={currentActor?.currentMp ?? 0}
+            items={state.battleItems}
             onSelectCommand={controller.selectCommand}
             onUseSpell={controller.useSpell}
             onUseItem={controller.useItem}
           />
         </>
+      )}
+
+      {state.phase === 'TARGET_SELECT' && state.pendingTargetSelection && (
+        <TargetSelectView
+          candidateIds={state.pendingTargetSelection.candidateIds}
+          actorNameById={actorNameById}
+          actorHpById={actorHpById}
+          onSelect={controller.selectTarget}
+        />
       )}
 
       {state.phase === 'SUBJECT_DIFFICULTY_SELECT' && (
