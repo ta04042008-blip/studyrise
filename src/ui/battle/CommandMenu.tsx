@@ -1,19 +1,48 @@
+import type { ItemBattleSlot, QuestionCommandKind, SpellDefinition } from '../../engine/battle/BattleEngine.types';
+
 interface CommandMenuProps {
   enabled: boolean;
-  onSelectAttack: () => void;
+  spell: SpellDefinition | null;
+  playerMp: number;
+  items: ItemBattleSlot[];
+  onSelectCommand: (command: QuestionCommandKind) => void;
+  onUseSpell: () => void;
+  onUseItem: (itemId: string) => void;
 }
 
 /**
- * MVP-1 boundary (CLAUDE.md §27): only アタック is implemented. Guard/
- * Charge/Search/Spell/Item are not rendered — this is not "6 buttons,
- * 5 disabled," it is the smallest command menu that proves the loop.
+ * The 6 official commands (spec §5.1), all usable from COMMAND_SELECT.
+ * Spell is disabled when MP is insufficient for the character's one known
+ * spell; each item is disabled once its battle-local uses run out.
  */
-export function CommandMenu({ enabled, onSelectAttack }: CommandMenuProps) {
+export function CommandMenu({ enabled, spell, playerMp, items, onSelectCommand, onUseSpell, onUseItem }: CommandMenuProps) {
   return (
     <div className="command-menu">
-      <button type="button" disabled={!enabled} onClick={onSelectAttack}>
+      <button type="button" disabled={!enabled} onClick={() => onSelectCommand('attack')}>
         アタック
       </button>
+      <button type="button" disabled={!enabled} onClick={() => onSelectCommand('guard')}>
+        ガード
+      </button>
+      <button type="button" disabled={!enabled} onClick={() => onSelectCommand('charge')}>
+        チャージ
+      </button>
+      <button type="button" disabled={!enabled} onClick={() => onSelectCommand('search')}>
+        サーチ
+      </button>
+      <button type="button" disabled={!enabled || !spell || playerMp < spell.mpCost} onClick={onUseSpell}>
+        スペル{spell ? `（MP${spell.mpCost}）` : ''}
+      </button>
+      {items.map((slot) => (
+        <button
+          key={slot.item.id}
+          type="button"
+          disabled={!enabled || slot.remainingUses <= 0}
+          onClick={() => onUseItem(slot.item.id)}
+        >
+          {slot.item.name}（残{slot.remainingUses}）
+        </button>
+      ))}
     </div>
   );
 }
