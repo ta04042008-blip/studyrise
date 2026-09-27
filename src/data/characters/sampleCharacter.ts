@@ -1,10 +1,11 @@
 import type { CharacterDefinition } from '../../engine/battle/BattleEngine.types';
+import { sampleSpell } from '../spells/sampleSpell';
 
 /**
  * PLACEHOLDER content — a single minimal playable character, just enough
- * to exercise MVP-1's 1v1 battle loop. Not final game content
- * (CLAUDE.md §24); skill/spell/equipment fields are intentionally omitted
- * since MVP-1 does not implement those systems.
+ * to exercise the MVP-1/MVP-2 1v1 battle loop. Not final game content
+ * (CLAUDE.md §24); skill/equipment fields are intentionally omitted since
+ * neither system is implemented yet.
  */
 export const sampleCharacter: CharacterDefinition = {
   id: 'char_hero_placeholder',
@@ -16,4 +17,5 @@ export const sampleCharacter: CharacterDefinition = {
     maxHp: 60,
     maxMp: 5,
   },
+  initialSpellId: sampleSpell.id,
 };

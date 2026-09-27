@@ -1,6 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 import { createBattleEngine, type BattleEngine } from '../engine/battle/BattleEngine';
-import type { BattleState, CharacterDefinition, EnemyDefinition } from '../engine/battle/BattleEngine.types';
+import type {
+  BattleState,
+  CharacterDefinition,
+  EnemyDefinition,
+  ItemBattleSlot,
+  QuestionCommandKind,
+  SpellDefinition,
+} from '../engine/battle/BattleEngine.types';
 import { createQuestionEngine } from '../engine/question/QuestionEngine';
 import type { MultipleChoiceAnswer, QuestionDefinition } from '../engine/question/QuestionEngine.types';
 import { createRandomService } from '../engine/random/RandomService';
@@ -11,6 +18,8 @@ export interface UseBattleControllerArgs {
   player: CharacterDefinition;
   enemy: EnemyDefinition;
   questions: readonly QuestionDefinition[];
+  spellsById: Record<string, SpellDefinition>;
+  initialItems: ItemBattleSlot[];
   seed: number;
 }
 
@@ -18,9 +27,11 @@ export interface BattleController {
   state: BattleState;
   listSubjects: () => string[];
   listStars: (subject: string) => StarLevel[];
-  selectAttackCommand: () => void;
+  selectCommand: (command: QuestionCommandKind) => void;
   selectSubjectAndStar: (subject: string, star: StarLevel) => void;
   submitAnswer: (answer: MultipleChoiceAnswer) => void;
+  useSpell: () => void;
+  useItem: (itemId: string) => void;
   advance: () => void;
 }
 
@@ -29,11 +40,26 @@ export interface BattleController {
  * instantiates the engine, dispatches commands to it, and re-renders on
  * the resulting snapshot. No combat calculation happens here.
  */
-export function useBattleController({ player, enemy, questions, seed }: UseBattleControllerArgs): BattleController {
+export function useBattleController({
+  player,
+  enemy,
+  questions,
+  spellsById,
+  initialItems,
+  seed,
+}: UseBattleControllerArgs): BattleController {
   const engines = useMemo(() => {
     const random = createRandomService(seed);
     const questionEngine = createQuestionEngine(questions, random);
-    const battleEngine: BattleEngine = createBattleEngine(player, enemy, questionEngine, battleConfig, random);
+    const battleEngine: BattleEngine = createBattleEngine({
+      player,
+      enemy,
+      questionEngine,
+      config: battleConfig,
+      random,
+      spellsById,
+      initialItems,
+    });
     return { questionEngine, battleEngine };
     // Instantiate once per mounted battle; `seed` change means a new battle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -45,10 +71,13 @@ export function useBattleController({ player, enemy, questions, seed }: UseBattl
     setState(engines.battleEngine.getState());
   }, [engines]);
 
-  const selectAttackCommand = useCallback(() => {
-    engines.battleEngine.selectAttackCommand();
-    sync();
-  }, [engines, sync]);
+  const selectCommand = useCallback(
+    (command: QuestionCommandKind) => {
+      engines.battleEngine.selectCommand(command);
+      sync();
+    },
+    [engines, sync],
+  );
 
   const selectSubjectAndStar = useCallback(
     (subject: string, star: StarLevel) => {
@@ -66,6 +95,19 @@ export function useBattleController({ player, enemy, questions, seed }: UseBattl
     [engines, sync],
   );
 
+  const useSpell = useCallback(() => {
+    engines.battleEngine.useSpell();
+    sync();
+  }, [engines, sync]);
+
+  const useItem = useCallback(
+    (itemId: string) => {
+      engines.battleEngine.useItem(itemId);
+      sync();
+    },
+    [engines, sync],
+  );
+
   const advance = useCallback(() => {
     engines.battleEngine.advance();
     sync();
@@ -74,5 +116,15 @@ export function useBattleController({ player, enemy, questions, seed }: UseBattl
   const listSubjects = useCallback(() => engines.questionEngine.listSubjects(), [engines]);
   const listStars = useCallback((subject: string) => engines.questionEngine.listStars(subject), [engines]);
 
-  return { state, listSubjects, listStars, selectAttackCommand, selectSubjectAndStar, submitAnswer, advance };
+  return {
+    state,
+    listSubjects,
+    listStars,
+    selectCommand,
+    selectSubjectAndStar,
+    submitAnswer,
+    useSpell,
+    useItem,
+    advance,
+  };
 }

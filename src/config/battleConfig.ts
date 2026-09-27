@@ -36,6 +36,29 @@ export interface BattleConfig {
    * is given in the spec; 1.0 is a neutral placeholder.
    */
   attackCommandMultiplier: number;
+
+  /** Guard mitigation by ★, spec §5.7/§19 explicit baseline: 20/30/40/50/60%. */
+  guardMitigationByStar: Record<StarLevel, number>;
+  /** Guard great-success independent roll chance, spec §19 explicit baseline: 5%. */
+  guardGreatSuccessChance: number;
+  /**
+   * MVP baseline (confirmed by the user, not in the written spec): a guard
+   * great success adds this many percentage points to the ★-based
+   * mitigation (e.g. ★1 20%→40%, ★3 40%→60%), capped by guardMaxMitigation.
+   */
+  guardGreatSuccessBonusMitigation: number;
+  /** Final mitigation cap regardless of ★/great-success stacking. MVP baseline: 90%. */
+  guardMaxMitigation: number;
+
+  /** Charge great-success independent roll chance, spec §19 explicit baseline: 5%. */
+  chargeGreatSuccessChance: number;
+  /** MP gained on a normal successful Charge. Spec §5.8 explicit: 1. */
+  chargeMpGainNormal: number;
+  /** MP gained on a great-success Charge. Spec §5.8 explicit: 2. */
+  chargeMpGainGreatSuccess: number;
+
+  /** Search revealed-action count by ★, spec §5.9 explicit: 2/3/4/6/8. */
+  searchRevealCountByStar: Record<StarLevel, number>;
 }
 
 export const battleConfig: BattleConfig = {
@@ -52,4 +75,27 @@ export const battleConfig: BattleConfig = {
     5: 1.0, // PLACEHOLDER
   },
   attackCommandMultiplier: 1.0, // PLACEHOLDER
+
+  guardMitigationByStar: {
+    1: 0.2,
+    2: 0.3,
+    3: 0.4,
+    4: 0.5,
+    5: 0.6,
+  },
+  guardGreatSuccessChance: 0.05,
+  guardGreatSuccessBonusMitigation: 0.2,
+  guardMaxMitigation: 0.9,
+
+  chargeGreatSuccessChance: 0.05,
+  chargeMpGainNormal: 1,
+  chargeMpGainGreatSuccess: 2,
+
+  searchRevealCountByStar: {
+    1: 2,
+    2: 3,
+    3: 4,
+    4: 6,
+    5: 8,
+  },
 };
