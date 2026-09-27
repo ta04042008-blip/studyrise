@@ -70,7 +70,7 @@ describe('BattleEngine — Search', () => {
     engine.advance(); // resolve the enemy's turn — should consume one queue entry
     const state = engine.getState();
     expect(state.enemyActionLog).toHaveLength(1);
-    expect(state.enemyActionLog[0].attackerId).toBe('enemy');
+    expect(state.enemyActionLog[0].sourceActorId).toBe('enemy');
     expect(state.searchByEnemyId['enemy']).toHaveLength(1); // one fewer than before
   });
 

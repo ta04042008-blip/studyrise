@@ -20,12 +20,12 @@ describe('BattleEngine — Item', () => {
     // just verify the HEAL clamp behavior directly by checking HP stays <= maxHp and the
     // slot's remaining count decreases.
     const before = engine.getState();
-    expect(before.availableItems.find((s) => s.item.id === testItem.id)?.remainingUses).toBe(2);
+    expect(before.battleItems.find((s) => s.item.id === testItem.id)?.remainingUses).toBe(2);
 
     engine.useItem(testItem.id);
     const after = engine.getState();
-    expect(after.player.currentHp).toBeLessThanOrEqual(after.player.maxHp);
-    expect(after.availableItems.find((s) => s.item.id === testItem.id)?.remainingUses).toBe(1);
+    expect(after.players[0].currentHp).toBeLessThanOrEqual(after.players[0].maxHp);
+    expect(after.battleItems.find((s) => s.item.id === testItem.id)?.remainingUses).toBe(1);
   });
 
   it('heals a damaged player by the item amount (clamped at maxHp)', () => {
@@ -38,11 +38,11 @@ describe('BattleEngine — Item', () => {
       initialItems: [{ item: testItem, remainingUses: 1 }],
     });
     // With the enemy slightly faster, it has already hit the player once at battle start.
-    const hpAfterHit = engine.getState().player.currentHp;
+    const hpAfterHit = engine.getState().players[0].currentHp;
     expect(hpAfterHit).toBeLessThan(100);
 
     engine.useItem(testItem.id);
-    const hpAfterHeal = engine.getState().player.currentHp;
+    const hpAfterHeal = engine.getState().players[0].currentHp;
     expect(hpAfterHeal).toBe(Math.min(100, hpAfterHit + 20)); // testItem: HEAL 20
   });
 
@@ -57,7 +57,7 @@ describe('BattleEngine — Item', () => {
     const after = engine.getState();
 
     expect(after.phase).toBe(before.phase); // still COMMAND_SELECT, nothing happened
-    expect(after.player.currentHp).toBe(before.player.currentHp);
+    expect(after.players[0].currentHp).toBe(before.players[0].currentHp);
   });
 
   it('is rejected (no-op) for an unknown item id', () => {

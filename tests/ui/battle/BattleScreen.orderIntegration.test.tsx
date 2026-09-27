@@ -57,14 +57,14 @@ function question(): MultipleChoiceQuestion {
 
 function Harness({ seed }: { seed: number }) {
   const controller = useBattleController({
-    player: PLAYER,
-    enemy: ENEMY,
+    players: [PLAYER],
+    enemies: [ENEMY],
     questions: [question()],
     spellsById: { [SPELL.id]: SPELL },
     initialItems: [{ ...ITEM }],
     seed,
   });
-  return <BattleScreen controller={controller} spell={SPELL} />;
+  return <BattleScreen controller={controller} spellByPlayerId={{ [PLAYER.id]: SPELL }} />;
 }
 
 async function driveToQuestionAndAnswer(command: string, choiceLabel: string) {

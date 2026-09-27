@@ -2,8 +2,8 @@ import type { CharacterDefinition } from '../../engine/battle/BattleEngine.types
 import { sampleSpell } from '../spells/sampleSpell';
 
 /**
- * PLACEHOLDER content — a single minimal playable character, just enough
- * to exercise the MVP-1/MVP-2 1v1 battle loop. Not final game content
+ * PLACEHOLDER content — a minimal playable character, just enough to
+ * exercise the MVP-1/MVP-2/MVP-3 battle loop. Not final game content
  * (CLAUDE.md §24); skill/equipment fields are intentionally omitted since
  * neither system is implemented yet.
  */

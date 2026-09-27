@@ -31,7 +31,7 @@ function question(): MultipleChoiceQuestion {
 function attackOutcome(overrides: Partial<AttackOutcome> = {}): AttackOutcome {
   return {
     command: 'attack',
-    actorId: 'player',
+    sourceActorId: 'player',
     targetId: 'enemy',
     correct: true,
     damage: 10,
@@ -45,7 +45,7 @@ function attackOutcome(overrides: Partial<AttackOutcome> = {}): AttackOutcome {
 function guardOutcome(overrides: Partial<GuardOutcome> = {}): GuardOutcome {
   return {
     command: 'guard',
-    actorId: 'player',
+    sourceActorId: 'player',
     targetId: 'player',
     correct: true,
     applied: true,
@@ -60,7 +60,7 @@ function guardOutcome(overrides: Partial<GuardOutcome> = {}): GuardOutcome {
 function chargeOutcome(overrides: Partial<ChargeOutcome> = {}): ChargeOutcome {
   return {
     command: 'charge',
-    actorId: 'player',
+    sourceActorId: 'player',
     targetId: 'player',
     correct: true,
     mpGained: 1,
@@ -74,7 +74,7 @@ function chargeOutcome(overrides: Partial<ChargeOutcome> = {}): ChargeOutcome {
 function searchOutcome(overrides: Partial<SearchOutcome> = {}): SearchOutcome {
   return {
     command: 'search',
-    actorId: 'player',
+    sourceActorId: 'player',
     targetId: 'enemy',
     correct: true,
     success: true,
