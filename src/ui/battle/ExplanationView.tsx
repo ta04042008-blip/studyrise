@@ -28,7 +28,10 @@ export function ExplanationView({ outcome, onAdvance }: ExplanationViewProps) {
       <p className="explanation-view__text">{question.text}</p>
       <p>あなたの回答: {choiceText(outcome.selectedAnswerIndex)}</p>
       {question.format === 'multiple_choice' && <p>正答: {question.choices[question.correctIndex]}</p>}
-      <p>{outcome.correct ? '正解！' : '不正解'}</p>
+      <p>
+        {outcome.correct ? '正解！' : '不正解'}
+        {outcome.isCritical ? '（会心の一撃！）' : ''}
+      </p>
       <p className="explanation-view__explanation">{question.explanation}</p>
       <button type="button" disabled={advanced} onClick={handleAdvance}>
         次へ

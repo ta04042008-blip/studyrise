@@ -7,12 +7,17 @@ interface CommandAnimationViewProps {
 }
 
 /**
- * COMMAND_ANIMATION hook (spec §5.3「コマンド演出」/ §5.5 失敗時も専用演出).
- * MVP-1 keeps this a static success/fail beat rather than a timed
- * animation; enemy HP has not been changed yet at this point (RESULT_APPLY
- * happens on advance()).
+ * COMMAND_ANIMATION hook (spec §5.3「コマンド演出」). This step must not
+ * reveal 正誤 — that is only shown after RESULT_APPLY, per the required
+ * order COMMAND_ANIMATION → RESULT_APPLY → 正誤表示 → EXPLANATION → 次へ.
+ * MVP-1 has no real animation art yet, so this is a neutral placeholder
+ * beat, identical for a correct or incorrect answer; a future MVP can
+ * swap in a genuinely distinct hit/miss animation asset (spec §5.5) as
+ * long as it still stops short of stating 正解/不正解 in text.
+ * `outcome` is accepted (not just a bare callback) so a later animation
+ * can react to it without changing this component's call site.
  */
-export function CommandAnimationView({ outcome, onAdvance }: CommandAnimationViewProps) {
+export function CommandAnimationView({ onAdvance }: CommandAnimationViewProps) {
   const [advanced, setAdvanced] = useState(false);
 
   function handleAdvance() {
@@ -23,11 +28,7 @@ export function CommandAnimationView({ outcome, onAdvance }: CommandAnimationVie
 
   return (
     <div className="command-animation-view">
-      {outcome.correct ? (
-        <p>こうげき せいこう！{outcome.isCritical ? '（会心の一撃！）' : ''}</p>
-      ) : (
-        <p>こうげき しっぱい……</p>
-      )}
+      <p>こうげき！</p>
       <button type="button" disabled={advanced} onClick={handleAdvance}>
         次へ
       </button>
