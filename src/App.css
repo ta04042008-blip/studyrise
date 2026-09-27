@@ -1,0 +1,73 @@
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+  font-family: system-ui, sans-serif;
+}
+
+.battle-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.battle-screen__hp {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hp-bar__label {
+  font-size: 0.95rem;
+}
+
+.hp-bar__track {
+  width: 100%;
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.hp-bar__fill {
+  height: 100%;
+  background: #4a90d9;
+}
+
+button {
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 1rem;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.question-view__choices {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.question-view__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* iPad landscape / wider layouts: allow a two-column HP display. */
+@media (min-width: 768px) {
+  .app {
+    max-width: 900px;
+  }
+
+  .battle-screen__hp {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .battle-screen__hp > * {
+    flex: 1;
+  }
+}
