@@ -1,5 +1,6 @@
 import type { CharacterDefinition } from '../../engine/battle/BattleEngine.types';
 import { sampleSpell } from '../spells/sampleSpell';
+import { sampleAdditionalSpellHeal, sampleAdditionalSpellIce } from '../spells/sampleAdditionalSpells';
 
 /**
  * PLACEHOLDER content — a minimal playable character, just enough to
@@ -18,4 +19,6 @@ export const sampleCharacter: CharacterDefinition = {
     maxMp: 5,
   },
   initialSpellId: sampleSpell.id,
+  // PLACEHOLDER: reused across sample characters for MVP-4 exercise purposes.
+  additionalSpellPoolIds: [sampleAdditionalSpellIce.id, sampleAdditionalSpellHeal.id],
 };

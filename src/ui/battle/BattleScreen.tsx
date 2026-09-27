@@ -1,9 +1,10 @@
+import { useEffect, useState } from 'react';
 import type { BattleController } from '../../state/useBattleController';
-import type { SpellDefinition } from '../../engine/battle/BattleEngine.types';
 import { HpBar } from './HpBar';
 import { TurnOrderView } from './TurnOrderView';
 import { TargetSelectView } from './TargetSelectView';
 import { CommandMenu } from './CommandMenu';
+import { SpellSelectView } from './SpellSelectView';
 import { SubjectStarSelect } from './SubjectStarSelect';
 import { QuestionView } from './QuestionView';
 import { CommandAnimationView } from './CommandAnimationView';
@@ -15,8 +16,6 @@ import { BattleEndView } from './BattleEndView';
 
 interface BattleScreenProps {
   controller: BattleController;
-  /** Each player's one known spell, keyed by character id (null if none defined). */
-  spellByPlayerId: Record<string, SpellDefinition | null>;
 }
 
 /**
@@ -24,13 +23,20 @@ interface BattleScreenProps {
  * only reads `state` and dispatches to the controller. No damage/crit/HP
  * calculation happens in this component.
  */
-export function BattleScreen({ controller, spellByPlayerId }: BattleScreenProps) {
+export function BattleScreen({ controller }: BattleScreenProps) {
   const { state } = controller;
   const allActors = [...state.players, ...state.enemies];
   const actorNameById = Object.fromEntries(allActors.map((a) => [a.id, a.name]));
   const actorHpById = Object.fromEntries(allActors.map((a) => [a.id, { current: a.currentHp, max: a.maxHp }]));
   const currentActor = allActors.find((a) => a.id === state.currentActorId);
-  const currentSpell = spellByPlayerId[state.currentActorId] ?? null;
+  const currentKnownSpells = state.knownSpellsByPlayerId[state.currentActorId] ?? [];
+  // UI-only "which spell" step (CLAUDE.md §9) — never a BattleEngine phase.
+  // Reset whenever the acting player changes, so a stale open picker never
+  // survives into someone else's turn.
+  const [isSpellSelectOpen, setSpellSelectOpen] = useState(false);
+  useEffect(() => {
+    setSpellSelectOpen(false);
+  }, [state.currentActorId]);
 
   return (
     <div className="battle-screen">
@@ -55,15 +61,28 @@ export function BattleScreen({ controller, spellByPlayerId }: BattleScreenProps)
       {state.phase === 'COMMAND_SELECT' && (
         <>
           <EnemyActionLog log={state.enemyActionLog} actorNameById={actorNameById} />
-          <CommandMenu
-            enabled
-            spell={currentSpell}
-            playerMp={currentActor?.currentMp ?? 0}
-            items={state.battleItems}
-            onSelectCommand={controller.selectCommand}
-            onUseSpell={controller.useSpell}
-            onUseItem={controller.useItem}
-          />
+          {isSpellSelectOpen ? (
+            <SpellSelectView
+              knownSpells={currentKnownSpells}
+              playerMp={currentActor?.currentMp ?? 0}
+              onSelect={(spellId) => {
+                setSpellSelectOpen(false);
+                controller.useSpell(spellId);
+              }}
+              onCancel={() => setSpellSelectOpen(false)}
+            />
+          ) : (
+            <CommandMenu
+              enabled
+              knownSpells={currentKnownSpells}
+              playerMp={currentActor?.currentMp ?? 0}
+              items={state.battleItems}
+              onSelectCommand={controller.selectCommand}
+              onUseSpell={controller.useSpell}
+              onOpenSpellSelect={() => setSpellSelectOpen(true)}
+              onUseItem={controller.useItem}
+            />
+          )}
         </>
       )}
 

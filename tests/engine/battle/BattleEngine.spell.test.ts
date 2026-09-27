@@ -12,9 +12,9 @@ describe('BattleEngine — Spell', () => {
       engine.advance();
       engine.advance();
     }
-    expect(engine.getState().players[0].currentMp).toBeGreaterThanOrEqual(testSpell.mpCost);
+    expect(engine.getState().players[0].currentMp).toBeGreaterThanOrEqual(testSpell.levels[0].mpCost);
 
-    engine.useSpell();
+    engine.useSpell(testSpell.id);
     const state = engine.getState();
     expect(state.phase).toBe('RESULT_APPLY');
     expect(state.pendingCommand).toBeNull();
@@ -33,10 +33,10 @@ describe('BattleEngine — Spell', () => {
     const mpBefore = engine.getState().players[0].currentMp;
     const hpBefore = engine.getState().enemies[0].currentHp;
 
-    engine.useSpell();
+    engine.useSpell(testSpell.id);
 
     const state = engine.getState();
-    expect(state.players[0].currentMp).toBe(mpBefore - testSpell.mpCost);
+    expect(state.players[0].currentMp).toBe(mpBefore - testSpell.levels[0].mpCost);
     expect(state.enemies[0].currentHp).toBe(hpBefore - 15); // testSpell: DAMAGE 15
   });
 
@@ -56,7 +56,7 @@ describe('BattleEngine — Spell', () => {
       engine.advance();
     }
     const before = engine.getState();
-    engine.useSpell();
+    engine.useSpell(testHealSpell.id);
     const after = engine.getState();
 
     expect(after.enemies[0].currentHp).toBe(before.enemies[0].currentHp); // untouched — HEAL never targets the enemy
@@ -66,7 +66,7 @@ describe('BattleEngine — Spell', () => {
   it('is rejected (no-op) when the player does not have enough MP', () => {
     const engine = setup({ playerMaxMp: 5 }); // starts at 0 MP, spell costs 3
     const before = engine.getState();
-    engine.useSpell();
+    engine.useSpell(testSpell.id);
     const after = engine.getState();
 
     expect(after.phase).toBe(before.phase); // still COMMAND_SELECT
@@ -82,7 +82,7 @@ describe('BattleEngine — Spell', () => {
     engine.selectSubjectAndStar('数学', 1);
     // still QUESTION phase, not COMMAND_SELECT
     const before = engine.getState();
-    engine.useSpell();
+    engine.useSpell(testSpell.id);
     const after = engine.getState();
     expect(after.phase).toBe(before.phase);
   });
@@ -96,7 +96,7 @@ describe('BattleEngine — Spell', () => {
       engine.advance();
       engine.advance();
     }
-    engine.useSpell();
+    engine.useSpell(testSpell.id);
     expect(engine.getState().phase).not.toBe('QUESTION');
     expect(engine.getState().phase).not.toBe('EXPLANATION');
   });

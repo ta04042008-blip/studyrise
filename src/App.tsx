@@ -1,50 +1,14 @@
-import { useMemo, useState } from 'react';
-import { BattleScreen } from './ui/battle/BattleScreen';
-import { useBattleController } from './state/useBattleController';
-import { sampleParty } from './data/characters/sampleCharacters';
-import { sampleEnemyZone } from './data/enemies/sampleEnemies';
-import { sampleQuestions } from './data/questions/sampleQuestions';
-import { sampleSpell } from './data/spells/sampleSpell';
-import { sampleItem } from './data/items/sampleItem';
-import type { ItemBattleSlot, SpellDefinition } from './engine/battle/BattleEngine.types';
+import { useRunScreen } from './state/useRunScreen';
 import './App.css';
 
-const spellsById = { [sampleSpell.id]: sampleSpell };
-// PLACEHOLDER: every sample party member currently shares the one sample spell.
-const spellByPlayerId: Record<string, SpellDefinition | null> = Object.fromEntries(
-  sampleParty.map((c) => [c.id, spellsById[c.initialSpellId] ?? null]),
-);
-
+/**
+ * MVP-4 entry point: delegates entirely to useRunScreen, which chains
+ * Battle → Reward → Battle via RunController/RogueliteEngine (spec §9,
+ * CLAUDE.md §21 — multi-zone/stage itself is still MVP-5, so this is a
+ * standalone two-battle harness only, per the MVP-4 brief).
+ */
 function App() {
-  const [seed, setSeed] = useState(() => Date.now());
-  // PLACEHOLDER loadout: 2 uses of the one sample item, shared by the whole
-  // party for this battle only (spec §5.10; no base inventory yet). Reset
-  // on each new battle.
-  const initialItems = useMemo<ItemBattleSlot[]>(() => [{ item: sampleItem, remainingUses: 2 }], [seed]);
-
-  const controller = useBattleController({
-    players: sampleParty,
-    enemies: sampleEnemyZone,
-    questions: sampleQuestions,
-    spellsById,
-    initialItems,
-    seed,
-  });
-
-  const isOver = controller.state.phase === 'BATTLE_END';
-  const title = useMemo(() => 'StudyRise — MVP-3 戦闘プロトタイプ', []);
-
-  return (
-    <div className="app">
-      <h1>{title}</h1>
-      <BattleScreen controller={controller} spellByPlayerId={spellByPlayerId} />
-      {isOver && (
-        <button type="button" onClick={() => setSeed(Date.now())}>
-          もう一度たたかう
-        </button>
-      )}
-    </div>
-  );
+  return <div className="app">{useRunScreen()}</div>;
 }
 
 export default App;

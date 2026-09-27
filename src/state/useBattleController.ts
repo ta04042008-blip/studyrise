@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createBattleEngine, type BattleEngine } from '../engine/battle/BattleEngine';
 import type {
   BattleState,
   CharacterDefinition,
   EnemyDefinition,
   ItemBattleSlot,
+  PlayerCommandModifiers,
   QuestionCommandKind,
   SpellDefinition,
 } from '../engine/battle/BattleEngine.types';
@@ -23,6 +24,12 @@ export interface UseBattleControllerArgs {
   spellsById: Record<string, SpellDefinition>;
   initialItems: ItemBattleSlot[];
   seed: number;
+  /** Run-provided known-spells-and-levels per player (spec §4.5). Omit for the MVP-1〜3 single-initial-spell default. */
+  knownSpellsByPlayerId?: Record<string, { spellId: string; level: number }[]>;
+  /** Run-provided command-boost bonuses per player (spec §9.2 category 3). Omit for none. */
+  playerCommandModifiers?: Record<string, PlayerCommandModifiers>;
+  /** Starting HP per player, carried from a previous battle (RogueliteEngine). Omit for full HP. */
+  initialHpByPlayerId?: Record<string, number>;
 }
 
 export interface BattleController {
@@ -33,7 +40,7 @@ export interface BattleController {
   selectTarget: (targetId: string) => void;
   selectSubjectAndStar: (subject: string, star: StarLevel) => void;
   submitAnswer: (answer: MultipleChoiceAnswer) => void;
-  useSpell: () => void;
+  useSpell: (spellId: string) => void;
   useItem: (itemId: string) => void;
   advance: () => void;
 }
@@ -50,6 +57,9 @@ export function useBattleController({
   spellsById,
   initialItems,
   seed,
+  knownSpellsByPlayerId,
+  playerCommandModifiers,
+  initialHpByPlayerId,
 }: UseBattleControllerArgs): BattleController {
   const engines = useMemo(() => {
     const random = createRandomService(seed);
@@ -62,6 +72,9 @@ export function useBattleController({
       random,
       spellsById,
       initialItems,
+      knownSpellsByPlayerId,
+      playerCommandModifiers,
+      initialHpByPlayerId,
     });
     return { questionEngine, battleEngine };
     // Instantiate once per mounted battle; `seed` change means a new battle.
@@ -69,6 +82,17 @@ export function useBattleController({
   }, [seed]);
 
   const [state, setState] = useState<BattleState>(() => engines.battleEngine.getState());
+
+  // `engines` only changes when `seed` changes (a brand-new battle, e.g.
+  // MVP-4's Battle → Reward → Battle harness re-seeding this hook without
+  // unmounting it). The lazy useState initializer above only ever runs on
+  // this hook's very first mount, so without this resync, `state` would
+  // keep showing the *previous* battle's final snapshot forever — the new
+  // engine would be constructed and immediately usable via its methods, but
+  // the UI would never render its actual initial state.
+  useEffect(() => {
+    setState(engines.battleEngine.getState());
+  }, [engines]);
 
   const sync = useCallback(() => {
     setState(engines.battleEngine.getState());
@@ -106,10 +130,13 @@ export function useBattleController({
     [engines, sync],
   );
 
-  const useSpell = useCallback(() => {
-    engines.battleEngine.useSpell();
-    sync();
-  }, [engines, sync]);
+  const useSpell = useCallback(
+    (spellId: string) => {
+      engines.battleEngine.useSpell(spellId);
+      sync();
+    },
+    [engines, sync],
+  );
 
   const useItem = useCallback(
     (itemId: string) => {

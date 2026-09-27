@@ -17,9 +17,10 @@ const FORBIDDEN_VERDICT_WORDS = /正解|不正解|せいこう|しっぱい/;
 const SPELL: SpellDefinition = {
   id: 'spell_test',
   name: 'テストスペル',
-  mpCost: 0, // 0-cost in this harness so it's always usable regardless of MP flow
   targetType: 'enemy',
-  effects: [{ type: 'DAMAGE', amount: 12 }],
+  maxLevel: 1,
+  // 0-cost in this harness so it's always usable regardless of MP flow.
+  levels: [{ mpCost: 0, effects: [{ type: 'DAMAGE', amount: 12 }] }],
 };
 
 const ITEM: ItemBattleSlot = {
@@ -32,6 +33,7 @@ const PLAYER: CharacterDefinition = {
   name: 'Hero',
   baseStats: { attack: 30, defense: 5, speed: 20, maxHp: 100, maxMp: 5 },
   initialSpellId: SPELL.id,
+  additionalSpellPoolIds: [],
 };
 
 const ENEMY: EnemyDefinition = {
@@ -64,7 +66,7 @@ function Harness({ seed }: { seed: number }) {
     initialItems: [{ ...ITEM }],
     seed,
   });
-  return <BattleScreen controller={controller} spellByPlayerId={{ [PLAYER.id]: SPELL }} />;
+  return <BattleScreen controller={controller} />;
 }
 
 async function driveToQuestionAndAnswer(command: string, choiceLabel: string) {

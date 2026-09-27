@@ -1,6 +1,7 @@
 import type { CharacterDefinition } from '../../engine/battle/BattleEngine.types';
 import { sampleCharacter } from './sampleCharacter';
 import { sampleSpell } from '../spells/sampleSpell';
+import { sampleAdditionalSpellHeal, sampleAdditionalSpellIce } from '../spells/sampleAdditionalSpells';
 
 /**
  * PLACEHOLDER content — a 3-person party (spec §4.1) for exercising MVP-3's
@@ -18,6 +19,7 @@ export const samplePartyMember2: CharacterDefinition = {
     maxMp: 5,
   },
   initialSpellId: sampleSpell.id,
+  additionalSpellPoolIds: [sampleAdditionalSpellIce.id, sampleAdditionalSpellHeal.id], // PLACEHOLDER
 };
 
 export const samplePartyMember3: CharacterDefinition = {
@@ -31,6 +33,7 @@ export const samplePartyMember3: CharacterDefinition = {
     maxMp: 5,
   },
   initialSpellId: sampleSpell.id,
+  additionalSpellPoolIds: [sampleAdditionalSpellIce.id, sampleAdditionalSpellHeal.id], // PLACEHOLDER
 };
 
 /** Full 3-person party, in fixed order (spec §4.1: no mid-stage swap in MVP-3). */
