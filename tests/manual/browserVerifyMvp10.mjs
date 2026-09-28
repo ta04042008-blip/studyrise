@@ -212,6 +212,10 @@ async function main() {
   );
   const enhancedLabel = (await firstItemRow.locator('span').first().textContent())?.trim();
   log('5b-4: 装備の強化Lv表示が+1に更新', enhancedLabel !== firstItemLabel, `${firstItemLabel} -> ${enhancedLabel}`);
+  // Captured AFTER enhancement (not equippedSlotText, which was captured
+  // right after equipping but BEFORE the +1 enhance) — this is the correct
+  // baseline for the reload-persistence comparison below.
+  const equippedSlotTextAfterEnhance = await page.locator('.equipment-list-screen__equipped-slots dd').first().textContent();
 
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
   const statsBeforeReload = await readCharacterDetail(page, PARTY_LABELS[0]);
@@ -236,8 +240,8 @@ async function main() {
   );
   log(
     '5b-7: reload後も装備中スロットが維持(instanceId再解決)',
-    equippedSlotAfterReload?.trim() === equippedSlotText?.trim(),
-    `${equippedSlotText} -> ${equippedSlotAfterReload}`,
+    equippedSlotAfterReload?.trim() === equippedSlotTextAfterEnhance?.trim(),
+    `${equippedSlotTextAfterEnhance} -> ${equippedSlotAfterReload}`,
   );
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
   const statsAfterReload = await readCharacterDetail(page, PARTY_LABELS[0]);
