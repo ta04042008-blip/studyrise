@@ -415,7 +415,7 @@ const additionalEnglishQuestions: MultipleChoiceQuestion[] = [
     star: 2,
     format: 'multiple_choice',
     text: '"apple" の正しい複数形は？',
-    choices: ['apples', "apple's", 'appies', 'applies'],
+    choices: ['apples', "apple's", 'appleses', 'applies'],
     correctIndex: 0,
     explanation: 'apple の複数形は s を付けて apples です。',
   },
@@ -582,10 +582,10 @@ const additionalEnglishQuestions: MultipleChoiceQuestion[] = [
     unit: '受動態',
     star: 4,
     format: 'multiple_choice',
-    text: 'This song ___ written by a famous singer. に入る語は？',
+    text: 'This song ___ written by a famous singer in 1990. に入る語は？',
     choices: ['is', 'was', 'were', 'has'],
     correctIndex: 1,
-    explanation: '過去の受動態は be動詞の過去形(was/were) + 過去分詞です。written は過去分詞なので、主語 this song に合わせて was を使います。',
+    explanation: '文末の in 1990 から過去の出来事だと分かります。過去の受動態は be動詞の過去形(was/were) + 過去分詞です。written は過去分詞なので、主語 this song に合わせて was を使います。',
   },
   // ★5 — 高次統合
   {

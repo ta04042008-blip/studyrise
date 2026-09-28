@@ -53,7 +53,7 @@ export const FULL_QUESTION_ANSWER_KEY: Record<string, number> = {
   '"Although it was raining, she went outside without an umbrella." から分かることは？': 0,
   'The man ___ is standing there is my teacher. に入る語は？': 0,
   '"Turn right at the corner." の right の意味は？': 1,
-  'This song ___ written by a famous singer. に入る語は？': 1,
+  'This song ___ written by a famous singer in 1990. に入る語は？': 1,
   '"Even though he failed the first time, he kept practicing and finally succeeded." が伝える教訓に最も近いものは？': 0,
   'If I ___ more time, I would travel abroad. に入る語は？': 1,
   'The letter ___ in French was difficult to read. に入る語は？': 2,

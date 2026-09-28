@@ -28,7 +28,7 @@ const ANSWER_KEY = {
   'We ___ visit Japan next year. に入る語は？': 0, 'I ___ never seen that movie. に入る語は？': 0,
   '"Although it was raining, she went outside without an umbrella." から分かることは？': 0,
   'The man ___ is standing there is my teacher. に入る語は？': 0, '"Turn right at the corner." の right の意味は？': 1,
-  'This song ___ written by a famous singer. に入る語は？': 1,
+  'This song ___ written by a famous singer in 1990. に入る語は？': 1,
   '"Even though he failed the first time, he kept practicing and finally succeeded." が伝える教訓に最も近いものは？': 0,
   'If I ___ more time, I would travel abroad. に入る語は？': 1, 'The letter ___ in French was difficult to read. に入る語は？': 2,
   '"She whispered so that no one else could hear." から分かる話し方は？': 1,
@@ -106,6 +106,23 @@ async function departFor(page, stageNameText, partyLabels) {
   await page.getByRole('heading', { name: 'StudyRise — Stage攻略' }).waitFor();
 }
 
+/** Reads Level/EXP + resolved stats (HP/学力/忍耐力/思考速度/MP) from キャラクター詳細, starting and ending at Base Home. */
+async function readCharacterDetail(page, name) {
+  await page.getByRole('button', { name: 'キャラクター' }).click();
+  await page.locator('.character-list-view button', { hasText: name }).first().click();
+  const levelDd = page.locator('.character-detail-view__level dd');
+  const level = (await levelDd.nth(0).textContent())?.trim();
+  const exp = (await levelDd.nth(1).textContent())?.trim();
+  const statsDd = page.locator('.character-detail-view__stats dd');
+  const hp = (await statsDd.nth(0).textContent())?.trim();
+  const attack = (await statsDd.nth(1).textContent())?.trim();
+  const defense = (await statsDd.nth(2).textContent())?.trim();
+  const speed = (await statsDd.nth(3).textContent())?.trim();
+  await page.getByRole('button', { name: '一覧へ戻る' }).click();
+  await page.getByRole('button', { name: '拠点へ戻る' }).click();
+  return { level, exp, hp, attack, defense, speed };
+}
+
 async function clearWholeStage(page, stageName, bossName, partyLabels) {
   for (let zone = 0; zone < 4; zone++) {
     const outcome = await driveZoneToWin(page);
@@ -145,6 +162,10 @@ async function main() {
   log('3b: 持ち物画面へ遷移', await page.locator('body').count() > 0);
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
 
+  // --- Lv/EXP checkpoint: Stage1開始時 ---
+  const lvStage1Start = await readCharacterDetail(page, PARTY_LABELS[0]);
+  log('Lv/EXP: Stage1開始時', true, JSON.stringify(lvStage1Start));
+
   // --- 4. 出撃: Area選択 → Stage1 ---
   await departFor(page, '閉ざされた連絡路', PARTY_LABELS);
   log('4: Stage1へ出撃(3人編成、数学+英語選択)', true);
@@ -153,6 +174,78 @@ async function main() {
   await clearWholeStage(page, 'Stage1', 'JANUS', PARTY_LABELS);
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
   await page.getByRole('button', { name: '出撃', exact: true }).waitFor({ timeout: 5000 });
+
+  // --- Lv/EXP checkpoint: Stage1 clear後 ---
+  const lvStage1End = await readCharacterDetail(page, PARTY_LABELS[0]);
+  log('Lv/EXP: Stage1 clear後', true, JSON.stringify(lvStage1End));
+
+  // --- 5b. Equipment drop → 装備 → 強化 → reload (default runSeed sequence:
+  // Stage1 uses runSeed=1, whose Zone4/JANUS BOSS_ZONE (50%) roll is a
+  // guaranteed drop — verified analytically against the production
+  // permanent-drop RNG derivation before writing this script; no seed
+  // override needed, production drop probabilities are untouched). ---
+  await page.getByRole('button', { name: '装備' }).click();
+  const equipRowsAfterStage1 = page.locator('.equipment-list-screen__item');
+  const equipCountAfterStage1 = await equipRowsAfterStage1.count();
+  log('5b-1: Stage1(JANUS BOSS_ZONE)クリアでEquipment dropが発生', equipCountAfterStage1 > 0, `所持数=${equipCountAfterStage1}`);
+
+  const currencyMaterialBefore = await page.locator('.equipment-list-screen h1 + p').textContent();
+  const firstItemRow = equipRowsAfterStage1.first();
+  const firstItemLabel = (await firstItemRow.locator('span').first().textContent())?.trim();
+  await page.getByRole('button', { name: '拠点へ戻る' }).click();
+  const statsBeforeEquip = await readCharacterDetail(page, PARTY_LABELS[0]);
+  await page.getByRole('button', { name: '装備' }).click();
+
+  // 智也 is selected by default (roster[0]); equip the dropped item to him.
+  await firstItemRow.getByRole('button', { name: '装備' }).click();
+  const equippedSlotText = await page.locator('.equipment-list-screen__equipped-slots dd').first().textContent();
+  log('5b-2: 装備をキャラクターへ装備', !!equippedSlotText && !equippedSlotText.includes('未装備'), equippedSlotText ?? '');
+
+  // Enhance +1 and confirm currency/material decreased by exactly the previewed cost.
+  const enhanceButton = firstItemRow.getByRole('button', { name: /^強化（/ });
+  await enhanceButton.click();
+  const currencyMaterialAfterEnhance = await page.locator('.equipment-list-screen h1 + p').textContent();
+  log(
+    '5b-3: 強化+1後、コイン/強化素材が減少',
+    currencyMaterialAfterEnhance !== currencyMaterialBefore,
+    `${currencyMaterialBefore} -> ${currencyMaterialAfterEnhance}`,
+  );
+  const enhancedLabel = (await firstItemRow.locator('span').first().textContent())?.trim();
+  log('5b-4: 装備の強化Lv表示が+1に更新', enhancedLabel !== firstItemLabel, `${firstItemLabel} -> ${enhancedLabel}`);
+
+  await page.getByRole('button', { name: '拠点へ戻る' }).click();
+  const statsBeforeReload = await readCharacterDetail(page, PARTY_LABELS[0]);
+  log(
+    '5b-4b: 装備+強化後、キャラクターの解決済みstatsが変化(装備補正反映)',
+    JSON.stringify(statsBeforeReload) !== JSON.stringify(statsBeforeEquip),
+    `${JSON.stringify(statsBeforeEquip)} -> ${JSON.stringify(statsBeforeReload)}`,
+  );
+
+  // Reload and verify: instanceId/enhancementLevel/equipped-state/currency/material all persisted.
+  await page.reload();
+  await page.getByRole('button', { name: '出撃', exact: true }).waitFor({ timeout: 5000 });
+  await page.getByRole('button', { name: '装備' }).click();
+  const labelAfterReload = (await page.locator('.equipment-list-screen__item').first().locator('span').first().textContent())?.trim();
+  const currencyMaterialAfterReload = await page.locator('.equipment-list-screen h1 + p').textContent();
+  const equippedSlotAfterReload = await page.locator('.equipment-list-screen__equipped-slots dd').first().textContent();
+  log('5b-5: reload後も強化Lv/装備名が維持', labelAfterReload === enhancedLabel, `${enhancedLabel} -> ${labelAfterReload}`);
+  log(
+    '5b-6: reload後もコイン/強化素材数量が維持',
+    currencyMaterialAfterReload === currencyMaterialAfterEnhance,
+    `${currencyMaterialAfterEnhance} -> ${currencyMaterialAfterReload}`,
+  );
+  log(
+    '5b-7: reload後も装備中スロットが維持(instanceId再解決)',
+    equippedSlotAfterReload?.trim() === equippedSlotText?.trim(),
+    `${equippedSlotText} -> ${equippedSlotAfterReload}`,
+  );
+  await page.getByRole('button', { name: '拠点へ戻る' }).click();
+  const statsAfterReload = await readCharacterDetail(page, PARTY_LABELS[0]);
+  log(
+    '5b-8: reload後もキャラクターのLevel/EXPが維持',
+    JSON.stringify(statsAfterReload) === JSON.stringify(statsBeforeReload),
+    `${JSON.stringify(statsBeforeReload)} -> ${JSON.stringify(statsAfterReload)}`,
+  );
 
   // --- 6. Stage2 unlock 確認 ---
   await page.getByRole('button', { name: '出撃', exact: true }).click();
@@ -173,6 +266,10 @@ async function main() {
   const hasHistory = ((await page.locator('body').textContent()) ?? '').includes('全体サマリー');
   log('7b: 記録画面にLearningHistoryサマリーが表示', hasHistory);
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
+
+  // --- Lv/EXP checkpoint: Stage2開始時 ---
+  const lvStage2Start = await readCharacterDetail(page, PARTY_LABELS[0]);
+  log('Lv/EXP: Stage2開始時', true, JSON.stringify(lvStage2Start));
 
   // --- 8. Stage2 出撃 → 全4Zone → NEREID撃破 ---
   await departFor(page, '沈黙した循環区', PARTY_LABELS);
@@ -203,6 +300,10 @@ async function main() {
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
   await page.getByRole('button', { name: '出撃', exact: true }).waitFor({ timeout: 5000 });
 
+  // --- Lv/EXP checkpoint: Stage2 clear後 ---
+  const lvStage2End = await readCharacterDetail(page, PARTY_LABELS[0]);
+  log('Lv/EXP: Stage2 clear後', true, JSON.stringify(lvStage2End));
+
   // --- 9. Stage3 unlock 確認 → 出撃 → 全4Zone → MNEMOS撃破 ---
   await page.getByRole('button', { name: '出撃', exact: true }).click();
   await page.locator('.area-select-screen button, button', { hasText: 'ハルカ' }).first().click();
@@ -211,12 +312,20 @@ async function main() {
   await page.getByRole('button', { name: 'エリア選択へ戻る' }).click();
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
 
+  // --- Lv/EXP checkpoint: Stage3開始時 ---
+  const lvStage3Start = await readCharacterDetail(page, PARTY_LABELS[0]);
+  log('Lv/EXP: Stage3開始時', true, JSON.stringify(lvStage3Start));
+
   await departFor(page, '記録塔', PARTY_LABELS);
 
   await clearWholeStage(page, 'Stage3', 'MNEMOS', PARTY_LABELS);
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
   await page.getByRole('button', { name: '出撃', exact: true }).waitFor({ timeout: 5000 });
   log('10: 第1エリア《ハルカ》完走(Stage1/2/3クリア)', true);
+
+  // --- Lv/EXP checkpoint: Stage3 clear後 ---
+  const lvStage3End = await readCharacterDetail(page, PARTY_LABELS[0]);
+  log('Lv/EXP: Stage3 clear後', true, JSON.stringify(lvStage3End));
 
   // --- 11. Final reload: Permanent/History/Clear state persists ---
   await page.reload();

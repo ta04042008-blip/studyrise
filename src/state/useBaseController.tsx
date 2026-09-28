@@ -4,10 +4,12 @@ import type { AppPhase, BattleItemSlotSelection, QuestionScopeSelection, StageLa
 import { createEmptyDepartureDraft } from '../base/base.types';
 import { buildStageLaunchConfig } from '../base/buildStageLaunchConfig';
 import { buildResumedStageLaunchConfig } from '../base/buildResumedStageLaunchConfig';
+import { isRunSaveCompatibleWithCurrentContent } from '../base/runSaveCompatibility';
 import { validateDeparture } from '../base/departureValidation';
 import { deriveQuestionCatalog } from '../base/questionScope';
 import { resolveAreaStages } from '../base/areaResolution';
 import { sampleAreas, sampleStagesById } from '../data/areas/sampleArea';
+import { enemyDefinitionsById } from '../data/enemies/enemyDefinitionsById';
 import { sampleParty } from '../data/characters/sampleCharacters';
 import { sampleQuestions } from '../data/questions/sampleQuestions';
 import { sampleDepartureItemCatalog, sampleDepartureItemCatalogById } from '../data/items/sampleDepartureItemCatalog';
@@ -163,17 +165,19 @@ export function useBaseController(options?: UseBaseControllerOptions) {
   // StrictMode's dev-only double-invoke applying a stale/duplicate result.
   useEffect(() => {
     let cancelled = false;
-    saveSystem.loadBoot().then((boot) => {
-      if (cancelled) return;
-      if (boot.permanent) setPermanentState(boot.permanent);
-      if (boot.learningHistory) setLearningHistoryState(boot.learningHistory);
-      if (boot.run) {
-        setPendingRunSave(boot.run);
-        setPhase('RUN_RESUME_CHOICE');
-      } else {
-        setPhase('BASE_HOME');
-      }
-    });
+    saveSystem
+      .loadBoot((payload) => isRunSaveCompatibleWithCurrentContent(payload, sampleStagesById, enemyDefinitionsById))
+      .then((boot) => {
+        if (cancelled) return;
+        if (boot.permanent) setPermanentState(boot.permanent);
+        if (boot.learningHistory) setLearningHistoryState(boot.learningHistory);
+        if (boot.run) {
+          setPendingRunSave(boot.run);
+          setPhase('RUN_RESUME_CHOICE');
+        } else {
+          setPhase('BASE_HOME');
+        }
+      });
     return () => {
       cancelled = true;
     };
