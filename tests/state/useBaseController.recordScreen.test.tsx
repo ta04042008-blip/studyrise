@@ -4,6 +4,7 @@ import { useBaseController } from '../../src/state/useBaseController';
 import { sampleArea } from '../../src/data/areas/sampleArea';
 import { sampleStage } from '../../src/data/stages/sampleStage';
 import { sampleParty } from '../../src/data/characters/sampleCharacters';
+import { FULL_QUESTION_ANSWER_KEY } from '../fixtures/questionAnswerKey';
 
 afterEach(cleanup);
 
@@ -11,13 +12,7 @@ function Harness() {
   return <>{useBaseController()}</>;
 }
 
-const CORRECT_INDEX_BY_TEXT: Record<string, number> = {
-  '7 + 5 は？': 2,
-  '9 × 6 は？': 1,
-  '縦4cm、横5cmの長方形の面積は？': 1,
-  '"apple" の意味は？': 0,
-  '"library" の意味は？': 1,
-};
+const CORRECT_INDEX_BY_TEXT = FULL_QUESTION_ANSWER_KEY;
 
 function clickIfPresent(selector: string): boolean {
   const el = document.querySelector<HTMLButtonElement>(selector);

@@ -37,7 +37,7 @@ export interface SaveSystem {
    * absent, and one slice's corruption never blocks the others from loading
    * (user's explicit MVP-9 instruction §25/§26).
    */
-  loadBoot(): Promise<BootLoadResult>;
+  loadBoot(isRunPayloadCompatible?: (payload: RunSavePayload) => boolean): Promise<BootLoadResult>;
   /**
    * Wraps every provided payload in its envelope (schemaVersion + this
    * SaveSystem's injected Clock) and commits them all as one atomic
@@ -74,7 +74,7 @@ export function createSaveSystem({ repository, clock }: CreateSaveSystemOptions)
     }
   }
 
-  async function loadBoot(): Promise<BootLoadResult> {
+  async function loadBoot(isRunPayloadCompatible?: (payload: RunSavePayload) => boolean): Promise<BootLoadResult> {
     const permanent = await safeLoad(() => repository.loadPermanent(), migratePermanentSave);
     const learningHistory = await safeLoad(() => repository.loadLearningHistory(), migrateLearningHistorySave);
 
@@ -83,9 +83,14 @@ export function createSaveSystem({ repository, clock }: CreateSaveSystemOptions)
       // Each tier is validated independently (user's explicit instruction:
       // a corrupt `live` must never take `zoneStart`/`stageStart` down with
       // it) — the very first structurally-valid tier, in fallback order,
-      // wins.
+      // wins. `isRunPayloadCompatible` (bug fix, MVP-10 acceptance audit
+      // item 1) is an additional content-aware gate a caller may supply —
+      // a tier that is structurally fine but no longer matches the current
+      // content shape (e.g. an old Stage's Zone count/composition changed
+      // beneath a saved `currentZoneIndex`) is treated exactly like a
+      // corrupt tier: skipped, never taking a still-good older tier with it.
       const payload = await safeLoad(() => repository.loadRunCheckpoint(tier), migrateRunSave);
-      if (payload) {
+      if (payload && (!isRunPayloadCompatible || isRunPayloadCompatible(payload))) {
         run = { tier, payload };
         break;
       }

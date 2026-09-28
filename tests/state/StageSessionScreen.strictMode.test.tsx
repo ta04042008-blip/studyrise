@@ -7,7 +7,7 @@ import type { CharacterDefinition } from '../../src/engine/battle/BattleEngine.t
 import type { StageDefinition } from '../../src/engine/stage/StageEngine.types';
 import { sampleEnemy } from '../../src/data/enemies/sampleEnemy';
 import { sampleSpell } from '../../src/data/spells/sampleSpell';
-import { sampleQuestions } from '../../src/data/questions/sampleQuestions';
+import { sampleQuestionsCoreFive } from '../../src/data/questions/sampleQuestions';
 
 afterEach(cleanup);
 
@@ -36,7 +36,7 @@ const stage: StageDefinition = {
 const config: StageLaunchConfig = {
   party: [powerfulCharacter],
   stage,
-  questions: sampleQuestions,
+  questions: sampleQuestionsCoreFive,
   battleItems: [],
   runSeed: 999,
 };

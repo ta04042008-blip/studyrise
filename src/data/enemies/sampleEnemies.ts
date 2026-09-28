@@ -2,18 +2,19 @@ import type { EnemyDefinition } from '../../engine/battle/BattleEngine.types';
 import { sampleEnemy } from './sampleEnemy';
 
 /**
- * PLACEHOLDER content — a multi-enemy zone (spec §2.1) for exercising
- * MVP-3's target-selection and multi-enemy timeline behavior. Not final
- * game content (CLAUDE.md §24).
+ * MVP-10 official content — 「ウォッチャー」(Stage1 Zone2「監視交差点」×1 /
+ * Stage3《記録塔》Zone1「保存書庫」×1、v0.2 §23/§27)。ID kept as
+ * `enemy_goblin_placeholder` for Save V1 compatibility. Observation-role
+ * enemy: lower attack, slightly bulkier/slower than ランナー.
  */
 export const sampleEnemy2: EnemyDefinition = {
   id: 'enemy_goblin_placeholder',
-  name: 'ゴブリン', // PLACEHOLDER
+  name: 'ウォッチャー',
   baseStats: {
-    attack: 8,
-    defense: 3,
-    speed: 14,
-    maxHp: 25,
+    attack: 6,
+    defense: 5,
+    speed: 9,
+    maxHp: 28,
   },
 };
 

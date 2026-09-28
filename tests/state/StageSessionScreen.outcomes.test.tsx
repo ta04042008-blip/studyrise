@@ -7,7 +7,7 @@ import type { StageDefinition } from '../../src/engine/stage/StageEngine.types';
 import { sampleEnemy } from '../../src/data/enemies/sampleEnemy';
 import { sampleSpell } from '../../src/data/spells/sampleSpell';
 import { sampleAdditionalSpellHeal, sampleAdditionalSpellIce } from '../../src/data/spells/sampleAdditionalSpells';
-import { sampleQuestions } from '../../src/data/questions/sampleQuestions';
+import { sampleQuestionsCoreFive } from '../../src/data/questions/sampleQuestions';
 
 afterEach(cleanup);
 
@@ -109,7 +109,7 @@ describe('StageSessionScreen — every outcome returns to Base via onReturnToBas
     const config: StageLaunchConfig = {
       party: [powerfulCharacter],
       stage: oneZoneFinalStage('stage_test_clear'),
-      questions: sampleQuestions,
+      questions: sampleQuestionsCoreFive,
       battleItems: [],
       runSeed: 101,
     };
@@ -170,7 +170,7 @@ describe('StageSessionScreen — every outcome returns to Base via onReturnToBas
     const config: StageLaunchConfig = {
       party: [powerfulCharacter],
       stage,
-      questions: sampleQuestions,
+      questions: sampleQuestionsCoreFive,
       battleItems: [],
       runSeed: 103,
     };

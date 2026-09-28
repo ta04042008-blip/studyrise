@@ -1,17 +1,19 @@
 import type { CharacterUnlockRule, StageUnlockRule } from '../../engine/progression/ProgressionSystem.types';
+import { sampleStage } from '../stages/sampleStage';
+import { stageHaruka02 } from '../stages/stageHaruka02';
+import { stageHaruka03 } from '../stages/stageHaruka03';
 
 /**
- * PLACEHOLDER content — MVP-7's sample content is exactly one Area/Stage and
- * three characters, all unlocked by default (regression safety, user's
- * explicit instruction not to gate the existing MVP-1〜6 sample roster/
- * stage). There is nothing left to unlock yet, so these lists are
- * intentionally empty; the rule TYPES and reconcileStageResult's evaluation
- * logic are still exercised directly via test fixtures (user's explicit
- * instruction — "unlock logic はtest fixtureで検証して構いません").
- * STAGE_FIRST_CLEAR / UNLOCK_RESOURCE are the only two rule kinds MVP-7
- * implements (AREA_CLEAR/SPECIAL_CONDITION/STORY are future work, spec §10.7
- * decision doc §12).
+ * MVP-10 official content — Stage1初回クリア→Stage2 unlock、Stage2初回クリア
+ * →Stage3 unlockという第1エリア進行(user's explicit MVP-10 instruction §7)。
+ * Expressed purely as data (STAGE_FIRST_CLEAR rules) — StageEngine gains no
+ * per-Stage if文; ProgressionSystem.reconcileStageResult evaluates these
+ * generically. All 3 MVP-10 characters remain unlocked by default
+ * (regression safety — no CharacterUnlockRule needed yet).
  */
 export const sampleCharacterUnlockRules: CharacterUnlockRule[] = [];
 
-export const sampleStageUnlockRules: StageUnlockRule[] = [];
+export const sampleStageUnlockRules: StageUnlockRule[] = [
+  { type: 'STAGE_FIRST_CLEAR', stageId: sampleStage.id, unlocksStageIds: [stageHaruka02.id] },
+  { type: 'STAGE_FIRST_CLEAR', stageId: stageHaruka02.id, unlocksStageIds: [stageHaruka03.id] },
+];

@@ -1,14 +1,15 @@
 import type { EquipmentDefinition } from '../../engine/progression/ProgressionSystem.types';
 
 /**
- * PLACEHOLDER content — minimal equipment set to exercise MVP-7's
- * equip/enhance/dismantle/drop loop (CLAUDE.md §24). Not final game
- * content. specialEffects/allowedCharacterIds/requiredLevel are
- * intentionally omitted (MVP-7 decision doc §7 — not implemented yet).
+ * MVP-10 official content — display names正式化(旧文明技術/遠征用品の語彙、
+ * ビジュアルデザイン基準v0.1 §5/§8を参照)。IDs kept unchanged for Save V1
+ * compatibility (user's explicit instruction). specialEffects/
+ * allowedCharacterIds/requiredLevel remain intentionally omitted (MVP-7
+ * decision doc §7 — not implemented yet). stat bonuses unchanged.
  */
 export const sampleWeaponNormal: EquipmentDefinition = {
   id: 'equip_weapon_wood_sword_placeholder',
-  name: '木の剣', // PLACEHOLDER
+  name: '簡易出力端末',
   slot: 'weapon',
   rarity: 'NORMAL',
   baseStatBonus: { attack: 5 },
@@ -17,7 +18,7 @@ export const sampleWeaponNormal: EquipmentDefinition = {
 
 export const sampleWeaponRare: EquipmentDefinition = {
   id: 'equip_weapon_iron_blade_placeholder',
-  name: '鉄の刃', // PLACEHOLDER
+  name: '高出力演算端末',
   slot: 'weapon',
   rarity: 'RARE',
   baseStatBonus: { attack: 12, speed: 2 },
@@ -26,7 +27,7 @@ export const sampleWeaponRare: EquipmentDefinition = {
 
 export const sampleArmorNormal: EquipmentDefinition = {
   id: 'equip_armor_cloth_robe_placeholder',
-  name: '布のローブ', // PLACEHOLDER
+  name: '遠征ジャケット',
   slot: 'armor',
   rarity: 'NORMAL',
   baseStatBonus: { defense: 4, hp: 5 },
@@ -35,7 +36,7 @@ export const sampleArmorNormal: EquipmentDefinition = {
 
 export const sampleArmorUncommon: EquipmentDefinition = {
   id: 'equip_armor_leather_mail_placeholder',
-  name: '革の鎧', // PLACEHOLDER
+  name: '耐衝撃ベスト',
   slot: 'armor',
   rarity: 'UNCOMMON',
   baseStatBonus: { defense: 8, hp: 10 },
@@ -44,7 +45,7 @@ export const sampleArmorUncommon: EquipmentDefinition = {
 
 export const sampleAccessoryNormal: EquipmentDefinition = {
   id: 'equip_accessory_wooden_charm_placeholder',
-  name: '木のお守り', // PLACEHOLDER
+  name: '軽量識別タグ',
   slot: 'accessory',
   rarity: 'NORMAL',
   baseStatBonus: { speed: 3 },
@@ -53,7 +54,7 @@ export const sampleAccessoryNormal: EquipmentDefinition = {
 
 export const sampleAccessoryEpic: EquipmentDefinition = {
   id: 'equip_accessory_swift_band_placeholder',
-  name: '疾風の腕輪', // PLACEHOLDER
+  name: '発光接続インジケーター',
   slot: 'accessory',
   rarity: 'EPIC',
   baseStatBonus: { speed: 8, attack: 4 },

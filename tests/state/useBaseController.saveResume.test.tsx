@@ -7,6 +7,7 @@ import { createSaveSystem, type SaveSystem } from '../../src/engine/save/SaveSys
 import { sampleArea } from '../../src/data/areas/sampleArea';
 import { sampleStage } from '../../src/data/stages/sampleStage';
 import { sampleParty } from '../../src/data/characters/sampleCharacters';
+import { FULL_QUESTION_ANSWER_KEY } from '../fixtures/questionAnswerKey';
 
 afterEach(cleanup);
 
@@ -42,13 +43,7 @@ function reload(saveSystem: SaveSystem, strict = false) {
   render(strict ? <StrictHarness saveSystem={saveSystem} /> : <Harness saveSystem={saveSystem} />);
 }
 
-const CORRECT_INDEX_BY_TEXT: Record<string, number> = {
-  '7 + 5 は？': 2,
-  '9 × 6 は？': 1,
-  '縦4cm、横5cmの長方形の面積は？': 1,
-  '"apple" の意味は？': 0,
-  '"library" の意味は？': 1,
-};
+const CORRECT_INDEX_BY_TEXT = FULL_QUESTION_ANSWER_KEY;
 
 function clickIfPresent(selector: string): boolean {
   const el = document.querySelector<HTMLButtonElement>(selector);
@@ -309,6 +304,7 @@ describe('useBaseController — additional real-scenario coverage (MVP-9 audit i
     await driveToStageStart();
 
     fireEvent.click(screen.getByRole('button', { name: 'サーチ' }));
+    clickIfPresent('.target-select-view button');
     clickIfPresent('.subject-star-select button');
     const questionText = document.querySelector('.question-view__text')!.textContent!.trim();
     const idx = CORRECT_INDEX_BY_TEXT[questionText] ?? 0;
