@@ -9,6 +9,7 @@ import type {
 } from '../../engine/battle/BattleEngine.types';
 import type { RunState } from '../../engine/roguelite/RogueliteEngine.types';
 import type { QuestionDefinition } from '../../engine/question/QuestionEngine.types';
+import type { QuestionResult } from '../../engine/learningHistory/LearningHistory.types';
 
 interface ZoneBattlePanelProps {
   party: CharacterDefinition[];
@@ -21,6 +22,8 @@ interface ZoneBattlePanelProps {
   seed: number;
   onWin: (survivorHpByCharacterId: Record<string, number>, remainingBattleItems: ItemBattleSlot[]) => void;
   onLose: (remainingBattleItems: ItemBattleSlot[]) => void;
+  /** Learning-history event boundary (spec v0.8 §13, user's explicit MVP-8 instruction) — threaded straight through to `useBattleController`. */
+  onQuestionResult?: (result: QuestionResult) => void;
 }
 
 /**
@@ -41,6 +44,7 @@ export function ZoneBattlePanel({
   seed,
   onWin,
   onLose,
+  onQuestionResult,
 }: ZoneBattlePanelProps) {
   // Pure, randomness-free (MVP-5 correction 4: same single source StageEngine's KO-revival math uses) — safe to call every render.
   const battleInputs = runResolver.resolveBattleInputsForRun(party, runState);
@@ -55,6 +59,7 @@ export function ZoneBattlePanel({
     playerCommandModifiers: battleInputs.playerCommandModifiers,
     initialHpByPlayerId: battleInputs.initialHpByPlayerId,
     seed,
+    onQuestionResult,
   });
 
   const { state } = battleController;
