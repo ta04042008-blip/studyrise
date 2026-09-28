@@ -82,6 +82,30 @@ async function completeRewardPhaseAndProceed(page, partyLabels) {
   await page.locator('.reward-screen__complete button').click();
 }
 
+async function departFor(page, stageNameText, partyLabels) {
+  await page.getByRole('button', { name: '出撃', exact: true }).click();
+  await page.locator('.area-select-screen button, button', { hasText: 'ハルカ' }).first().click();
+  await page.locator('button', { hasText: stageNameText }).first().click();
+  await page.getByRole('button', { name: '編成を変更' }).click();
+  // PartyEditView's roster buttons toggle selection (aria-pressed) — only
+  // click ones not already selected, since a party may carry over from a
+  // previous departure and a blind click would deselect them instead.
+  for (const name of partyLabels) {
+    const btn = page.locator('.party-edit-view button', { hasText: name }).first();
+    if ((await btn.getAttribute('aria-pressed')) !== 'true') {
+      await btn.click();
+    }
+  }
+  await page.getByRole('button', { name: '決定' }).click();
+  // .check() (not .click()) — idempotent regardless of whether the scope
+  // already carried over checked from a previous departure.
+  await page.getByLabel(/数学（教科単位選択）/).check();
+  await page.getByLabel(/英語（教科単位選択）/).check();
+  await page.getByRole('button', { name: '出撃確認へ' }).click();
+  await page.getByRole('button', { name: '出撃', exact: true }).click();
+  await page.getByRole('heading', { name: 'StudyRise — Stage攻略' }).waitFor();
+}
+
 async function clearWholeStage(page, stageName, bossName, partyLabels) {
   for (let zone = 0; zone < 4; zone++) {
     const outcome = await driveZoneToWin(page);
@@ -122,19 +146,7 @@ async function main() {
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
 
   // --- 4. 出撃: Area選択 → Stage1 ---
-  await page.getByRole('button', { name: '出撃', exact: true }).click();
-  await page.locator('.area-select-screen button, button', { hasText: 'ハルカ' }).first().click();
-  await page.locator('button', { hasText: '閉ざされた連絡路' }).first().click();
-  await page.getByRole('button', { name: '編成を変更' }).click();
-  for (const name of PARTY_LABELS) {
-    await page.locator('.party-edit-view button', { hasText: name }).first().click();
-  }
-  await page.getByRole('button', { name: '決定' }).click();
-  await page.getByLabel(/数学（教科単位選択）/).click();
-  await page.getByLabel(/英語（教科単位選択）/).click();
-  await page.getByRole('button', { name: '出撃確認へ' }).click();
-  await page.getByRole('button', { name: '出撃', exact: true }).click();
-  await page.getByRole('heading', { name: 'StudyRise — Stage攻略' }).waitFor();
+  await departFor(page, '閉ざされた連絡路', PARTY_LABELS);
   log('4: Stage1へ出撃(3人編成、数学+英語選択)', true);
 
   // --- 5. Stage1 全4Zone → JANUS撃破 → Stage Clear ---
@@ -147,6 +159,7 @@ async function main() {
   await page.locator('.area-select-screen button, button', { hasText: 'ハルカ' }).first().click();
   const stage2Visible = await page.locator('button', { hasText: '沈黙した循環区' }).count();
   log('6: Stage1クリア後、Stage2《沈黙した循環区》がunlockされ選択可能', !!stage2Visible);
+  await page.getByRole('button', { name: 'エリア選択へ戻る' }).click();
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
 
   // --- 7. Base: Level/EXP, Equipment, LearningHistory ---
@@ -154,6 +167,7 @@ async function main() {
   await page.locator('.character-list-view button', { hasText: PARTY_LABELS[0] }).first().click();
   const detailText = (await page.locator('body').textContent()) ?? '';
   log('7a: キャラクター詳細にLevelが表示', /Lv|レベル|Level/.test(detailText), detailText.slice(0, 120));
+  await page.getByRole('button', { name: '一覧へ戻る' }).click();
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
   await page.getByRole('button', { name: '記録' }).click();
   const hasHistory = ((await page.locator('body').textContent()) ?? '').includes('全体サマリー');
@@ -161,12 +175,7 @@ async function main() {
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
 
   // --- 8. Stage2 出撃 → 全4Zone → NEREID撃破 ---
-  await page.getByRole('button', { name: '出撃', exact: true }).click();
-  await page.locator('.area-select-screen button, button', { hasText: 'ハルカ' }).first().click();
-  await page.locator('button', { hasText: '沈黙した循環区' }).first().click();
-  await page.getByRole('button', { name: '出撃確認へ' }).click();
-  await page.getByRole('button', { name: '出撃', exact: true }).click();
-  await page.getByRole('heading', { name: 'StudyRise — Stage攻略' }).waitFor();
+  await departFor(page, '沈黙した循環区', PARTY_LABELS);
   log('8: Stage2へ出撃', true);
 
   // Mid-stage reload check (after Zone1 clear + reward pick, inside INTER_ZONE_CHOICE).
@@ -199,10 +208,10 @@ async function main() {
   await page.locator('.area-select-screen button, button', { hasText: 'ハルカ' }).first().click();
   const stage3Visible = await page.locator('button', { hasText: '記録塔' }).count();
   log('9: Stage2クリア後、Stage3《記録塔》がunlockされ選択可能', !!stage3Visible);
-  await page.locator('button', { hasText: '記録塔' }).first().click();
-  await page.getByRole('button', { name: '出撃確認へ' }).click();
-  await page.getByRole('button', { name: '出撃', exact: true }).click();
-  await page.getByRole('heading', { name: 'StudyRise — Stage攻略' }).waitFor();
+  await page.getByRole('button', { name: 'エリア選択へ戻る' }).click();
+  await page.getByRole('button', { name: '拠点へ戻る' }).click();
+
+  await departFor(page, '記録塔', PARTY_LABELS);
 
   await clearWholeStage(page, 'Stage3', 'MNEMOS', PARTY_LABELS);
   await page.getByRole('button', { name: '拠点へ戻る' }).click();
