@@ -3,8 +3,9 @@ import { ZoneBattlePanel } from '../ui/stage/ZoneBattlePanel';
 import { ZoneRewardPanel } from '../ui/stage/ZoneRewardPanel';
 import { InterZoneChoiceView } from '../ui/stage/InterZoneChoiceView';
 import { StageResultView } from '../ui/stage/StageResultView';
-import { createStageEngine, type RunResolver } from '../engine/stage/StageEngine';
+import { createStageEngine, diffConsumedItemCounts, type RunResolver } from '../engine/stage/StageEngine';
 import type { StageRunState } from '../engine/stage/StageEngine.types';
+import type { StageEndContext } from '../engine/progression/ProgressionSystem.types';
 import { stageConfig } from '../config/stageConfig';
 import { createRogueliteEngine } from '../engine/roguelite/RogueliteEngine';
 import { createRandomService } from '../engine/random/RandomService';
@@ -49,13 +50,13 @@ const runResolver: RunResolver = createRogueliteEngine({
  * by the base layer's phase switch, never called from behind an `if` inside
  * a shared hook (Rules of Hooks, user's explicit MVP-6 requirement).
  */
-export function useStageController(config: StageLaunchConfig, onReturnToBase: () => void) {
+export function useStageController(config: StageLaunchConfig, onReturnToBase: (endContext: StageEndContext) => void) {
   const { party, stage, questions, battleItems, runSeed: initialRunSeed } = config;
 
   const [runSeed, setRunSeed] = useState(initialRunSeed);
 
   const [stageState, setStageState] = useState<StageRunState>(() =>
-    stageEngine.createInitialState(stage, party, runSeed, runResolver),
+    stageEngine.createInitialState(stage, party, runSeed, runResolver, battleItems),
   );
 
   const characterNameById = useMemo<Record<string, string>>(
@@ -67,17 +68,19 @@ export function useStageController(config: StageLaunchConfig, onReturnToBase: ()
   const battleSeed = stageEngine.deriveZoneBattleSeed(stage, stageState);
   const rewardSeed = stageEngine.deriveZoneRewardSeed(stage, stageState);
 
-  // One stable item loadout per zone attempt (spec §5.10: unused items
-  // return to inventory at zone end — MVP-6 doesn't yet model that
-  // transfer, so each zone simply starts fresh from the launch-time
-  // loadout, same as MVP-5's harness).
+  // The party-shared item pool carries across the WHOLE Stage attempt (spec
+  // §5.10/§14, MVP-7 decision doc §14 — no longer refilled per zone).
+  // `stageState.battleItems` only changes reference at the same moments
+  // `zone.id` does (recordZoneWin/recordZoneDefeat/createInitialState), so
+  // keying on `zone.id` alone still gives BattleEngine a fresh, isolated
+  // clone each zone without re-cloning on every unrelated re-render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const initialItems = useMemo<ItemBattleSlot[]>(() => battleItems.map((slot) => ({ ...slot })), [zone.id]);
+  const initialItems = useMemo<ItemBattleSlot[]>(() => stageState.battleItems.map((slot) => ({ ...slot })), [zone.id]);
 
   function restart() {
     const nextSeed = runSeed + 1;
     setRunSeed(nextSeed);
-    setStageState(stageEngine.createInitialState(stage, party, nextSeed, runResolver));
+    setStageState(stageEngine.createInitialState(stage, party, nextSeed, runResolver, battleItems));
   }
 
   const devPanel = import.meta.env.DEV && (
@@ -105,8 +108,10 @@ export function useStageController(config: StageLaunchConfig, onReturnToBase: ()
             spellsById={spellsById}
             initialItems={initialItems}
             seed={battleSeed}
-            onWin={(survivorHp) => setStageState((s) => stageEngine.recordZoneWin(s, survivorHp))}
-            onLose={() => setStageState((s) => stageEngine.recordZoneDefeat(s, party, runResolver))}
+            onWin={(survivorHp, remainingItems) =>
+              setStageState((s) => stageEngine.recordZoneWin(stage, s, survivorHp, remainingItems))
+            }
+            onLose={(remainingItems) => setStageState((s) => stageEngine.recordZoneDefeat(s, party, runResolver, remainingItems))}
           />
         </>
       );
@@ -150,10 +155,26 @@ export function useStageController(config: StageLaunchConfig, onReturnToBase: ()
       );
     }
     case 'STAGE_RESULT': {
+      // Pure data shaping only (no RNG, no PermanentState mutation) — safe
+      // to compute during render. The actual permanent-reward reconciliation
+      // is deferred to Base's "拠点へ戻る" click handler (MVP-7 decision doc
+      // §19: reconcileStageResult runs exactly once, from an event handler,
+      // never a React effect).
+      const stageEndContext: StageEndContext = {
+        stageResult: stageState.result!,
+        stage,
+        partyCharacterIds: party.map((c) => c.id),
+        runSeed: stageState.runSeed,
+        consumedItemCounts: diffConsumedItemCounts(battleItems, stageState.battleItems),
+      };
       return (
         <>
           <h1>StudyRise — Stage攻略</h1>
-          <StageResultView result={stageState.result!} onReturnToBase={onReturnToBase} onRestart={restart} />
+          <StageResultView
+            result={stageState.result!}
+            onReturnToBase={() => onReturnToBase(stageEndContext)}
+            onRestart={restart}
+          />
         </>
       );
     }

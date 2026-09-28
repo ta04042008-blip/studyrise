@@ -1,13 +1,20 @@
 import type { BattleItemSlotSelection, DepartureDraft, DepartureItemCatalogEntry, QuestionScopeSelection } from '../../base/base.types';
 import type { DepartureValidation } from '../../base/departureValidation';
 import type { SubjectCatalogEntry } from '../../base/questionScope';
+import type { EquipmentDefinition, PermanentState } from '../../engine/progression/ProgressionSystem.types';
 import { ItemSlotPicker } from './ItemSlotPicker';
 import { QuestionScopeSelector } from './QuestionScopeSelector';
+import { resolveEquippedName } from './equipmentDisplay';
 
 interface DeparturePrepScreenProps {
   draft: DepartureDraft;
   questionCatalog: SubjectCatalogEntry[];
   itemCatalog: DepartureItemCatalogEntry[];
+  /** Owned quantity per itemDefinitionId (MVP-7 decision doc §14) — passed straight through to ItemSlotPicker. */
+  ownedQuantityById?: Record<string, number>;
+  /** MVP-7: 装備確認 is now real, read-only equipped-gear display (spec §3.6 — still not editable from here; edit via the 装備 screen). */
+  permanentState: PermanentState;
+  equipmentDefsById: Record<string, EquipmentDefinition>;
   validation: DepartureValidation;
   onEditParty: () => void;
   onChangeItemSlots: (slots: BattleItemSlotSelection) => void;
@@ -25,6 +32,9 @@ export function DeparturePrepScreen({
   draft,
   questionCatalog,
   itemCatalog,
+  ownedQuantityById,
+  permanentState,
+  equipmentDefsById,
   validation,
   onEditParty,
   onChangeItemSlots,
@@ -50,12 +60,36 @@ export function DeparturePrepScreen({
 
       <section className="departure-prep-screen__section">
         <h2>装備確認</h2>
-        <p>装備システムはMVP-7で実装予定です（このStageの出撃には影響しません）。</p>
+        {draft.party.length === 0 ? (
+          <p>パーティが編成されていません。</p>
+        ) : (
+          <ul>
+            {draft.party.map((c) => {
+              const characterState = permanentState.characters[c.id];
+              return (
+                <li key={c.id}>
+                  {c.name}:{' '}
+                  {characterState
+                    ? (['weaponInstanceId', 'armorInstanceId', 'accessoryInstanceId'] as const)
+                        .map((slotKey) => resolveEquippedName(characterState.equipped[slotKey], permanentState.inventory.equipment, equipmentDefsById))
+                        .join(' / ')
+                    : '未装備 / 未装備 / 未装備'}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <p>装備の変更は拠点の「装備」画面から行えます（このStageの出撃には影響しません）。</p>
       </section>
 
       <section className="departure-prep-screen__section">
         <h2>持ち込みアイテム</h2>
-        <ItemSlotPicker catalog={itemCatalog} slots={draft.itemSlots} onChange={onChangeItemSlots} />
+        <ItemSlotPicker
+          catalog={itemCatalog}
+          slots={draft.itemSlots}
+          onChange={onChangeItemSlots}
+          ownedQuantityById={ownedQuantityById}
+        />
       </section>
 
       <section className="departure-prep-screen__section">

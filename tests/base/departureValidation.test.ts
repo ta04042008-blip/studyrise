@@ -49,4 +49,27 @@ describe('validateDeparture (spec v0.6 §3.3/§12.2)', () => {
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes('問題がありません'))).toBe(true);
   });
+
+  describe('ownedQuantityById (MVP-7 decision doc §14 — 3slot選択時の所持数validation)', () => {
+    function baseDraft() {
+      return { ...createEmptyDepartureDraft(), stageId: sampleStage.id, party: [sampleParty[0]], questionScope: validScope };
+    }
+
+    it('is unaffected when ownedQuantityById is omitted (pre-MVP-7 callers)', () => {
+      const draft = { ...baseDraft(), itemSlots: ['item_x', 'item_x', 'item_x'] as [string, string, string] };
+      expect(validateDeparture(draft, sampleQuestions).valid).toBe(true);
+    });
+
+    it('accepts a selection at or under the owned quantity, including the same item across multiple slots', () => {
+      const draft = { ...baseDraft(), itemSlots: ['item_x', 'item_x', null] as [string, string | null, string | null] };
+      expect(validateDeparture(draft, sampleQuestions, { item_x: 2 }).valid).toBe(true);
+    });
+
+    it('rejects a selection that exceeds the owned quantity', () => {
+      const draft = { ...baseDraft(), itemSlots: ['item_x', 'item_x', 'item_x'] as [string, string, string] };
+      const result = validateDeparture(draft, sampleQuestions, { item_x: 2 });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.includes('所持数'))).toBe(true);
+    });
+  });
 });

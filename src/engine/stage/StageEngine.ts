@@ -1,4 +1,4 @@
-import type { CharacterDefinition, EnemyBattleInstance, EnemyDefinition } from '../battle/BattleEngine.types';
+import type { CharacterDefinition, EnemyBattleInstance, EnemyDefinition, ItemBattleSlot } from '../battle/BattleEngine.types';
 import { deriveSeed } from '../random/RandomService';
 import type { RogueliteEngine } from '../roguelite/RogueliteEngine';
 import type { RunState } from '../roguelite/RogueliteEngine.types';
@@ -16,6 +16,32 @@ import type { StageDefinition, StageRunState, ZoneDefinition } from './StageEngi
 export type RunResolver = Pick<RogueliteEngine, 'createInitialRunState' | 'resolveBattleInputsForRun' | 'resetRunBuild'>;
 
 /**
+ * Pure bookkeeping helper (MVP-7 decision doc §14): sums remainingUses per
+ * item id on both sides and returns how many uses of each item were
+ * actually consumed. Deliberately NOT a reward calculation (no currency/
+ * EXP/equipment amount is derived here) — just an item-count diff, so it
+ * stays fine for StageEngine's own module to own even under the "StageEngine
+ * computes no permanent reward amount" rule. Robust to the same item id
+ * appearing in more than one loadout slot (spec §14: "同じitemを複数枠へ入
+ * れることは可能").
+ */
+export function diffConsumedItemCounts(original: ItemBattleSlot[], final: ItemBattleSlot[]): Record<string, number> {
+  const sumByItemId = (slots: ItemBattleSlot[]): Record<string, number> => {
+    const sums: Record<string, number> = {};
+    for (const slot of slots) sums[slot.item.id] = (sums[slot.item.id] ?? 0) + slot.remainingUses;
+    return sums;
+  };
+  const originalUses = sumByItemId(original);
+  const finalUses = sumByItemId(final);
+  const consumed: Record<string, number> = {};
+  for (const [itemId, originalCount] of Object.entries(originalUses)) {
+    const diff = Math.max(0, originalCount - (finalUses[itemId] ?? 0));
+    if (diff > 0) consumed[itemId] = diff;
+  }
+  return consumed;
+}
+
+/**
  * StageEngine (spec v0.5 §2/MVP-5): owns multi-zone Stage progression only.
  * BattleEngine still only ever runs one Zone's battle; RogueliteEngine still
  * only ever runs one Zone's reward phase (CLAUDE.md §18.3/§18.5). Every
@@ -25,7 +51,13 @@ export type RunResolver = Pick<RogueliteEngine, 'createInitialRunState' | 'resol
  * ever does anything from INTER_ZONE_CHOICE.
  */
 export interface StageEngine {
-  createInitialState(stage: StageDefinition, party: CharacterDefinition[], runSeed: number, runResolver: RunResolver): StageRunState;
+  createInitialState(
+    stage: StageDefinition,
+    party: CharacterDefinition[],
+    runSeed: number,
+    runResolver: RunResolver,
+    battleItems: ItemBattleSlot[],
+  ): StageRunState;
   currentZone(stage: StageDefinition, state: StageRunState): ZoneDefinition;
   /** Resolves the current zone's enemy placements into BattleEngine-ready instances (definition id and instance id kept separate — MVP-5 correction 1). */
   resolveZoneEnemies(
@@ -37,10 +69,31 @@ export interface StageEngine {
   deriveZoneBattleSeed(stage: StageDefinition, state: StageRunState): number;
   /** `deriveSeed(runSeed, zoneId, "reward")`. */
   deriveZoneRewardSeed(stage: StageDefinition, state: StageRunState): number;
-  /** BattleEngine reported outcome==='win': snapshot survivor HP (KO'd stay 0) and move to ZONE_REWARD. No-op unless currently ZONE_BATTLE. */
-  recordZoneWin(state: StageRunState, survivorHpByCharacterId: Record<string, number>): StageRunState;
-  /** BattleEngine reported outcome==='lose': Stage attempt over, RunBuild discarded. No-op unless currently ZONE_BATTLE. */
-  recordZoneDefeat(state: StageRunState, party: CharacterDefinition[], runResolver: RunResolver): StageRunState;
+  /**
+   * BattleEngine reported outcome==='win': snapshot survivor HP (KO'd stay
+   * 0), records this zone's id into `clearedZoneIds` (a plain fact —
+   * StageEngine computes no reward from it), persists the battle's ending
+   * item stock into the stage-wide pool (MVP-7 decision doc §14 — items
+   * are never refilled per zone), and moves to ZONE_REWARD. No-op unless
+   * currently ZONE_BATTLE.
+   */
+  recordZoneWin(
+    stage: StageDefinition,
+    state: StageRunState,
+    survivorHpByCharacterId: Record<string, number>,
+    remainingBattleItems: ItemBattleSlot[],
+  ): StageRunState;
+  /**
+   * BattleEngine reported outcome==='lose': Stage attempt over, RunBuild
+   * discarded, ending item stock persisted (spec §2.6: consumed items stay
+   * consumed even on defeat). No-op unless currently ZONE_BATTLE.
+   */
+  recordZoneDefeat(
+    state: StageRunState,
+    party: CharacterDefinition[],
+    runResolver: RunResolver,
+    remainingBattleItems: ItemBattleSlot[],
+  ): StageRunState;
   /** Mid-reward-phase progress sync (after each RogueliteEngine apply, not only the last). Always applies while in ZONE_REWARD. */
   updateRunState(state: StageRunState, nextRunState: RunState): StageRunState;
   /**
@@ -71,6 +124,7 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
     party: CharacterDefinition[],
     runSeed: number,
     runResolver: RunResolver,
+    battleItems: ItemBattleSlot[],
   ): StageRunState {
     return {
       stageId: stage.id,
@@ -78,6 +132,8 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
       currentZoneIndex: 0,
       phase: 'ZONE_BATTLE',
       runState: runResolver.createInitialRunState(party),
+      clearedZoneIds: [],
+      battleItems: battleItems.map((slot) => ({ ...slot })),
       result: null,
     };
   }
@@ -101,22 +157,41 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
     return deriveSeed(state.runSeed, currentZone(stage, state).id, 'reward');
   }
 
-  function recordZoneWin(state: StageRunState, survivorHpByCharacterId: Record<string, number>): StageRunState {
+  function recordZoneWin(
+    stage: StageDefinition,
+    state: StageRunState,
+    survivorHpByCharacterId: Record<string, number>,
+    remainingBattleItems: ItemBattleSlot[],
+  ): StageRunState {
     if (state.phase !== 'ZONE_BATTLE') return state;
+    const zoneId = currentZone(stage, state).id;
     return {
       ...state,
       phase: 'ZONE_REWARD',
       runState: { ...state.runState, currentHpByCharacterId: survivorHpByCharacterId },
+      clearedZoneIds: [...state.clearedZoneIds, zoneId],
+      battleItems: remainingBattleItems,
     };
   }
 
-  function recordZoneDefeat(state: StageRunState, party: CharacterDefinition[], runResolver: RunResolver): StageRunState {
+  function recordZoneDefeat(
+    state: StageRunState,
+    party: CharacterDefinition[],
+    runResolver: RunResolver,
+    remainingBattleItems: ItemBattleSlot[],
+  ): StageRunState {
     if (state.phase !== 'ZONE_BATTLE') return state;
     return {
       ...state,
       phase: 'STAGE_RESULT',
       runState: runResolver.resetRunBuild(state.runState, party),
-      result: { stageId: state.stageId, outcome: 'DEFEATED', zonesCleared: state.currentZoneIndex },
+      battleItems: remainingBattleItems,
+      result: {
+        stageId: state.stageId,
+        outcome: 'DEFEATED',
+        zonesCleared: state.currentZoneIndex,
+        clearedZoneIds: state.clearedZoneIds,
+      },
     };
   }
 
@@ -139,7 +214,12 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
         ...state,
         phase: 'STAGE_RESULT',
         runState: runResolver.resetRunBuild(state.runState, party),
-        result: { stageId: state.stageId, outcome: 'CLEARED', zonesCleared: state.currentZoneIndex + 1 },
+        result: {
+          stageId: state.stageId,
+          outcome: 'CLEARED',
+          zonesCleared: state.currentZoneIndex + 1,
+          clearedZoneIds: state.clearedZoneIds,
+        },
       };
     }
     return { ...state, phase: 'INTER_ZONE_CHOICE' };
@@ -184,7 +264,12 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
       ...state,
       phase: 'STAGE_RESULT',
       runState: runResolver.resetRunBuild(state.runState, party),
-      result: { stageId: state.stageId, outcome: 'SELF_RETURNED', zonesCleared: state.currentZoneIndex + 1 },
+      result: {
+        stageId: state.stageId,
+        outcome: 'SELF_RETURNED',
+        zonesCleared: state.currentZoneIndex + 1,
+        clearedZoneIds: state.clearedZoneIds,
+      },
     };
   }
 

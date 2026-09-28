@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { CharacterDefinition } from '../engine/battle/BattleEngine.types';
 import type { AppPhase, BattleItemSlotSelection, QuestionScopeSelection, StageLaunchConfig } from '../base/base.types';
 import { createEmptyDepartureDraft } from '../base/base.types';
@@ -19,20 +19,48 @@ import { DepartureConfirmScreen } from '../ui/base/DepartureConfirmScreen';
 import { PartyEditView } from '../ui/base/PartyEditView';
 import { CharacterListView } from '../ui/base/CharacterListView';
 import { CharacterDetailView } from '../ui/base/CharacterDetailView';
-import { EquipmentPlaceholderScreen } from '../ui/base/EquipmentPlaceholderScreen';
-import { InventoryPlaceholderScreen } from '../ui/base/InventoryPlaceholderScreen';
+import { EquipmentListScreen } from '../ui/base/EquipmentListScreen';
+import { InventoryListScreen } from '../ui/base/InventoryListScreen';
 import { RecordPlaceholderScreen } from '../ui/base/RecordPlaceholderScreen';
+import { createEmptyPermanentCharacterState, createProgressionSystem, expRequiredForLevel } from '../engine/progression/ProgressionSystem';
+import type { EquipmentSlot, PermanentState, StageEndContext } from '../engine/progression/ProgressionSystem.types';
+import { progressionConfig } from '../config/progressionConfig';
+import { createSampleInitialPermanentState } from '../data/progression/createInitialPermanentState';
+import { sampleEquipmentDefinitionsById } from '../data/equipment/sampleEquipment';
+import { sampleEquipmentDropTablesById } from '../data/equipment/sampleDropTables';
+import { sampleGrowthProfileByCharacterId } from '../data/progression/growthProfiles';
+import { sampleCharacterUnlockRules, sampleStageUnlockRules } from '../data/progression/unlockRules';
+import { createProductionInstanceIdFactory } from '../engine/progression/instanceId';
 
 const DEFAULT_RUN_SEED = 1;
 
 /**
- * MVP-6 root controller (spec v0.6 §3/CLAUDE.md §6/§21): owns only screen
- * navigation (`AppPhase`) and the in-progress 出撃準備 draft
- * (`DepartureDraft`) — no permanent growth, Inventory, or Save data (user's
- * explicit MVP-6 instruction). `IN_STAGE` is rendered by mounting
- * `StageSessionScreen`, which is the only place `useStageController` is
- * ever called — this hook itself never calls it conditionally (Rules of
- * Hooks).
+ * Single ProgressionSystem instance for the whole Base session (MVP-7),
+ * mirroring how `useStageController.tsx` builds one stable `runResolver`
+ * module-level instance — ProgressionSystem itself holds no mutable state,
+ * only content-data bindings (CLAUDE.md §7 data-driven).
+ */
+const progressionSystem = createProgressionSystem({
+  config: progressionConfig,
+  growthProfileByCharacterId: sampleGrowthProfileByCharacterId,
+  equipmentDefsById: sampleEquipmentDefinitionsById,
+  equipmentDropTablesById: sampleEquipmentDropTablesById,
+  characterUnlockRules: sampleCharacterUnlockRules,
+  stageUnlockRules: sampleStageUnlockRules,
+  instanceIdFactory: createProductionInstanceIdFactory(),
+});
+
+/**
+ * MVP-7 root controller (spec v0.7 §3/§10/§18.8, CLAUDE.md §6/§21): owns
+ * screen navigation (`AppPhase`), the in-progress 出撃準備 draft
+ * (`DepartureDraft`), and now `PermanentState` — the account-level
+ * progression data ProgressionSystem reads/writes (level/EXP, equipment,
+ * currency/materials, unlocks). SaveSystem/IndexedDB persistence is still
+ * MVP-9 (user's explicit instruction) — `permanentState` lives in memory
+ * only, seeded from `createSampleInitialPermanentState()`. `IN_STAGE` is
+ * rendered by mounting `StageSessionScreen`, which is the only place
+ * `useStageController` is ever called — this hook itself never calls it
+ * conditionally (Rules of Hooks).
  */
 export function useBaseController() {
   const [phase, setPhase] = useState<AppPhase>('BASE_HOME');
@@ -42,14 +70,33 @@ export function useBaseController() {
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [partyEditReturnPhase, setPartyEditReturnPhase] = useState<AppPhase>('BASE_HOME');
   const [isConfirmingDeparture, setIsConfirmingDeparture] = useState(false);
+  const [permanentState, setPermanentState] = useState<PermanentState>(createSampleInitialPermanentState);
+
+  // Guards reconcileStageResult to exactly one application per Stage attempt
+  // (MVP-7 decision doc §19: "StrictModeで二重付与されないように...イベント
+  // ハンドラ上で1回だけ確定する構造を優先") — reset whenever a new Stage
+  // attempt is launched, mirroring the existing isConfirmingDeparture guard.
+  const hasReconciledCurrentStageRef = useRef(false);
 
   const questionCatalog = useMemo(() => deriveQuestionCatalog(sampleQuestions), []);
 
+  // Unlock-gated rosters (spec §10.7/§13, decision doc §12/§13). All three
+  // existing MVP-1〜6 sample characters/the one sample stage are unlocked
+  // from `createSampleInitialPermanentState()` by default — this filter is
+  // a no-op today and only bites once locked content is added.
+  const unlockedParty = useMemo(
+    () => sampleParty.filter((c) => permanentState.unlockedCharacterIds.includes(c.id)),
+    [permanentState.unlockedCharacterIds],
+  );
+
   const selectedArea = draft.areaId ? (sampleAreas.find((a) => a.id === draft.areaId) ?? null) : null;
-  const areaStages = selectedArea ? resolveAreaStages(selectedArea, sampleStagesById) : [];
+  const areaStages = useMemo(() => {
+    if (!selectedArea) return [];
+    return resolveAreaStages(selectedArea, sampleStagesById).filter((s) => permanentState.unlockedStageIds.includes(s.id));
+  }, [selectedArea, permanentState.unlockedStageIds]);
   const selectedStage = draft.stageId ? (sampleStagesById[draft.stageId] ?? null) : null;
 
-  const departureValidation = validateDeparture(draft, sampleQuestions);
+  const departureValidation = validateDeparture(draft, sampleQuestions, permanentState.inventory.consumables);
 
   function goHome() {
     setPhase('BASE_HOME');
@@ -102,13 +149,30 @@ export function useBaseController() {
     if (!departureValidation.valid || !selectedStage) return;
 
     setIsConfirmingDeparture(true);
-    const config = buildStageLaunchConfig(draft, selectedStage, sampleQuestions, sampleDepartureItemCatalogById, nextRunSeed);
+    hasReconciledCurrentStageRef.current = false;
+    // Base Stats + Permanent Level Growth + Equipment (decision doc §18) —
+    // resolved once here, before RunBuild's temporary bonuses ever enter the
+    // picture. BattleEngine/StageEngine/RogueliteEngine only ever see the
+    // already-resolved CharacterDefinition, never PermanentState itself.
+    const resolvedParty = draft.party.map((c) => progressionSystem.resolveCharacterForBattle(c, permanentState));
+    const config = buildStageLaunchConfig(
+      { ...draft, party: resolvedParty },
+      selectedStage,
+      sampleQuestions,
+      sampleDepartureItemCatalogById,
+      nextRunSeed,
+    );
     setNextRunSeed((seed) => seed + 1);
     setLaunchConfig(config);
     setPhase('IN_STAGE');
   }
 
-  function handleReturnToBase() {
+  function handleReturnToBase(endContext: StageEndContext) {
+    if (hasReconciledCurrentStageRef.current) return; // idempotency guard — reconcile exactly once per Stage attempt
+    hasReconciledCurrentStageRef.current = true;
+
+    const { permanentState: nextPermanentState } = progressionSystem.reconcileStageResult(permanentState, endContext);
+    setPermanentState(nextPermanentState);
     setLaunchConfig(null);
     setIsConfirmingDeparture(false);
     setDraft(createEmptyDepartureDraft());
@@ -120,12 +184,44 @@ export function useBaseController() {
     setPhase('CHARACTER_DETAIL');
   }
 
+  function handleEquip(characterId: string, instanceId: string) {
+    const result = progressionSystem.equipItem(permanentState, characterId, instanceId);
+    if (result.success) setPermanentState(result.permanentState);
+  }
+
+  function handleUnequip(characterId: string, slot: EquipmentSlot) {
+    setPermanentState((p) => progressionSystem.unequipSlot(p, characterId, slot));
+  }
+
+  function handleEnhance(instanceId: string) {
+    const result = progressionSystem.enhanceEquipment(permanentState, instanceId);
+    if (result.success) setPermanentState(result.permanentState);
+  }
+
+  function handleToggleLock(instanceId: string) {
+    setPermanentState((p) => ({
+      ...p,
+      inventory: {
+        ...p.inventory,
+        equipment: p.inventory.equipment.map((i) => (i.instanceId === instanceId ? { ...i, locked: !i.locked } : i)),
+      },
+    }));
+  }
+
+  function handleDismantle(instanceIds: string[]) {
+    const result = progressionSystem.dismantleEquipment(permanentState, instanceIds);
+    if (result.success) setPermanentState(result.permanentState);
+  }
+
   function renderDeparturePrep() {
     return (
       <DeparturePrepScreen
         draft={draft}
         questionCatalog={questionCatalog}
         itemCatalog={sampleDepartureItemCatalog}
+        ownedQuantityById={permanentState.inventory.consumables}
+        permanentState={permanentState}
+        equipmentDefsById={sampleEquipmentDefinitionsById}
         validation={departureValidation}
         onEditParty={handleOpenPartyEditFromPrep}
         onChangeItemSlots={handleChangeItemSlots}
@@ -174,7 +270,7 @@ export function useBaseController() {
     case 'PARTY_EDIT':
       return (
         <PartyEditView
-          roster={sampleParty}
+          roster={unlockedParty}
           selected={draft.party}
           onSave={handleSaveParty}
           onCancel={handleCancelPartyEdit}
@@ -182,19 +278,54 @@ export function useBaseController() {
       );
 
     case 'CHARACTER_LIST':
-      return <CharacterListView roster={sampleParty} onSelect={handleSelectCharacter} onBack={goHome} />;
+      return <CharacterListView roster={unlockedParty} onSelect={handleSelectCharacter} onBack={goHome} />;
 
     case 'CHARACTER_DETAIL': {
-      const character = sampleParty.find((c) => c.id === selectedCharacterId);
-      if (!character) return <CharacterListView roster={sampleParty} onSelect={handleSelectCharacter} onBack={goHome} />;
-      return <CharacterDetailView character={character} onBack={() => setPhase('CHARACTER_LIST')} />;
+      const character = unlockedParty.find((c) => c.id === selectedCharacterId);
+      if (!character) return <CharacterListView roster={unlockedParty} onSelect={handleSelectCharacter} onBack={goHome} />;
+      // UI input → engine command → result → UI renders (CLAUDE.md §9): the
+      // resolved stats are computed once, here, via ProgressionSystem — the
+      // view component itself only ever displays plain data, never calls
+      // into the engine.
+      const characterState = permanentState.characters[character.id] ?? createEmptyPermanentCharacterState(character.id);
+      const resolvedCharacter = progressionSystem.resolveCharacterForBattle(character, permanentState);
+      const nextLevelExpRequired = expRequiredForLevel(characterState.level, progressionConfig.expCurve);
+      return (
+        <CharacterDetailView
+          character={character}
+          characterState={characterState}
+          resolvedBaseStats={resolvedCharacter.baseStats}
+          nextLevelExpRequired={nextLevelExpRequired}
+          equipmentDefsById={sampleEquipmentDefinitionsById}
+          equipmentInstances={permanentState.inventory.equipment}
+          onBack={() => setPhase('CHARACTER_LIST')}
+        />
+      );
     }
 
     case 'EQUIPMENT_LIST':
-      return <EquipmentPlaceholderScreen onBack={goHome} />;
+      return (
+        <EquipmentListScreen
+          permanentState={permanentState}
+          equipmentDefsById={sampleEquipmentDefinitionsById}
+          roster={unlockedParty}
+          onEquip={handleEquip}
+          onUnequip={handleUnequip}
+          onEnhance={handleEnhance}
+          onToggleLock={handleToggleLock}
+          onDismantle={handleDismantle}
+          onBack={goHome}
+        />
+      );
 
     case 'INVENTORY_LIST':
-      return <InventoryPlaceholderScreen onBack={goHome} />;
+      return (
+        <InventoryListScreen
+          permanentState={permanentState}
+          itemCatalog={sampleDepartureItemCatalog}
+          onBack={goHome}
+        />
+      );
 
     case 'RECORD_LIST':
       return <RecordPlaceholderScreen onBack={goHome} />;

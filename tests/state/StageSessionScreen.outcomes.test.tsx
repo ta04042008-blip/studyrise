@@ -42,7 +42,15 @@ function oneZoneFinalStage(id: string): StageDefinition {
   return {
     id,
     name: `テストステージ（${id}）`,
-    zones: [{ id: `${id}_zone1`, enemies: [{ enemyDefinitionId: sampleEnemy.id, instanceId: 'e1' }], isRareRewardEvent: false, isFinalZone: true }],
+    zones: [
+      {
+        id: `${id}_zone1`,
+        enemies: [{ enemyDefinitionId: sampleEnemy.id, instanceId: 'e1' }],
+        isRareRewardEvent: false,
+        permanentRewardProfileId: 'BOSS_ZONE',
+        isFinalZone: true,
+      },
+    ],
   };
 }
 
@@ -143,8 +151,20 @@ describe('StageSessionScreen — every outcome returns to Base via onReturnToBas
       id: 'stage_test_selfreturn',
       name: 'テストステージ（自主帰還）',
       zones: [
-        { id: 'zone1', enemies: [{ enemyDefinitionId: sampleEnemy.id, instanceId: 'e1' }], isRareRewardEvent: false, isFinalZone: false },
-        { id: 'zone2_final', enemies: [{ enemyDefinitionId: sampleEnemy.id, instanceId: 'e2' }], isRareRewardEvent: false, isFinalZone: true },
+        {
+          id: 'zone1',
+          enemies: [{ enemyDefinitionId: sampleEnemy.id, instanceId: 'e1' }],
+          isRareRewardEvent: false,
+          permanentRewardProfileId: 'NORMAL_ZONE',
+          isFinalZone: false,
+        },
+        {
+          id: 'zone2_final',
+          enemies: [{ enemyDefinitionId: sampleEnemy.id, instanceId: 'e2' }],
+          isRareRewardEvent: false,
+          permanentRewardProfileId: 'BOSS_ZONE',
+          isFinalZone: true,
+        },
       ],
     };
     const config: StageLaunchConfig = {

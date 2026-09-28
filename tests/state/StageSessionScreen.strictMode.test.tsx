@@ -22,7 +22,15 @@ const powerfulCharacter: CharacterDefinition = {
 const stage: StageDefinition = {
   id: 'stage_test_strict',
   name: 'テストステージ（StrictMode確認用）',
-  zones: [{ id: 'zone1', enemies: [{ enemyDefinitionId: sampleEnemy.id, instanceId: 'e1' }], isRareRewardEvent: false, isFinalZone: true }],
+  zones: [
+    {
+      id: 'zone1',
+      enemies: [{ enemyDefinitionId: sampleEnemy.id, instanceId: 'e1' }],
+      isRareRewardEvent: false,
+      permanentRewardProfileId: 'BOSS_ZONE',
+      isFinalZone: true,
+    },
+  ],
 };
 
 const config: StageLaunchConfig = {
