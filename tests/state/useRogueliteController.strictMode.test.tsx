@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useRogueliteController } from '../../src/state/useRogueliteController';
 import { createRogueliteEngine, type RogueliteEngine } from '../../src/engine/roguelite/RogueliteEngine';
 import type { RunState } from '../../src/engine/roguelite/RogueliteEngine.types';
-import { createRandomService } from '../../src/engine/random/RandomService';
+import { createRandomService, type RandomService } from '../../src/engine/random/RandomService';
 import { testCharacterA, testConfig, testRewardDefinitions, testSpellsById } from '../engine/roguelite/fixtures';
 
 afterEach(cleanup);
@@ -25,11 +25,12 @@ afterEach(cleanup);
  * to include (so this test isn't sensitive to candidate generation).
  */
 function makeCountingEngine() {
+  const random = createRandomService(1);
   const real = createRogueliteEngine({
     spellsById: testSpellsById,
     rewardDefinitions: testRewardDefinitions,
     config: testConfig,
-    random: createRandomService(1),
+    random,
   });
   let confirmAndApplyCalls = 0;
   let rerollCalls = 0;
@@ -44,14 +45,16 @@ function makeCountingEngine() {
       return real.rerollCurrent(phase, characters, runBuild);
     },
   };
-  return { engine, callCounts: () => ({ confirmAndApplyCalls, rerollCalls }) };
+  return { engine, random, callCounts: () => ({ confirmAndApplyCalls, rerollCalls }) };
 }
 
 function Harness({
   engine,
+  random,
   onRunState,
 }: {
   engine: RogueliteEngine;
+  random: RandomService;
   onRunState: (s: RunState) => void;
 }) {
   const [runState, setRunState] = useState<RunState>(() => engine.createInitialRunState([testCharacterA]));
@@ -61,6 +64,7 @@ function Harness({
     runState,
     isRareRewardEvent: false,
     engine,
+    random,
     onComplete: (next) => {
       setRunState(next);
       onRunState(next);
@@ -79,11 +83,11 @@ function Harness({
 
 describe('useRogueliteController under React.StrictMode', () => {
   it('confirm() calls engine.confirmAndApply exactly once per tap, never twice', () => {
-    const { engine, callCounts } = makeCountingEngine();
+    const { engine, random, callCounts } = makeCountingEngine();
     let finalRunState: RunState | null = null;
     render(
       <StrictMode>
-        <Harness engine={engine} onRunState={(s) => (finalRunState = s)} />
+        <Harness engine={engine} random={random} onRunState={(s) => (finalRunState = s)} />
       </StrictMode>,
     );
 
@@ -95,10 +99,10 @@ describe('useRogueliteController under React.StrictMode', () => {
   });
 
   it('reroll() calls engine.rerollCurrent exactly once per tap, never twice', () => {
-    const { engine, callCounts } = makeCountingEngine();
+    const { engine, random, callCounts } = makeCountingEngine();
     render(
       <StrictMode>
-        <Harness engine={engine} onRunState={() => {}} />
+        <Harness engine={engine} random={random} onRunState={() => {}} />
       </StrictMode>,
     );
 

@@ -1,6 +1,7 @@
 import type { QuestionCommandKind } from '../battle/BattleEngine.types';
 import type { StatKey } from '../../types/stats';
 import { RARITIES, type Rarity } from '../../types/rarity';
+import type { RandomState } from '../random/RandomService';
 
 /**
  * Spec §9.4, five fixed tiers. Display-only in MVP-4 (see RogueliteEngine.ts
@@ -151,4 +152,21 @@ export interface RewardPhaseSession {
   currentRewardSession: RewardSession;
   isRareRewardEvent: boolean;
   complete: boolean;
+}
+
+/**
+ * MVP-9: everything needed to resume an in-progress reward phase — the
+ * `RewardPhaseSession` itself is already plain, fully-serializable data
+ * (candidates/rarity/rerollRemaining/locked-or-applied status are all
+ * already-decided values, never re-derived), but it alone is not enough:
+ * a reroll after resume must produce the exact same candidates a
+ * non-reloaded session would have (spec §18.16, user's explicit MVP-9
+ * instruction — no reseeding), which requires the reward RNG's cursor too.
+ * RogueliteEngine itself never exposes its injected RandomService, so this
+ * is assembled by the caller (useRogueliteController) from the exact
+ * instance it also handed to `createRogueliteEngine`.
+ */
+export interface RewardPhaseSnapshot {
+  phase: RewardPhaseSession;
+  randomState: RandomState;
 }

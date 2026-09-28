@@ -13,8 +13,12 @@ function Harness() {
 }
 
 describe('useBaseController — Base → Area → Stage → 出撃準備 → 出撃確認 → Stage', () => {
-  it('drives the full departure flow from Base Home into a mounted Stage', () => {
+  it('drives the full departure flow from Base Home into a mounted Stage', async () => {
     render(<Harness />);
+
+    // MVP-9: Base Home only renders after the async SaveSystem boot load
+    // resolves (BOOT_LOADING first) — wait for it once, up front.
+    await screen.findByRole('button', { name: '出撃' });
 
     // Base Home: exactly the 6 official hotspots (user's explicit MVP-6 instruction).
     for (const label of ['出撃', '編成', 'キャラクター', '装備', '持ち物', '記録']) {

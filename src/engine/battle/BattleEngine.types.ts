@@ -2,6 +2,7 @@ import type { BaseStats, PlayerBaseStats, StarLevel } from '../../types/stats';
 import type { QuestionDefinition } from '../question/QuestionEngine.types';
 import type { TimelineState } from './actionTimeline';
 import type { Effect } from './effects';
+import type { RandomState } from '../random/RandomService';
 
 /**
  * Battle phase state machine (CLAUDE.md §6). RESULT_APPLY is shared by two
@@ -328,4 +329,40 @@ export interface BattleState {
    */
   knownSpellsByPlayerId: Record<string, KnownSpell[]>;
   outcome: 'win' | 'lose' | null;
+}
+
+/**
+ * Everything needed to resume a BattleEngine bit-for-bit (MVP-9 spec §15.2,
+ * user's explicit instruction) — not just the public `BattleState`, but the
+ * mutable state BattleEngine keeps in private closures and never exposes
+ * through `getState()`:
+ *
+ *  - `enemyPlannedActions` is each enemy's FULL upcoming action queue.
+ *    `BattleState.searchByEnemyId` is only the player-visible prefix of it
+ *    (see BattleEngine.ts's buildSearchSnapshot) — restoring from that alone
+ *    would lose any queued-but-unrevealed entries and any entries beyond
+ *    what Search happened to reveal, so it is never reconstructed from
+ *    `searchByEnemyId` (user's explicit instruction).
+ *  - `revealedCountByEnemyId` is how many of each queue's front entries are
+ *    currently Search-revealed; kept explicit rather than re-derived from
+ *    `searchByEnemyId`'s array lengths so a future divergence between the
+ *    two can never silently corrupt a restore.
+ *  - `randomState`/`timelineRandomState` let the resumed engine continue
+ *    the exact same future random sequence a non-reloaded session would
+ *    have produced (spec §18.16, user's explicit MVP-9 instruction — no
+ *    reseeding on resume). They are two independent streams (MVP-3
+ *    correction 2: timeline tie-breaks never share a cursor with
+ *    damage/crit/AI/question-selection rolls).
+ *
+ * Only `BattleEngine.exportSnapshot()` produces one of these;
+ * `restoreBattleEngine()` is the only consumer.
+ */
+export interface BattleEngineSnapshot {
+  state: BattleState;
+  /** Main battle RandomService's cursor — shared with QuestionEngine.pickQuestion (see useBattleController), so restoring it must feed the SAME restored instance into both. */
+  randomState: RandomState;
+  /** Timeline tie-break stream's cursor — independent of `randomState`. */
+  timelineRandomState: RandomState;
+  enemyPlannedActions: Record<string, PlannedEnemyAction[]>;
+  revealedCountByEnemyId: Record<string, number>;
 }

@@ -63,8 +63,10 @@ function driveZoneBattleToWin(maxSteps = 1500) {
 }
 
 /** Drives Base Home all the way to a mounted, in-progress Stage with a single-character party (主人公 only). */
-function driveToStageStart() {
-  fireEvent.click(screen.getByRole('button', { name: '出撃' }));
+async function driveToStageStart() {
+  // MVP-9: Base Home only renders after the async SaveSystem boot load
+  // resolves (BOOT_LOADING first).
+  fireEvent.click(await screen.findByRole('button', { name: '出撃' }));
   fireEvent.click(screen.getByRole('button', { name: sampleArea.name }));
   fireEvent.click(screen.getByRole('button', { name: sampleStage.name }));
 
@@ -94,9 +96,9 @@ function driveZone1ThenSelfReturnToBase() {
 }
 
 describe('useBaseController — permanent-reward reconciliation end-to-end (MVP-7)', () => {
-  it('a self-returned Stage attempt grants Zone-clear EXP/currency/material to PermanentState, back at Base', () => {
+  it('a self-returned Stage attempt grants Zone-clear EXP/currency/material to PermanentState, back at Base', async () => {
     render(<Harness />);
-    driveToStageStart();
+    await driveToStageStart();
     driveZone1ThenSelfReturnToBase();
 
     // Back at BASE_HOME.
@@ -113,9 +115,9 @@ describe('useBaseController — permanent-reward reconciliation end-to-end (MVP-
     expect(screen.getByText('20 / 次Lvまで 30')).toBeTruthy();
   });
 
-  it('reconciles exactly once even under React.StrictMode double-invocation', () => {
+  it('reconciles exactly once even under React.StrictMode double-invocation', async () => {
     render(<StrictHarness />);
-    driveToStageStart();
+    await driveToStageStart();
     driveZone1ThenSelfReturnToBase();
 
     fireEvent.click(screen.getByRole('button', { name: '持ち物' }));
