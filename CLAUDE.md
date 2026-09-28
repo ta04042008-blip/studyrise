@@ -4,7 +4,7 @@ This repository contains the NEW StudyRise.
 
 0. Highest-priority rule
 
-docs/StudyRise_Spec_v0.2.md is the single source of truth for GAME BEHAVIOR.
+docs/StudyRise_Spec_v0.11.md is the single source of truth for GAME BEHAVIOR.
 
 Do not import assumptions from:
 
@@ -447,11 +447,21 @@ UI polish does not substitute for logic tests.
 
 21. Development workflow
 
-Do not implement the entire game in one task.
+MVP-1 through MVP-10 are complete.
 
-Work in the formal MVP order.
+The current project is in the post-MVP expansion and polish phase.
 
-Current order:
+For each new task:
+
+• read the latest formal spec (docs/StudyRise_Spec_v0.11.md)
+• inspect the current implementation
+• state the bounded target
+• identify affected systems and save-schema impact
+• identify files to change
+• identify tests to add/update
+• avoid implementing unrelated future features
+
+The completed MVP sequence remains historical context:
 
 1. MVP-1 — minimal 1 player vs 1 enemy battle
 2. MVP-2 — all six commands
@@ -462,17 +472,9 @@ Current order:
 7. MVP-7 — permanent progression
 8. MVP-8 — learning history
 9. MVP-9 — save/resume
-10. MVP-10 — content expansion
+10. MVP-10 — formal content expansion
 
-Before each MVP:
-
-• read the formal spec
-• inspect current implementation
-• write a bounded implementation plan
-• identify files to change
-• identify tests to add/update
-
-Do not implement future MVP features early unless they are strictly required as a generic foundation and do not expose future gameplay.
+Do not regress completed MVP behavior while working on post-MVP features.
 
 ────────
 
@@ -554,43 +556,23 @@ Do not provide long self-commentary unless requested.
 
 ────────
 
-27. MVP-1 boundary
+27. Post-MVP boundary
 
-Until explicitly moved to MVP-2, MVP-1 is ONLY the smallest battle slice necessary to prove:
+MVP-1 through MVP-10 are complete and must be treated as working baseline behavior.
 
-1 player
-vs
-1 enemy
+Post-MVP work should be scoped independently.
 
-action order
-→ Attack
-→ subject/difficulty selection
-→ question
-→ answer
-→ command animation hook
-→ damage/no damage result
-→ correctness result
-→ explanation
-→ next action
-→ win/loss
+Do not use old MVP boundaries to remove or disable completed systems.
 
-Do not add during MVP-1:
+Current known post-MVP candidates are governed by the latest formal spec and may include:
 
-• Guard
-• Charge
-• Search
-• Spell
-• Item
-• party of 3
-• multiple enemies
-• roguelite rewards
-• base
-• equipment
-• permanent progression
-• learning-history UI
-• cloud sync
+• formal visual assets
+• story display
+• unique character skills
+• additional question formats
+• later areas/content
 
-Architecture may leave extension points for them, but gameplay must remain MVP-1-sized.
+Do not implement these merely because they are listed here. Implement only the user-requested, explicitly scoped task.
 
 ────────
 
@@ -599,9 +581,9 @@ Architecture may leave extension points for them, but gameplay must remain MVP-1
 Before editing code:
 
 1. Read this CLAUDE.md.
-2. Read docs/StudyRise_Spec_v0.2.md.
+2. Read docs/StudyRise_Spec_v0.11.md.
 3. Inspect the repository.
-4. State the current MVP target.
+4. State the current scoped target.
 5. Provide a short plan.
 6. Only then modify files, unless the user explicitly asked for planning only.
 
