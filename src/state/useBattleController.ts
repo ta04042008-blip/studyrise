@@ -15,6 +15,8 @@ import type { MultipleChoiceAnswer, QuestionDefinition } from '../engine/questio
 import { createRandomService } from '../engine/random/RandomService';
 import { battleConfig } from '../config/battleConfig';
 import type { StarLevel } from '../types/stats';
+import type { QuestionResult } from '../engine/learningHistory/LearningHistory.types';
+import { questionResultFromAnswer } from '../engine/learningHistory/questionResultFromAnswer';
 
 export interface UseBattleControllerArgs {
   /** 1〜3 characters (spec §4.1). */
@@ -31,6 +33,13 @@ export interface UseBattleControllerArgs {
   playerCommandModifiers?: Record<string, PlayerCommandModifiers>;
   /** Starting HP per player, carried from a previous battle (RogueliteEngine). Omit for full HP. */
   initialHpByPlayerId?: Record<string, number>;
+  /**
+   * Learning-history event boundary (spec v0.8 §13, user's explicit MVP-8
+   * instruction): invoked exactly once per answer BattleEngine actually
+   * accepts (see `submitAnswer` below), never from a `useEffect`. Omit for
+   * no recording (e.g. tests that don't care about learning history).
+   */
+  onQuestionResult?: (result: QuestionResult) => void;
 }
 
 export interface BattleController {
@@ -61,6 +70,7 @@ export function useBattleController({
   knownSpellsByPlayerId,
   playerCommandModifiers,
   initialHpByPlayerId,
+  onQuestionResult,
 }: UseBattleControllerArgs): BattleController {
   const engines = useMemo(() => {
     const random = createRandomService(seed);
@@ -125,10 +135,36 @@ export function useBattleController({
 
   const submitAnswer = useCallback(
     (answer: MultipleChoiceAnswer) => {
+      // Learning-history dedup boundary (user's explicit MVP-8 instruction):
+      // BattleEngine.submitAnswer only ever finalizes an answer when it is
+      // called while phase === 'QUESTION' (it no-ops otherwise — see
+      // BattleEngine's own `warnRejected('submitAnswer')` guard). Checking
+      // that same condition here, synchronously right before delegating,
+      // tells us whether THIS call is the one that will actually resolve a
+      // new outcome. A second call for the same confirmed answer (button
+      // mash, StrictMode double-invoke, or any other re-entry) always sees
+      // phase !== 'QUESTION' by then, so `onQuestionResult` fires exactly
+      // once per BattleEngine-accepted answer — no separate ref/flag guard,
+      // and no `useEffect`, is needed.
+      //
+      // Read `pendingOutcome`, not `lastPlayerOutcome`: correctness is fully
+      // computed inside `submitAnswer` itself (phase → COMMAND_ANIMATION),
+      // but `lastPlayerOutcome` is only populated later, when the player
+      // taps through COMMAND_ANIMATION (`advance()` → `applyPendingResult()`
+      // → EXPLANATION) — which may never happen inside this same call.
+      // `pendingOutcome` is exactly "the outcome this submitAnswer call just
+      // finalized", available immediately.
+      const wasQuestionPhase = engines.battleEngine.getState().phase === 'QUESTION';
       engines.battleEngine.submitAnswer(answer);
+      if (wasQuestionPhase && onQuestionResult) {
+        const outcome = engines.battleEngine.getState().pendingOutcome;
+        if (outcome) {
+          onQuestionResult(questionResultFromAnswer(answer, outcome));
+        }
+      }
       sync();
     },
-    [engines, sync],
+    [engines, sync, onQuestionResult],
   );
 
   const useSpell = useCallback(

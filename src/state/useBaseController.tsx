@@ -21,7 +21,7 @@ import { CharacterListView } from '../ui/base/CharacterListView';
 import { CharacterDetailView } from '../ui/base/CharacterDetailView';
 import { EquipmentListScreen } from '../ui/base/EquipmentListScreen';
 import { InventoryListScreen } from '../ui/base/InventoryListScreen';
-import { RecordPlaceholderScreen } from '../ui/base/RecordPlaceholderScreen';
+import { RecordScreen } from '../ui/base/RecordScreen';
 import { createEmptyPermanentCharacterState, createProgressionSystem, expRequiredForLevel } from '../engine/progression/ProgressionSystem';
 import type { EquipmentSlot, PermanentState, StageEndContext } from '../engine/progression/ProgressionSystem.types';
 import { progressionConfig } from '../config/progressionConfig';
@@ -31,6 +31,10 @@ import { sampleEquipmentDropTablesById } from '../data/equipment/sampleDropTable
 import { sampleGrowthProfileByCharacterId } from '../data/progression/growthProfiles';
 import { sampleCharacterUnlockRules, sampleStageUnlockRules } from '../data/progression/unlockRules';
 import { createProductionInstanceIdFactory } from '../engine/progression/instanceId';
+import { createEmptyLearningHistoryState, createLearningHistorySystem } from '../engine/learningHistory/LearningHistorySystem';
+import type { LearningHistoryState, QuestionResult } from '../engine/learningHistory/LearningHistory.types';
+import { createProductionLearningHistoryIdFactory } from '../engine/learningHistory/idFactory';
+import { createSystemClock } from '../engine/learningHistory/clock';
 
 const DEFAULT_RUN_SEED = 1;
 
@@ -48,6 +52,17 @@ const progressionSystem = createProgressionSystem({
   characterUnlockRules: sampleCharacterUnlockRules,
   stageUnlockRules: sampleStageUnlockRules,
   instanceIdFactory: createProductionInstanceIdFactory(),
+});
+
+/**
+ * Single LearningHistorySystem instance for the whole Base session (MVP-8,
+ * mirroring `progressionSystem` above) — stateless aside from its injected
+ * id/clock, never RandomService (user's explicit MVP-8 instruction: record
+ * ids/timestamps must never consume or be affected by game randomness).
+ */
+const learningHistorySystem = createLearningHistorySystem({
+  idFactory: createProductionLearningHistoryIdFactory(),
+  clock: createSystemClock(),
 });
 
 /**
@@ -71,6 +86,10 @@ export function useBaseController() {
   const [partyEditReturnPhase, setPartyEditReturnPhase] = useState<AppPhase>('BASE_HOME');
   const [isConfirmingDeparture, setIsConfirmingDeparture] = useState(false);
   const [permanentState, setPermanentState] = useState<PermanentState>(createSampleInitialPermanentState);
+  // Independent from PermanentState (user's explicit MVP-8 instruction — never
+  // merged into permanentState.characters/inventory). SaveSystem/IndexedDB
+  // persistence for this is still MVP-9; it lives in memory only here.
+  const [learningHistoryState, setLearningHistoryState] = useState<LearningHistoryState>(createEmptyLearningHistoryState);
 
   // Guards reconcileStageResult to exactly one application per Stage attempt
   // (MVP-7 decision doc §19: "StrictModeで二重付与されないように...イベント
@@ -79,6 +98,12 @@ export function useBaseController() {
   const hasReconciledCurrentStageRef = useRef(false);
 
   const questionCatalog = useMemo(() => deriveQuestionCatalog(sampleQuestions), []);
+  // Canonical registry for resolving a LearningHistoryRecord.questionId back
+  // to its QuestionDefinition (user's explicit MVP-8 instruction: the record
+  // screen resolves against the FULL question catalog, not whatever subset a
+  // past Stage's departure range happened to scope battles to — a record may
+  // reference a question from a different Stage/range than the current one).
+  const questionsById = useMemo(() => Object.fromEntries(sampleQuestions.map((q) => [q.id, q])), []);
 
   // Unlock-gated rosters (spec §10.7/§13, decision doc §12/§13). All three
   // existing MVP-1〜6 sample characters/the one sample stage are unlocked
@@ -177,6 +202,10 @@ export function useBaseController() {
     setIsConfirmingDeparture(false);
     setDraft(createEmptyDepartureDraft());
     setPhase('BASE_HOME');
+  }
+
+  function handleQuestionResult(result: QuestionResult) {
+    setLearningHistoryState((s) => learningHistorySystem.recordAnswer(s, result));
   }
 
   function handleSelectCharacter(characterId: string) {
@@ -328,13 +357,19 @@ export function useBaseController() {
       );
 
     case 'RECORD_LIST':
-      return <RecordPlaceholderScreen onBack={goHome} />;
+      return <RecordScreen records={learningHistoryState.records} questionsById={questionsById} onBack={goHome} />;
 
     case 'IN_STAGE':
       // launchConfig is always set together with this phase (handleConfirmDeparture); this
       // fallback exists only as a defensive guard against an unreachable state, never as a
       // silent production fallback to sample data (user's explicit MVP-6 instruction).
       if (!launchConfig) return <BaseHomeScreen onSelect={handleHotspotSelect} />;
-      return <StageSessionScreen config={launchConfig} onReturnToBase={handleReturnToBase} />;
+      return (
+        <StageSessionScreen
+          config={launchConfig}
+          onReturnToBase={handleReturnToBase}
+          onQuestionResult={handleQuestionResult}
+        />
+      );
   }
 }

@@ -16,6 +16,7 @@ import { rewardConfig } from '../config/rewardConfig';
 import type { ItemBattleSlot } from '../engine/battle/BattleEngine.types';
 import type { RunState } from '../engine/roguelite/RogueliteEngine.types';
 import type { StageLaunchConfig } from '../base/base.types';
+import type { QuestionResult } from '../engine/learningHistory/LearningHistory.types';
 
 export type { StageLaunchConfig } from '../base/base.types';
 
@@ -50,7 +51,11 @@ const runResolver: RunResolver = createRogueliteEngine({
  * by the base layer's phase switch, never called from behind an `if` inside
  * a shared hook (Rules of Hooks, user's explicit MVP-6 requirement).
  */
-export function useStageController(config: StageLaunchConfig, onReturnToBase: (endContext: StageEndContext) => void) {
+export function useStageController(
+  config: StageLaunchConfig,
+  onReturnToBase: (endContext: StageEndContext) => void,
+  onQuestionResult?: (result: QuestionResult) => void,
+) {
   const { party, stage, questions, battleItems, runSeed: initialRunSeed } = config;
 
   const [runSeed, setRunSeed] = useState(initialRunSeed);
@@ -108,6 +113,7 @@ export function useStageController(config: StageLaunchConfig, onReturnToBase: (e
             spellsById={spellsById}
             initialItems={initialItems}
             seed={battleSeed}
+            onQuestionResult={onQuestionResult}
             onWin={(survivorHp, remainingItems) =>
               setStageState((s) => stageEngine.recordZoneWin(stage, s, survivorHp, remainingItems))
             }
