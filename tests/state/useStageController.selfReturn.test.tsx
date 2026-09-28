@@ -51,7 +51,7 @@ function driveZoneBattleToWin(maxSteps = 1500) {
   return 'timeout';
 }
 
-const PARTY_LABELS = ['主人公', '魔法使い', '騎士'];
+const PARTY_LABELS = ['葉山智也', '南雲彩乃', '岡村駆'];
 
 describe('useStageController — self-return (spec §2.5, MVP-5)', () => {
   it('is only offered between zones, discards the run build, and ends the stage as SELF_RETURNED', () => {

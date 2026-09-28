@@ -17,7 +17,7 @@ describe('deriveQuestionCatalog', () => {
     const subjects = catalog.map((c) => c.subject).sort();
     expect(subjects).toEqual(['数学', '英語'].sort());
     const math = catalog.find((c) => c.subject === '数学')!;
-    expect(math.fields.map((f) => f.field).sort()).toEqual(['図形', '計算'].sort());
+    expect(math.fields.map((f) => f.field).sort()).toEqual(['図形', '数の性質', '数量関係', '計算'].sort());
   });
 });
 

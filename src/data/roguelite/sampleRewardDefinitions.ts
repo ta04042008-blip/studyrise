@@ -4,26 +4,35 @@ import { sampleSpell } from '../spells/sampleSpell';
 import { sampleAdditionalSpellHeal, sampleAdditionalSpellIce } from '../spells/sampleAdditionalSpells';
 
 /**
- * PLACEHOLDER content (CLAUDE.md §24) — the MVP-4 sample reward pool, just
- * enough to exercise every RewardCategory end-to-end. Not final game
- * balance; only the id/category/target fields are load-bearing for
- * RogueliteEngine, the name/description text is illustrative.
+ * MVP-10 official content — reward pool covering every RewardCategory.
+ * Spell name references正式化(ブレイク/解析パルス/リフレクト、既存ID/effect
+ * は変更しない)。`reward_new_spell_firebolt`はMVP-10で新規追加(既存
+ * mechanicのみ使用、user's Phase5指示 — 智也/駆のadditionalSpellPoolIdsに
+ * ブレイクが入ったため、その2人がNEW_SPELLでブレイクを習得できるよう
+ * 対応するreward candidateが必要)。
  */
 export const sampleRewardDefinitions: RewardDefinition[] = [
-  // NEW_SPELL — one per spell in the sample characters' additionalSpellPoolIds.
+  // NEW_SPELL — one per spell any character's additionalSpellPoolIds may reference.
+  {
+    id: 'reward_new_spell_firebolt',
+    category: 'NEW_SPELL',
+    spellId: sampleSpell.id,
+    name: '新規スペル：ブレイク',
+    description: 'ブレイクを新たに習得する。',
+  },
   {
     id: 'reward_new_spell_ice',
     category: 'NEW_SPELL',
     spellId: sampleAdditionalSpellIce.id,
-    name: '新規スペル：アイスシャード',
-    description: 'アイスシャードを新たに習得する。',
+    name: '新規スペル：解析パルス',
+    description: '解析パルスを新たに習得する。',
   },
   {
     id: 'reward_new_spell_heal',
     category: 'NEW_SPELL',
     spellId: sampleAdditionalSpellHeal.id,
-    name: '新規スペル：ヒール',
-    description: 'ヒールを新たに習得する。',
+    name: '新規スペル：リフレクト',
+    description: 'リフレクトを新たに習得する。',
   },
 
   // SPELL_UPGRADE — one per spell any sample character could know.
@@ -31,22 +40,22 @@ export const sampleRewardDefinitions: RewardDefinition[] = [
     id: 'reward_spell_upgrade_firebolt',
     category: 'SPELL_UPGRADE',
     spellId: sampleSpell.id,
-    name: 'スペル強化：ファイアボルト',
-    description: 'ファイアボルトのLvを1上げる。',
+    name: 'スペル強化：ブレイク',
+    description: 'ブレイクのLvを1上げる。',
   },
   {
     id: 'reward_spell_upgrade_ice',
     category: 'SPELL_UPGRADE',
     spellId: sampleAdditionalSpellIce.id,
-    name: 'スペル強化：アイスシャード',
-    description: 'アイスシャードのLvを1上げる。',
+    name: 'スペル強化：解析パルス',
+    description: '解析パルスのLvを1上げる。',
   },
   {
     id: 'reward_spell_upgrade_heal',
     category: 'SPELL_UPGRADE',
     spellId: sampleAdditionalSpellHeal.id,
-    name: 'スペル強化：ヒール',
-    description: 'ヒールのLvを1上げる。',
+    name: 'スペル強化：リフレクト',
+    description: 'リフレクトのLvを1上げる。',
   },
 
   // COMMAND_BOOST — one per official command (max 3 stacks, rewardConfig).

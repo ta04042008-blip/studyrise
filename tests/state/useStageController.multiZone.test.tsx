@@ -65,7 +65,7 @@ function readHpBars(): Record<string, { current: number; max: number }> {
   return result;
 }
 
-const PARTY_LABELS = ['主人公', '魔法使い', '騎士'];
+const PARTY_LABELS = ['葉山智也', '南雲彩乃', '岡村駆'];
 
 /** Drives every deployed character's reward selection (first offered candidate each), then taps the completion banner's continue/clear button. */
 function completeRewardPhaseAndProceed() {
@@ -80,11 +80,11 @@ function completeRewardPhaseAndProceed() {
   fireEvent.click(proceedButton);
 }
 
-describe('useStageController — full multi-zone Stage flow (spec v0.5 §2, MVP-5)', () => {
-  it('Zone1 → Reward → Zone2 (rare event, duplicate enemy species) → Reward → Zone3 (Final/Boss) → Reward → Stage Clear', () => {
+describe('useStageController — full multi-zone Stage flow (Stage1《閉ざされた連絡路》, MVP-10 official content, 4 Zones)', () => {
+  it('Zone1(ランナー×2) → Reward → Zone2(ランナー+ウォッチャー) → Reward → Zone3(強敵センチネル、希少報酬) → Reward → Zone4(JANUS/Final) → Reward → Stage Clear', () => {
     render(<Harness />);
 
-    // --- Zone 1 ---
+    // --- Zone 1: 旧接続路 (ランナー ×2, duplicate enemy species) ---
     expect(driveZoneBattleToWin()).toBe('won');
     const zone1EndingHp = readHpBars();
     for (const label of PARTY_LABELS) expect(zone1EndingHp[label]).toBeDefined();
@@ -99,24 +99,33 @@ describe('useStageController — full multi-zone Stage flow (spec v0.5 §2, MVP-
     fireEvent.click(screen.getByRole('button', { name: '次のゾーンへ' }));
 
     // Zone 2 starts: survivors' HP carried over (never reset to full unless
-    // already full), new enemies (2× same species) start fresh.
+    // already full), new enemies (ランナー + ウォッチャー) start fresh.
     const zone2StartHp = readHpBars();
     for (const label of PARTY_LABELS) {
       expect(zone2StartHp[label].current).toBe(zone1EndingHp[label].current);
     }
-    expect(document.querySelectorAll('.hp-bar').length).toBeGreaterThanOrEqual(2 + PARTY_LABELS.length); // 2 goblins + party
+    expect(document.querySelectorAll('.hp-bar').length).toBeGreaterThanOrEqual(2 + PARTY_LABELS.length); // ランナー+ウォッチャー + party
 
-    // --- Zone 2 (rare reward event, duplicate enemy species) ---
+    // --- Zone 2: 監視交差点 (ランナー×1 + ウォッチャー×1, not a rare event) ---
     expect(driveZoneBattleToWin()).toBe('won');
     fireEvent.click(screen.getByRole('button', { name: 'ゾーンクリア → 報酬へ' }));
-    // Zone 2 IS a rare-reward-event zone: 4 candidates offered (ZoneDefinition.isRareRewardEvent reflected).
-    expect(document.querySelectorAll('.reward-card')).toHaveLength(4);
+    expect(document.querySelectorAll('.reward-card')).toHaveLength(3);
     completeRewardPhaseAndProceed();
 
     // --- INTER_ZONE_CHOICE between Zone2 and Zone3 ---
     fireEvent.click(screen.getByRole('button', { name: '次のゾーンへ' }));
 
-    // --- Zone 3 (Final Zone, boss present) ---
+    // --- Zone 3: 封鎖ゲート前 (クランプ+リレー+センチネル, first 強敵, rare reward event) ---
+    expect(driveZoneBattleToWin()).toBe('won');
+    fireEvent.click(screen.getByRole('button', { name: 'ゾーンクリア → 報酬へ' }));
+    // Zone 3 IS a rare-reward-event zone: 4 candidates offered.
+    expect(document.querySelectorAll('.reward-card')).toHaveLength(4);
+    completeRewardPhaseAndProceed();
+
+    // --- INTER_ZONE_CHOICE between Zone3 and Zone4 (final) ---
+    fireEvent.click(screen.getByRole('button', { name: '次のゾーンへ' }));
+
+    // --- Zone 4 (Final Zone, boss 門衛機《JANUS》 only) ---
     expect(driveZoneBattleToWin()).toBe('won');
     fireEvent.click(screen.getByRole('button', { name: 'ゾーンクリア → 報酬へ' }));
     expect(document.querySelectorAll('.reward-card')).toHaveLength(3); // Final Zone still uses the normal reward rule
@@ -131,6 +140,6 @@ describe('useStageController — full multi-zone Stage flow (spec v0.5 §2, MVP-
 
     // --- Stage Clear ---
     expect(screen.getByRole('heading', { name: 'ステージクリア！' })).toBeTruthy();
-    expect(screen.getByText('クリア済みゾーン数: 3')).toBeTruthy();
+    expect(screen.getByText('クリア済みゾーン数: 4')).toBeTruthy();
   });
 });

@@ -9,7 +9,7 @@ import type { StageEndContext } from '../engine/progression/ProgressionSystem.ty
 import { stageConfig } from '../config/stageConfig';
 import { createRogueliteEngine } from '../engine/roguelite/RogueliteEngine';
 import { createRandomService } from '../engine/random/RandomService';
-import { sampleEnemyDefinitionsById } from '../data/stages/sampleStage';
+import { enemyDefinitionsById } from '../data/enemies/enemyDefinitionsById';
 import { spellsById } from '../data/spells/spellsById';
 import { sampleRewardDefinitions } from '../data/roguelite/sampleRewardDefinitions';
 import { rewardConfig } from '../config/rewardConfig';
@@ -197,7 +197,7 @@ export function useStageController(
 
   switch (stageState.phase) {
     case 'ZONE_BATTLE': {
-      const enemies = stageEngine.resolveZoneEnemies(stage, stageState, sampleEnemyDefinitionsById);
+      const enemies = stageEngine.resolveZoneEnemies(stage, stageState, enemyDefinitionsById);
       return (
         <>
           <h1>StudyRise — Stage攻略</h1>
