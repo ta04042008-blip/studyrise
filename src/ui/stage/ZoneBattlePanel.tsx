@@ -19,8 +19,8 @@ interface ZoneBattlePanelProps {
   spellsById: Record<string, SpellDefinition>;
   initialItems: ItemBattleSlot[];
   seed: number;
-  onWin: (survivorHpByCharacterId: Record<string, number>) => void;
-  onLose: () => void;
+  onWin: (survivorHpByCharacterId: Record<string, number>, remainingBattleItems: ItemBattleSlot[]) => void;
+  onLose: (remainingBattleItems: ItemBattleSlot[]) => void;
 }
 
 /**
@@ -65,13 +65,13 @@ export function ZoneBattlePanel({
       {state.phase === 'BATTLE_END' && state.outcome === 'win' && (
         <button
           type="button"
-          onClick={() => onWin(Object.fromEntries(state.players.map((p) => [p.id, p.currentHp])))}
+          onClick={() => onWin(Object.fromEntries(state.players.map((p) => [p.id, p.currentHp])), state.battleItems)}
         >
           ゾーンクリア → 報酬へ
         </button>
       )}
       {state.phase === 'BATTLE_END' && state.outcome === 'lose' && (
-        <button type="button" onClick={onLose}>
+        <button type="button" onClick={() => onLose(state.battleItems)}>
           敗北 — ステージ失敗
         </button>
       )}

@@ -1,9 +1,10 @@
 import { useStageController } from './useStageController';
 import type { StageLaunchConfig } from '../base/base.types';
+import type { StageEndContext } from '../engine/progression/ProgressionSystem.types';
 
 interface StageSessionScreenProps {
   config: StageLaunchConfig;
-  onReturnToBase: () => void;
+  onReturnToBase: (endContext: StageEndContext) => void;
 }
 
 /**

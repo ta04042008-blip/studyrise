@@ -21,6 +21,7 @@ export const sampleStage: StageDefinition = {
       id: 'zone_1',
       enemies: [{ enemyDefinitionId: sampleEnemy.id, instanceId: 'zone1_slime_1' }],
       isRareRewardEvent: false,
+      permanentRewardProfileId: 'NORMAL_ZONE',
       isFinalZone: false,
     },
     {
@@ -30,6 +31,7 @@ export const sampleStage: StageDefinition = {
         { enemyDefinitionId: sampleEnemy2.id, instanceId: 'zone2_goblin_2' },
       ],
       isRareRewardEvent: true,
+      permanentRewardProfileId: 'NORMAL_ZONE',
       isFinalZone: false,
     },
     {
@@ -39,6 +41,7 @@ export const sampleStage: StageDefinition = {
         { enemyDefinitionId: sampleEnemyBoss.id, instanceId: 'zone3_boss_1' },
       ],
       isRareRewardEvent: false,
+      permanentRewardProfileId: 'BOSS_ZONE',
       isFinalZone: true,
     },
   ],

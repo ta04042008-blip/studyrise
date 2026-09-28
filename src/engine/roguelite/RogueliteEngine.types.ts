@@ -1,10 +1,17 @@
 import type { QuestionCommandKind } from '../battle/BattleEngine.types';
 import type { StatKey } from '../../types/stats';
+import { RARITIES, type Rarity } from '../../types/rarity';
 
-/** Spec §9.4, five fixed tiers. Display-only in MVP-4 (see RogueliteEngine.ts header comment) — it never gates which reward content is offered. */
-export type Rarity = 'NORMAL' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
-
-export const RARITIES: readonly Rarity[] = ['NORMAL', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'];
+/**
+ * Spec §9.4, five fixed tiers. Display-only in MVP-4 (see RogueliteEngine.ts
+ * header comment) — it never gates which reward content is offered.
+ * Re-exported from the shared `src/types/rarity.ts` (MVP-7: equipment
+ * rarity reuses the same scale, and ProgressionSystem must not depend on
+ * this roguelite-specific module) so every existing `import { RARITIES,
+ * type Rarity } from './RogueliteEngine.types'` call site keeps working
+ * unchanged.
+ */
+export { RARITIES, type Rarity };
 
 export type RewardCategory = 'NEW_SPELL' | 'SPELL_UPGRADE' | 'COMMAND_BOOST' | 'TEMP_STAT_BOOST' | 'HEAL_SPECIAL';
 

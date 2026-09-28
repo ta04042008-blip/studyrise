@@ -5,7 +5,7 @@ import type { StageConfig } from '../../../src/config/stageConfig';
 import { createRogueliteEngine, type RogueliteEngine } from '../../../src/engine/roguelite/RogueliteEngine';
 import type { RewardSession, RunState } from '../../../src/engine/roguelite/RogueliteEngine.types';
 import { createRandomService, deriveSeed } from '../../../src/engine/random/RandomService';
-import type { CharacterDefinition, EnemyDefinition } from '../../../src/engine/battle/BattleEngine.types';
+import type { CharacterDefinition, EnemyDefinition, ItemBattleSlot } from '../../../src/engine/battle/BattleEngine.types';
 import {
   testCharacterA,
   testConfig,
@@ -16,6 +16,9 @@ import {
 
 const testStageConfig: StageConfig = { koReviveHpPercent: 0.3 };
 const stageEngine = createStageEngine({ config: testStageConfig });
+
+/** No departure items needed for these fixtures — StageEngine's item-pool threading is covered by its own dedicated test file. */
+const NO_ITEMS: ItemBattleSlot[] = [];
 
 function makeRunResolver(seed = 0): RogueliteEngine {
   return createRogueliteEngine({
@@ -50,6 +53,7 @@ const oneZoneStage: StageDefinition = {
       id: 'zone_1_final',
       enemies: [{ enemyDefinitionId: bossEnemy.id, instanceId: 'boss_1' }],
       isRareRewardEvent: false,
+      permanentRewardProfileId: 'BOSS_ZONE',
       isFinalZone: true,
     },
   ],
@@ -63,6 +67,7 @@ const threeZoneStage: StageDefinition = {
       id: 'zone_1',
       enemies: [{ enemyDefinitionId: normalEnemy.id, instanceId: 'z1_e1' }],
       isRareRewardEvent: false,
+      permanentRewardProfileId: 'NORMAL_ZONE',
       isFinalZone: false,
     },
     {
@@ -72,6 +77,7 @@ const threeZoneStage: StageDefinition = {
         { enemyDefinitionId: normalEnemy.id, instanceId: 'z2_e2' }, // same species twice
       ],
       isRareRewardEvent: true,
+      permanentRewardProfileId: 'NORMAL_ZONE',
       isFinalZone: false,
     },
     {
@@ -81,6 +87,7 @@ const threeZoneStage: StageDefinition = {
         { enemyDefinitionId: bossEnemy.id, instanceId: 'z3_boss' },
       ],
       isRareRewardEvent: false,
+      permanentRewardProfileId: 'BOSS_ZONE',
       isFinalZone: true,
     },
   ],
@@ -108,10 +115,11 @@ function completeRewardPhase(
 describe('StageEngine — createInitialState / retry', () => {
   it('always starts at Zone 1, phase ZONE_BATTLE, with a fresh default RunBuild', () => {
     const runResolver = makeRunResolver();
-    const state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
+    const state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
     expect(state.currentZoneIndex).toBe(0);
     expect(state.phase).toBe('ZONE_BATTLE');
     expect(state.result).toBeNull();
+    expect(state.clearedZoneIds).toEqual([]);
     expect(stageEngine.currentZone(threeZoneStage, state).id).toBe('zone_1');
     for (const c of testParty) {
       expect(state.runState.build.characters[c.id].knownSpells).toHaveLength(1);
@@ -122,9 +130,9 @@ describe('StageEngine — createInitialState / retry', () => {
 describe('StageEngine — Zone resolution (enemyDefinitionId vs instanceId, MVP-5 correction 1)', () => {
   it('resolves each EnemyInstanceDefinition to a BattleEngine-ready instance keeping both ids', () => {
     const runResolver = makeRunResolver();
-    const state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
+    const state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
     // Advance to zone_2 (same-species-twice zone) by simulating a win + full reward + continue.
-    const afterWin = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 100 });
+    const afterWin = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 100 }, NO_ITEMS);
     const rewardedRunState = completeRewardPhase(makeRunResolver(1), testParty, afterWin.runState, false);
     const synced = stageEngine.updateRunState(afterWin, rewardedRunState);
     const afterReward = stageEngine.completeZoneReward(threeZoneStage, synced, testParty, runResolver);
@@ -145,7 +153,7 @@ describe('StageEngine — Zone resolution (enemyDefinitionId vs instanceId, MVP-
 describe('StageEngine — seed derivation (MVP-5 correction 3)', () => {
   it('battle/reward seeds are derived from runSeed + zone id, independent of each other', () => {
     const runResolver = makeRunResolver();
-    const state = stageEngine.createInitialState(threeZoneStage, testParty, 123, runResolver);
+    const state = stageEngine.createInitialState(threeZoneStage, testParty, 123, runResolver, NO_ITEMS);
     const battleSeed = stageEngine.deriveZoneBattleSeed(threeZoneStage, state);
     const rewardSeed = stageEngine.deriveZoneRewardSeed(threeZoneStage, state);
     expect(battleSeed).toBe(deriveSeed(123, 'zone_1', 'battle'));
@@ -155,8 +163,8 @@ describe('StageEngine — seed derivation (MVP-5 correction 3)', () => {
 
   it('the same runSeed reproduces identical per-zone seeds across two independent StageEngine runs', () => {
     const runResolver = makeRunResolver();
-    const stateA = stageEngine.createInitialState(threeZoneStage, testParty, 7, runResolver);
-    const stateB = stageEngine.createInitialState(threeZoneStage, testParty, 7, runResolver);
+    const stateA = stageEngine.createInitialState(threeZoneStage, testParty, 7, runResolver, NO_ITEMS);
+    const stateB = stageEngine.createInitialState(threeZoneStage, testParty, 7, runResolver, NO_ITEMS);
     expect(stageEngine.deriveZoneBattleSeed(threeZoneStage, stateA)).toBe(
       stageEngine.deriveZoneBattleSeed(threeZoneStage, stateB),
     );
@@ -164,8 +172,8 @@ describe('StageEngine — seed derivation (MVP-5 correction 3)', () => {
 
   it('a different runSeed on the same stage yields different per-zone seeds', () => {
     const runResolver = makeRunResolver();
-    const stateA = stageEngine.createInitialState(threeZoneStage, testParty, 7, runResolver);
-    const stateB = stageEngine.createInitialState(threeZoneStage, testParty, 8, runResolver);
+    const stateA = stageEngine.createInitialState(threeZoneStage, testParty, 7, runResolver, NO_ITEMS);
+    const stateB = stageEngine.createInitialState(threeZoneStage, testParty, 8, runResolver, NO_ITEMS);
     expect(stageEngine.deriveZoneBattleSeed(threeZoneStage, stateA)).not.toBe(
       stageEngine.deriveZoneBattleSeed(threeZoneStage, stateB),
     );
@@ -175,8 +183,8 @@ describe('StageEngine — seed derivation (MVP-5 correction 3)', () => {
 describe('StageEngine — HP carryover and KO revival', () => {
   it("a survivor's HP carries into the next zone unchanged", () => {
     const runResolver = makeRunResolver();
-    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 42, charB: 100 });
+    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
+    state = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 42, charB: 100 }, NO_ITEMS);
     const rewardedRunState = completeRewardPhase(makeRunResolver(1), testParty, state.runState, false);
     state = stageEngine.updateRunState(state, rewardedRunState);
     state = stageEngine.completeZoneReward(threeZoneStage, state, testParty, runResolver);
@@ -186,9 +194,9 @@ describe('StageEngine — HP carryover and KO revival', () => {
 
   it('a KO\'d (0 HP) character revives at ceil(effectiveMaxHp * 30%) at the next zone, minimum 1', () => {
     const runResolver = makeRunResolver();
-    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
+    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
     // testCharacterA.baseStats.maxHp === 100 → 30% == 30 exactly.
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 0, charB: 100 });
+    state = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 0, charB: 100 }, NO_ITEMS);
     const rewardedRunState = completeRewardPhase(makeRunResolver(1), testParty, state.runState, false);
     state = stageEngine.updateRunState(state, rewardedRunState);
     state = stageEngine.completeZoneReward(threeZoneStage, state, testParty, runResolver);
@@ -199,7 +207,7 @@ describe('StageEngine — HP carryover and KO revival', () => {
 
   it('revival uses effectiveMaxHp (RunBuild HP boosts included), not the raw base maxHp — via the same resolveBattleInputsForRun single source', () => {
     const runResolver = makeRunResolver();
-    let state = stageEngine.createInitialState(threeZoneStage, [testCharacterA], 1, runResolver);
+    let state = stageEngine.createInitialState(threeZoneStage, [testCharacterA], 1, runResolver, NO_ITEMS);
     // Manually grant a +10 HP temp-stat-boost stack, matching what RogueliteEngine's own applyRewardToBuild would do.
     state = {
       ...state,
@@ -215,7 +223,7 @@ describe('StageEngine — HP carryover and KO revival', () => {
         },
       },
     };
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 0 });
+    state = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 0 }, NO_ITEMS);
     // Synthesize an already-complete, no-op reward phase (bypassing real
     // candidate generation) so this test's only variable is the HP boost
     // already on the build, not whatever reward would randomly be rolled.
@@ -247,8 +255,8 @@ describe('StageEngine — HP carryover and KO revival', () => {
 describe('StageEngine — RunBuild persistence and reward reflection', () => {
   it('RunBuild is preserved across zone transitions (not reset) until the stage ends', () => {
     const runResolver = makeRunResolver();
-    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 100, charB: 100 });
+    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
+    state = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 100, charB: 100 }, NO_ITEMS);
     const rewardedRunState = completeRewardPhase(makeRunResolver(1), testParty, state.runState, false);
     state = stageEngine.updateRunState(state, rewardedRunState);
     state = stageEngine.completeZoneReward(threeZoneStage, state, testParty, runResolver);
@@ -278,7 +286,7 @@ describe('StageEngine — RunBuild persistence and reward reflection', () => {
 describe('StageEngine — self-return', () => {
   it('is impossible during ZONE_BATTLE (no-op)', () => {
     const runResolver = makeRunResolver();
-    const state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
+    const state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
     expect(state.phase).toBe('ZONE_BATTLE');
     const afterAttempt = stageEngine.selfReturn(state, testParty, runResolver);
     expect(afterAttempt).toBe(state); // untouched — structurally still ZONE_BATTLE
@@ -286,8 +294,8 @@ describe('StageEngine — self-return', () => {
 
   it('is impossible during ZONE_REWARD (no-op)', () => {
     const runResolver = makeRunResolver();
-    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 100, charB: 100 });
+    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
+    state = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 100, charB: 100 }, NO_ITEMS);
     expect(state.phase).toBe('ZONE_REWARD');
     const afterAttempt = stageEngine.selfReturn(state, testParty, runResolver);
     expect(afterAttempt).toBe(state);
@@ -295,8 +303,8 @@ describe('StageEngine — self-return', () => {
 
   it('from INTER_ZONE_CHOICE, ends the stage as SELF_RETURNED and discards RunBuild', () => {
     const runResolver = makeRunResolver();
-    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 100, charB: 100 });
+    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
+    state = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 100, charB: 100 }, NO_ITEMS);
     const rewardedRunState = completeRewardPhase(makeRunResolver(1), testParty, state.runState, false);
     state = stageEngine.updateRunState(state, rewardedRunState);
     state = stageEngine.completeZoneReward(threeZoneStage, state, testParty, runResolver);
@@ -308,7 +316,12 @@ describe('StageEngine — self-return', () => {
 
     state = stageEngine.selfReturn(state, testParty, runResolver);
     expect(state.phase).toBe('STAGE_RESULT');
-    expect(state.result).toEqual({ stageId: threeZoneStage.id, outcome: 'SELF_RETURNED', zonesCleared: 1 });
+    expect(state.result).toEqual({
+      stageId: threeZoneStage.id,
+      outcome: 'SELF_RETURNED',
+      zonesCleared: 1,
+      clearedZoneIds: ['zone_1'],
+    });
     expect(state.runState.build).toEqual(defaultBuild);
   });
 });
@@ -316,18 +329,18 @@ describe('StageEngine — self-return', () => {
 describe('StageEngine — defeat', () => {
   it('any zone defeat ends the stage as DEFEATED and discards RunBuild', () => {
     const runResolver = makeRunResolver();
-    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
-    state = stageEngine.recordZoneDefeat(state, testParty, runResolver);
+    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
+    state = stageEngine.recordZoneDefeat(state, testParty, runResolver, NO_ITEMS);
     expect(state.phase).toBe('STAGE_RESULT');
-    expect(state.result).toEqual({ stageId: threeZoneStage.id, outcome: 'DEFEATED', zonesCleared: 0 });
+    expect(state.result).toEqual({ stageId: threeZoneStage.id, outcome: 'DEFEATED', zonesCleared: 0, clearedZoneIds: [] });
     expect(state.runState.build).toEqual(runResolver.createDefaultRunBuild(testParty));
   });
 
   it('is impossible outside ZONE_BATTLE (no-op)', () => {
     const runResolver = makeRunResolver();
-    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 100, charB: 100 });
-    const afterAttempt = stageEngine.recordZoneDefeat(state, testParty, runResolver);
+    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
+    state = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 100, charB: 100 }, NO_ITEMS);
+    const afterAttempt = stageEngine.recordZoneDefeat(state, testParty, runResolver, NO_ITEMS);
     expect(afterAttempt).toBe(state);
   });
 });
@@ -335,10 +348,10 @@ describe('StageEngine — defeat', () => {
 describe('StageEngine — Final Zone / boss / Stage Clear', () => {
   it('a 1-zone Stage (already the final zone) clears immediately after its reward phase completes, with no INTER_ZONE_CHOICE', () => {
     const runResolver = makeRunResolver();
-    let state = stageEngine.createInitialState(oneZoneStage, testParty, 1, runResolver);
+    let state = stageEngine.createInitialState(oneZoneStage, testParty, 1, runResolver, NO_ITEMS);
     expect(stageEngine.currentZone(oneZoneStage, state).isFinalZone).toBe(true);
 
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 100, charB: 100 });
+    state = stageEngine.recordZoneWin(oneZoneStage, state, { [testCharacterA.id]: 100, charB: 100 }, NO_ITEMS);
     expect(state.phase).toBe('ZONE_REWARD');
 
     const rewardedRunState = completeRewardPhase(makeRunResolver(1), testParty, state.runState, false);
@@ -346,16 +359,21 @@ describe('StageEngine — Final Zone / boss / Stage Clear', () => {
     state = stageEngine.completeZoneReward(oneZoneStage, state, testParty, runResolver);
 
     expect(state.phase).toBe('STAGE_RESULT');
-    expect(state.result).toEqual({ stageId: oneZoneStage.id, outcome: 'CLEARED', zonesCleared: 1 });
+    expect(state.result).toEqual({
+      stageId: oneZoneStage.id,
+      outcome: 'CLEARED',
+      zonesCleared: 1,
+      clearedZoneIds: ['zone_1_final'],
+    });
     expect(state.runState.build).toEqual(runResolver.createDefaultRunBuild(testParty)); // RunBuild discarded on clear
   });
 
   it('a 3-zone Stage requires all zones cleared, offers Zone reward after the boss too, then clears', () => {
     const runResolver = makeRunResolver();
-    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
+    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
 
     // Zone 1 (normal).
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 100, charB: 100 });
+    state = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 100, charB: 100 }, NO_ITEMS);
     let rewarded = completeRewardPhase(makeRunResolver(1), testParty, state.runState, false);
     state = stageEngine.updateRunState(state, rewarded);
     state = stageEngine.completeZoneReward(threeZoneStage, state, testParty, runResolver);
@@ -365,7 +383,7 @@ describe('StageEngine — Final Zone / boss / Stage Clear', () => {
 
     // Zone 2 (same-species-twice, rare reward event).
     expect(stageEngine.currentZone(threeZoneStage, state).isRareRewardEvent).toBe(true);
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 80, charB: 90 });
+    state = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 80, charB: 90 }, NO_ITEMS);
     rewarded = completeRewardPhase(makeRunResolver(2), testParty, state.runState, true);
     state = stageEngine.updateRunState(state, rewarded);
     state = stageEngine.completeZoneReward(threeZoneStage, state, testParty, runResolver);
@@ -379,7 +397,7 @@ describe('StageEngine — Final Zone / boss / Stage Clear', () => {
     expect(finalZoneEnemies.some((e) => e.definition.isBoss)).toBe(true);
     expect(finalZoneEnemies.some((e) => !e.definition.isBoss)).toBe(true);
 
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 50, charB: 60 });
+    state = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 50, charB: 60 }, NO_ITEMS);
     expect(state.phase).toBe('ZONE_REWARD'); // boss defeat still runs the normal Zone reward flow (spec §11.4)
     rewarded = completeRewardPhase(makeRunResolver(3), testParty, state.runState, false);
     state = stageEngine.updateRunState(state, rewarded);
@@ -387,14 +405,19 @@ describe('StageEngine — Final Zone / boss / Stage Clear', () => {
     state = stageEngine.completeZoneReward(threeZoneStage, state, testParty, runResolver);
 
     expect(state.phase).toBe('STAGE_RESULT');
-    expect(state.result).toEqual({ stageId: threeZoneStage.id, outcome: 'CLEARED', zonesCleared: 3 });
+    expect(state.result).toEqual({
+      stageId: threeZoneStage.id,
+      outcome: 'CLEARED',
+      zonesCleared: 3,
+      clearedZoneIds: ['zone_1', 'zone_2', 'zone_3_final'],
+    });
     expect(state.runState.build).toEqual(runResolver.createDefaultRunBuild(testParty));
   });
 
   it('completeZoneReward no-ops until the reward phase is actually complete (idempotency, CLAUDE.md §13)', () => {
     const runResolver = makeRunResolver();
-    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver);
-    state = stageEngine.recordZoneWin(state, { [testCharacterA.id]: 100, charB: 100 });
+    let state = stageEngine.createInitialState(threeZoneStage, testParty, 1, runResolver, NO_ITEMS);
+    state = stageEngine.recordZoneWin(threeZoneStage, state, { [testCharacterA.id]: 100, charB: 100 }, NO_ITEMS);
     // rewardPhase is still null (no reward-phase driving happened) — must no-op, not throw.
     const afterAttempt = stageEngine.completeZoneReward(threeZoneStage, state, testParty, runResolver);
     expect(afterAttempt).toBe(state);

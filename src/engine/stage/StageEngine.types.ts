@@ -1,3 +1,4 @@
+import type { ItemBattleSlot } from '../battle/BattleEngine.types';
 import type { RunState } from '../roguelite/RogueliteEngine.types';
 
 /**
@@ -25,6 +26,15 @@ export interface ZoneDefinition {
   /** Spec §9.1: whether this zone's reward phase offers 4 candidates instead of 3. */
   isRareRewardEvent: boolean;
   /**
+   * Stable id of a data-driven permanent-reward profile (spec §10/§11, MVP-7
+   * decision doc §3) — e.g. `"NORMAL_ZONE"`/`"BOSS_ZONE"` in
+   * `progressionConfig.zoneRewardProfiles`. StageEngine never interprets
+   * this string; only ProgressionSystem.reconcileStageResult reads it (via
+   * the StageDefinition carried in StageEndContext), which is what keeps
+   * "StageEngineは経験値・通貨・装備報酬量を計算しない" true by construction.
+   */
+  permanentRewardProfileId: string;
+  /**
    * Whether this is the Stage's final zone (spec §2.1: "各ステージの最終
    * ゾーンにはボスが1体存在する"). Boss placement itself is validated by
    * stageValidation.ts against `EnemyDefinition.isBoss`, never inferred from
@@ -49,6 +59,14 @@ export interface StageResult {
   outcome: StageOutcome;
   /** Number of zones fully cleared before this outcome (dev/debug display only — not persisted anywhere in MVP-5). */
   zonesCleared: number;
+  /**
+   * Zone ids whose battle was won during this Stage attempt (MVP-7 decision
+   * doc: a plain game-progress fact StageResult may carry). This is what
+   * `ProgressionSystem.reconcileStageResult` iterates to look up each
+   * cleared zone's `permanentRewardProfileId` — StageEngine itself never
+   * computes or interprets any reward amount from it.
+   */
+  clearedZoneIds: string[];
 }
 
 /**
@@ -72,5 +90,24 @@ export interface StageRunState {
   currentZoneIndex: number;
   phase: StagePhase;
   runState: RunState;
+  /**
+   * Zone ids won so far this Stage attempt (append-only, MVP-7). Copied
+   * verbatim into `StageResult.clearedZoneIds` once the attempt ends —
+   * StageEngine only ever records the fact "this zone id was won", never
+   * what it's worth.
+   */
+  clearedZoneIds: string[];
+  /**
+   * The party-shared item loadout (spec §5.10/§14, MVP-7 decision doc §14):
+   * a single pool that carries across the WHOLE Stage attempt, not
+   * refilled per zone. Seeded from `StageLaunchConfig.battleItems` at
+   * `createInitialState` and refreshed by `recordZoneWin`/`recordZoneDefeat`
+   * whenever a Zone's battle ends, so consumption persists into the
+   * next zone. Diffing this against the launch-time loadout (by the
+   * Base⇄Stage boundary, when building StageEndContext) is how
+   * `consumedItemCounts` is derived — StageEngine itself never touches
+   * PermanentState.
+   */
+  battleItems: ItemBattleSlot[];
   result: StageResult | null;
 }
