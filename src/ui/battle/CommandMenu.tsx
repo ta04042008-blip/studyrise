@@ -1,21 +1,36 @@
-import type { ItemBattleSlot, QuestionCommandKind, SpellDefinition } from '../../engine/battle/BattleEngine.types';
+import type { ItemBattleSlot, KnownSpell, QuestionCommandKind } from '../../engine/battle/BattleEngine.types';
 
 interface CommandMenuProps {
   enabled: boolean;
-  spell: SpellDefinition | null;
+  knownSpells: KnownSpell[];
   playerMp: number;
   items: ItemBattleSlot[];
   onSelectCommand: (command: QuestionCommandKind) => void;
-  onUseSpell: () => void;
+  onUseSpell: (spellId: string) => void;
+  onOpenSpellSelect: () => void;
   onUseItem: (itemId: string) => void;
 }
 
 /**
- * The 6 official commands (spec §5.1), all usable from COMMAND_SELECT.
- * Spell is disabled when MP is insufficient for the character's one known
- * spell; each item is disabled once its battle-local uses run out.
+ * The 6 official commands (spec §5.1), all usable from COMMAND_SELECT. With
+ * exactly one known spell (MVP-1〜3's only case) the Spell button uses it
+ * directly, same as before; with more than one (spec §4.5, up to 3 via
+ * roguelite NEW_SPELL rewards) it instead opens SpellSelectView — this is a
+ * UI-only branch, never a new BattleEngine phase (CLAUDE.md §9). Each item
+ * is disabled once its battle-local uses run out.
  */
-export function CommandMenu({ enabled, spell, playerMp, items, onSelectCommand, onUseSpell, onUseItem }: CommandMenuProps) {
+export function CommandMenu({
+  enabled,
+  knownSpells,
+  playerMp,
+  items,
+  onSelectCommand,
+  onUseSpell,
+  onOpenSpellSelect,
+  onUseItem,
+}: CommandMenuProps) {
+  const onlySpell = knownSpells.length === 1 ? knownSpells[0] : null;
+
   return (
     <div className="command-menu">
       <button type="button" disabled={!enabled} onClick={() => onSelectCommand('attack')}>
@@ -30,9 +45,19 @@ export function CommandMenu({ enabled, spell, playerMp, items, onSelectCommand, 
       <button type="button" disabled={!enabled} onClick={() => onSelectCommand('search')}>
         サーチ
       </button>
-      <button type="button" disabled={!enabled || !spell || playerMp < spell.mpCost} onClick={onUseSpell}>
-        スペル{spell ? `（MP${spell.mpCost}）` : ''}
-      </button>
+      {onlySpell ? (
+        <button
+          type="button"
+          disabled={!enabled || playerMp < onlySpell.mpCost}
+          onClick={() => onUseSpell(onlySpell.spellId)}
+        >
+          スペル（MP{onlySpell.mpCost}）
+        </button>
+      ) : (
+        <button type="button" disabled={!enabled || knownSpells.length === 0} onClick={onOpenSpellSelect}>
+          スペル
+        </button>
+      )}
       {items.map((slot) => (
         <button
           key={slot.item.id}

@@ -31,17 +31,25 @@ export function mc(overrides: Partial<MultipleChoiceQuestion> = {}): MultipleCho
 export const testSpell: SpellDefinition = {
   id: 'spell_test',
   name: 'テストスペル',
-  mpCost: 3,
   targetType: 'enemy',
-  effects: [{ type: 'DAMAGE', amount: 15 }],
+  maxLevel: 3,
+  levels: [
+    { mpCost: 3, effects: [{ type: 'DAMAGE', amount: 15 }] },
+    { mpCost: 3, effects: [{ type: 'DAMAGE', amount: 20 }] },
+    { mpCost: 3, effects: [{ type: 'DAMAGE', amount: 25 }] },
+  ],
 };
 
 export const testHealSpell: SpellDefinition = {
   id: 'spell_test_heal',
   name: 'テスト回復スペル',
-  mpCost: 2,
   targetType: 'self',
-  effects: [{ type: 'HEAL', amount: 10 }],
+  maxLevel: 3,
+  levels: [
+    { mpCost: 2, effects: [{ type: 'HEAL', amount: 10 }] },
+    { mpCost: 2, effects: [{ type: 'HEAL', amount: 15 }] },
+    { mpCost: 2, effects: [{ type: 'HEAL', amount: 20 }] },
+  ],
 };
 
 export const testItem = {
@@ -84,6 +92,12 @@ export function setup(opts?: {
   players?: CharacterDefinition[];
   /** Overrides the default single-enemy roster entirely (MVP-3 multi-enemy tests). */
   enemies?: EnemyDefinition[];
+  /** MVP-4: run-provided known spells/levels per player, overriding the default single-initial-spell inference. */
+  knownSpellsByPlayerId?: Record<string, { spellId: string; level: number }[]>;
+  /** MVP-4: run-provided command-boost bonuses per player. */
+  playerCommandModifiers?: Record<string, import('../../../src/engine/battle/BattleEngine.types').PlayerCommandModifiers>;
+  /** MVP-4: starting HP per player, carried from a previous battle. */
+  initialHpByPlayerId?: Record<string, number>;
 }) {
   const playerDef: CharacterDefinition = {
     id: 'player',
@@ -96,6 +110,7 @@ export function setup(opts?: {
       maxMp: opts?.playerMaxMp ?? 5,
     },
     initialSpellId: opts?.initialSpellId ?? testSpell.id,
+    additionalSpellPoolIds: [],
   };
   const enemyDef: EnemyDefinition = {
     id: 'enemy',
@@ -117,6 +132,9 @@ export function setup(opts?: {
     random,
     spellsById: opts?.spellsById ?? { [testSpell.id]: testSpell },
     initialItems: opts?.initialItems ?? [{ item: testItem, remainingUses: 2 }],
+    knownSpellsByPlayerId: opts?.knownSpellsByPlayerId,
+    playerCommandModifiers: opts?.playerCommandModifiers,
+    initialHpByPlayerId: opts?.initialHpByPlayerId,
   });
   return engine;
 }

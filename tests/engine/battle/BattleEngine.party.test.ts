@@ -17,6 +17,7 @@ function player(overrides: Partial<CharacterDefinition> & { id: string }): Chara
     name: overrides.id,
     baseStats: { attack: 50, defense: 10, speed: 20, maxHp: 100, maxMp: 5 },
     initialSpellId: testSpell.id,
+    additionalSpellPoolIds: [],
     ...overrides,
   };
 }
@@ -299,7 +300,7 @@ describe('BattleEngine — Spell/Item targetType and TARGET_SELECT (MVP-3 requir
       engine.advance();
       engine.advance();
     }
-    engine.useSpell();
+    engine.useSpell(testSpell.id);
     let state = engine.getState();
     expect(state.phase).toBe('TARGET_SELECT');
     expect(state.pendingTargetSelection?.for).toBe('spell');
@@ -353,10 +354,10 @@ describe('BattleEngine — sourceActorId is explicit everywhere (MVP-3 correctio
       engine.advance();
       engine.advance();
     }
-    expect(engine.getState().players.find((p) => p.id === 'caster')?.currentMp).toBeGreaterThanOrEqual(testSpell.mpCost);
+    expect(engine.getState().players.find((p) => p.id === 'caster')?.currentMp).toBeGreaterThanOrEqual(testSpell.levels[0].mpCost);
     expect(engine.getState().players.find((p) => p.id === 'bystander')?.currentMp).toBe(0);
 
-    engine.useSpell();
+    engine.useSpell(testSpell.id);
     const state = engine.getState();
     expect(state.lastNonQuestionOutcome?.sourceActorId).toBe('caster');
     expect(state.players.find((p) => p.id === 'caster')?.currentMp).toBeLessThan(5);

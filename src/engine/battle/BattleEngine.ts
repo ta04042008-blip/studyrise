@@ -5,6 +5,7 @@ import type { QuestionEngine } from '../question/QuestionEngine';
 import type { MultipleChoiceAnswer } from '../question/QuestionEngine.types';
 import { calculateAttackDamage } from './damage';
 import { applyEffect } from './effects';
+import { spellLevelData } from './spellLevel';
 import {
   createTimelineRandomService,
   createTimelineState,
@@ -21,7 +22,9 @@ import type {
   CharacterDefinition,
   EnemyDefinition,
   ItemBattleSlot,
+  KnownSpell,
   PlannedEnemyAction,
+  PlayerCommandModifiers,
   QuestionCommandKind,
   QuestionCommandOutcome,
   SpellDefinition,
@@ -42,6 +45,28 @@ export interface CreateBattleEngineOptions {
   spellsById: Record<string, SpellDefinition>;
   /** Party-shared battle-local item stock (spec §5.10; MVP-3 correction 5 — never per-player). */
   initialItems: ItemBattleSlot[];
+  /**
+   * Run-provided known-spells-and-levels for each player (spec §4.5: up to
+   * 3 once roguelite NEW_SPELL rewards are applied between battles).
+   * Defaults to `[{ spellId: initialSpellId, level: 1 }]` per player when
+   * omitted, which is byte-identical to MVP-1〜3's single-spell behavior —
+   * existing callers never need to pass this.
+   */
+  knownSpellsByPlayerId?: Record<string, { spellId: string; level: number }[]>;
+  /**
+   * Run-provided per-player command-boost bonuses (spec §9.2 category 3),
+   * already resolved to a total magnitude by whoever built this battle
+   * (RogueliteEngine's resolveBattleInputsForRun). Defaults to no bonuses.
+   */
+  playerCommandModifiers?: Record<string, PlayerCommandModifiers>;
+  /**
+   * Starting HP for each player, clamped to their maxHp (RogueliteEngine's
+   * resolveBattleInputsForRun carries the previous battle's ending HP, plus
+   * any HEAL_SPECIAL/max-HP roguelite rewards, into the next one). Defaults
+   * to full maxHp per player when omitted — byte-identical to MVP-1〜3,
+   * which always started a fresh battle at full HP.
+   */
+  initialHpByPlayerId?: Record<string, number>;
 }
 
 export interface BattleEngine {
@@ -73,14 +98,18 @@ export interface BattleEngine {
   submitAnswer(answer: MultipleChoiceAnswer): void;
   /**
    * Spell's short flow (spec §5.3): コマンド → 対象/選択 → 条件確認 →
-   * 即時処理. Uses the current actor's one known spell. When its
+   * 即時処理. `spellId` must be one the current actor currently knows
+   * (spec §4.5 — 1〜3 known spells; the UI only ever needs to show a
+   * spell-picker step when there is more than one, per §5.3's 対象選択
+   * ルール precedent, but the engine always takes the id explicitly, the
+   * same way useItem(itemId) already does). When the resolved spell's
    * targetType is 'enemy' and more than one enemy is alive, this instead
    * enters TARGET_SELECT; otherwise (self-target, or exactly one alive
-   * enemy) it validates MP cost, deducts it, and applies the spell's
-   * effects immediately, landing on the RESULT_APPLY resting phase (no
-   * question → no 正誤 → no EXPLANATION).
+   * enemy) it validates MP cost at the spell's current level, deducts it,
+   * and applies that level's effects immediately, landing on the
+   * RESULT_APPLY resting phase (no question → no 正誤 → no EXPLANATION).
    */
-  useSpell(): void;
+  useSpell(spellId: string): void;
   /** Same flow as useSpell(), consuming one use of the named item from the party-shared pool. */
   useItem(itemId: string): void;
   /**
@@ -95,7 +124,8 @@ export interface BattleEngine {
   advance(): void;
 }
 
-function actorFromCharacter(def: CharacterDefinition): BattleActor {
+function actorFromCharacter(def: CharacterDefinition, initialHp?: number): BattleActor {
+  const maxHp = def.baseStats.maxHp;
   return {
     id: def.id,
     name: def.name,
@@ -103,8 +133,8 @@ function actorFromCharacter(def: CharacterDefinition): BattleActor {
     attack: def.baseStats.attack,
     defense: def.baseStats.defense,
     speed: def.baseStats.speed,
-    maxHp: def.baseStats.maxHp,
-    currentHp: def.baseStats.maxHp,
+    maxHp,
+    currentHp: initialHp === undefined ? maxHp : Math.min(maxHp, Math.max(0, initialHp)),
     maxMp: def.baseStats.maxMp,
     // Spec §8: MP resets to 0 at zone start.
     currentMp: 0,
@@ -132,9 +162,26 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
   const { players: playerDefs, enemies: enemyDefs, questionEngine, config, random, spellsById, initialItems } =
     options;
 
-  const players: BattleActor[] = playerDefs.map(actorFromCharacter);
+  const players: BattleActor[] = playerDefs.map((d) => actorFromCharacter(d, options.initialHpByPlayerId?.[d.id]));
   const enemies: BattleActor[] = enemyDefs.map(actorFromEnemy);
-  const playerDefsById: Record<string, CharacterDefinition> = Object.fromEntries(playerDefs.map((d) => [d.id, d]));
+
+  // Defaults preserve MVP-1〜3 behavior exactly: one known spell (the
+  // character's initialSpellId) at level 1, no command-boost bonuses.
+  const knownSpellLevelsByPlayerId: Record<string, { spellId: string; level: number }[]> =
+    options.knownSpellsByPlayerId ??
+    Object.fromEntries(playerDefs.map((d) => [d.id, [{ spellId: d.initialSpellId, level: 1 }]]));
+  const commandModifiers: Record<string, PlayerCommandModifiers> = options.playerCommandModifiers ?? {};
+
+  const knownSpellsByPlayerId: Record<string, KnownSpell[]> = Object.fromEntries(
+    Object.entries(knownSpellLevelsByPlayerId).map(([playerId, entries]) => [
+      playerId,
+      entries.map(({ spellId, level }) => {
+        const spell = spellsById[spellId];
+        const levelData = spellLevelData(spell, level);
+        return { spellId, level, name: spell.name, mpCost: levelData.mpCost };
+      }),
+    ]),
+  );
 
   function actorById(id: string): BattleActor {
     const found = players.find((p) => p.id === id) ?? enemies.find((e) => e.id === id);
@@ -194,6 +241,7 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
     enemyActionLog: [],
     searchByEnemyId: {},
     battleItems: initialItems,
+    knownSpellsByPlayerId,
     outcome: null,
   };
 
@@ -358,7 +406,12 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
             config,
             random,
           );
-          damage = result.damage;
+          // COMMAND_BOOST (spec §9.2 category 3): a run-provided percent
+          // bonus on top of the base formula's result, re-floored the same
+          // way calculateAttackDamage itself floors (spec §5.6). Absent
+          // modifier => bonusPercent 0 => byte-identical to MVP-1〜3.
+          const bonusPercent = commandModifiers[pending.sourceActorId]?.attackDamageBonusPercent ?? 0;
+          damage = Math.max(config.minimumDamage, Math.round(result.damage * (1 + bonusPercent / 100)));
           isCritical = result.isCritical;
         }
         outcome = { ...base, command: 'attack', damage, isCritical };
@@ -372,9 +425,11 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
           applied = true;
           isGreatSuccess = random.chance(config.guardGreatSuccessChance);
           const baseMitigation = config.guardMitigationByStar[star];
-          mitigationPercent = isGreatSuccess
-            ? Math.min(config.guardMaxMitigation, baseMitigation + config.guardGreatSuccessBonusMitigation)
-            : baseMitigation;
+          const bonus = commandModifiers[pending.sourceActorId]?.guardMitigationBonus ?? 0;
+          const raw = isGreatSuccess
+            ? baseMitigation + config.guardGreatSuccessBonusMitigation + bonus
+            : baseMitigation + bonus;
+          mitigationPercent = Math.min(config.guardMaxMitigation, raw);
         }
         outcome = { ...base, command: 'guard', applied, mitigationPercent, isGreatSuccess };
         break;
@@ -385,7 +440,8 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
         if (correct) {
           // ★ does NOT modify MP gain (spec §5.8) — deliberately not
           // consulting config.attackStarModifier or `star` here.
-          isGreatSuccess = random.chance(config.chargeGreatSuccessChance);
+          const bonus = commandModifiers[pending.sourceActorId]?.chargeGreatSuccessBonus ?? 0;
+          isGreatSuccess = random.chance(config.chargeGreatSuccessChance + bonus);
           mpGained = isGreatSuccess ? config.chargeMpGainGreatSuccess : config.chargeMpGainNormal;
         }
         outcome = { ...base, command: 'charge', mpGained, isGreatSuccess };
@@ -394,7 +450,8 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
       case 'search': {
         let revealedActions: PlannedEnemyAction[] = [];
         if (correct) {
-          const count = config.searchRevealCountByStar[star];
+          const bonus = commandModifiers[pending.sourceActorId]?.searchRevealBonusCount ?? 0;
+          const count = config.searchRevealCountByStar[star] + bonus;
           ensureEnemyQueueLength(pending.targetId, count);
           revealedActions = enemyPlannedActions[pending.targetId].slice(0, count);
         }
@@ -448,20 +505,21 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
     state.phase = 'EXPLANATION';
   }
 
-  function useSpell() {
+  function useSpell(spellId: string) {
     if (state.phase !== 'COMMAND_SELECT') {
       warnRejected('useSpell');
       return;
     }
     const sourceActorId = state.currentActorId;
-    const playerDef = playerDefsById[sourceActorId];
-    const spell = spellsById[playerDef.initialSpellId];
-    if (!spell) {
-      warnRejected('useSpell (no spell found for initialSpellId)');
+    const known = knownSpellsByPlayerId[sourceActorId]?.find((k) => k.spellId === spellId);
+    const spell = spellsById[spellId];
+    if (!known || !spell) {
+      warnRejected('useSpell (spell not known by this actor)');
       return;
     }
+    const levelData = spellLevelData(spell, known.level);
     const sourceActor = actorById(sourceActorId);
-    if (sourceActor.currentMp < spell.mpCost) {
+    if (sourceActor.currentMp < levelData.mpCost) {
       warnRejected('useSpell (insufficient MP)');
       return;
     }
@@ -481,9 +539,11 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
 
   function resolveSpell(sourceActorId: string, spellId: string, targetId: string) {
     const spell = spellsById[spellId];
+    const known = knownSpellsByPlayerId[sourceActorId].find((k) => k.spellId === spellId)!;
+    const levelData = spellLevelData(spell, known.level);
     const sourceActor = actorById(sourceActorId);
-    sourceActor.currentMp -= spell.mpCost;
-    for (const effect of spell.effects) {
+    sourceActor.currentMp -= levelData.mpCost;
+    for (const effect of levelData.effects) {
       applyEffectToActor(actorById(targetId), effect);
     }
 
@@ -492,7 +552,7 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
       sourceActorId,
       targetId,
       spellId: spell.id,
-      effects: spell.effects,
+      effects: levelData.effects,
     };
     // No question was involved, so there is no 正誤/EXPLANATION step (spec
     // §5.3's short flow) — RESULT_APPLY is the resting phase here.

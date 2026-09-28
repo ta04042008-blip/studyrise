@@ -16,9 +16,13 @@ import type { Effect } from './effects';
  * explain. TARGET_SELECT is only entered when a command's target must be
  * chosen among more than one alive candidate (see targetSelection.ts) —
  * with a single alive enemy it auto-resolves and this phase is skipped
- * entirely, same as MVP-1/2's 1v1 behavior. ZONE_CLEAR/REWARD (roguelite,
- * multi-zone) still aren't part of this union — out of scope through
- * MVP-4/5 (CLAUDE.md §21/§27).
+ * entirely, same as MVP-1/2's 1v1 behavior. ZONE_CLEAR/REWARD (roguelite)
+ * are deliberately NOT part of this union, even as of MVP-4: multi-zone
+ * progression itself is still out of scope (MVP-5), so the reward flow is
+ * orchestrated one level above BattleEngine (RunController) between one
+ * BattleEngine instance's BATTLE_END(win) and the next instance's
+ * construction — see engine/roguelite/RogueliteEngine.ts. This keeps
+ * BattleEngine's own state machine, and every MVP-1〜3 test, untouched.
  */
 export type BattlePhase =
   | 'COMMAND_SELECT'
@@ -31,13 +35,24 @@ export type BattlePhase =
   | 'ENEMY_ACTION'
   | 'BATTLE_END';
 
+/** Per-level payload of a spell (spec §4.5: "各スペルに最大Lvを持つ"). */
+export interface SpellLevelData {
+  /** 1〜5, spec §4.5 ("コスト軽減後も最低1MP" applies to future cost-reduction effects, not levels themselves). */
+  mpCost: number;
+  effects: Effect[];
+}
+
 export interface SpellDefinition {
   id: string;
   name: string;
-  /** 1〜5, spec §4.5. */
-  mpCost: number;
   targetType: 'enemy' | 'self';
-  effects: Effect[];
+  /**
+   * Highest level a SPELL_UPGRADE roguelite reward can raise this spell to
+   * (spec §4.5). Set per spell, not globally.
+   */
+  maxLevel: number;
+  /** Index 0 = level 1 ... index (maxLevel - 1) = max level. Length must equal maxLevel. */
+  levels: SpellLevelData[];
 }
 
 export interface ItemDefinition {
@@ -69,6 +84,13 @@ export interface CharacterDefinition {
    * Resolved against the `spellsById` map passed to createBattleEngine.
    */
   initialSpellId: string;
+  /**
+   * Stable IDs (CLAUDE.md §15) of spells this character may acquire via a
+   * NEW_SPELL roguelite reward (spec §4.3 "追加スペルプール"). A NEW_SPELL
+   * candidate is only ever generated from this list, and never for a spell
+   * the character already knows in the current run.
+   */
+  additionalSpellPoolIds: string[];
 }
 
 export interface EnemyDefinition {
@@ -99,6 +121,40 @@ export interface BattleActor {
 }
 
 export type QuestionCommandKind = 'attack' | 'guard' | 'charge' | 'search';
+
+/**
+ * One spell a player actor currently knows in this run (initial spell, or a
+ * NEW_SPELL roguelite reward), resolved to its current level's display data.
+ * Provided to BattleEngine via `knownSpellsByPlayerId` and echoed back on
+ * `BattleState` unchanged for the whole battle (spells are only gained/
+ * leveled between battles, via RogueliteEngine — never mid-battle).
+ */
+export interface KnownSpell {
+  spellId: string;
+  level: number;
+  name: string;
+  /** Resolved for `level` (SpellLevelData.mpCost at that level). */
+  mpCost: number;
+}
+
+/**
+ * Optional, run-provided per-player bonuses from COMMAND_BOOST roguelite
+ * rewards (spec §9.2 category 3). All additive on top of the global
+ * `BattleConfig` baseline; omitted/absent means "no boost", so existing
+ * MVP-1〜3 callers that never pass this see byte-identical behavior.
+ * Magnitudes per boost level are a RogueliteEngine/rewardConfig concern —
+ * BattleEngine only ever consumes the already-resolved total.
+ */
+export interface PlayerCommandModifiers {
+  /** Percent bonus to final Attack damage, e.g. 20 = "+20%". */
+  attackDamageBonusPercent?: number;
+  /** Percentage-point bonus to Guard mitigation, 0..1 scale (e.g. 0.05 = "+5pp"). */
+  guardMitigationBonus?: number;
+  /** Percentage-point bonus to Charge's great-success roll chance, 0..1 scale. */
+  chargeGreatSuccessBonus?: number;
+  /** Flat bonus to Search's revealed-action count. */
+  searchRevealBonusCount?: number;
+}
 
 /**
  * Pending question-based command, mid-flow (Attack/Guard/Charge/Search
@@ -236,5 +292,13 @@ export interface BattleState {
   searchByEnemyId: Record<string, PlannedEnemyAction[]>;
   /** Party-shared item pool (spec §5.10's 3-slot loadout; MVP-3 correction 5 — never per-player). */
   battleItems: ItemBattleSlot[];
+  /**
+   * Each player's currently known spells for this battle (spec §4.5: 1
+   * initial spell, up to 3 total once roguelite NEW_SPELL rewards are
+   * applied between battles). Fixed for the whole battle — never mutated
+   * mid-battle. UI only shows a spell-picker step when an entry has more
+   * than one item; with exactly one (MVP-1〜3's only case) it auto-selects.
+   */
+  knownSpellsByPlayerId: Record<string, KnownSpell[]>;
   outcome: 'win' | 'lose' | null;
 }
