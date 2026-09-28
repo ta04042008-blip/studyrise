@@ -20,6 +20,7 @@ import type {
   BattleActor,
   BattleState,
   CharacterDefinition,
+  EnemyBattleInstance,
   EnemyDefinition,
   ItemBattleSlot,
   KnownSpell,
@@ -36,8 +37,16 @@ const UPCOMING_PREVIEW_COUNT = 4;
 export interface CreateBattleEngineOptions {
   /** 1〜3 characters (spec §4.1). Order is fixed for this battle. */
   players: CharacterDefinition[];
-  /** 1 or more enemies (spec §2.1: a zone = an enemy formation). */
-  enemies: EnemyDefinition[];
+  /**
+   * 1 or more enemies (spec §2.1: a zone = an enemy formation). A plain
+   * `EnemyDefinition` is normalized to an instance whose instanceId equals
+   * the definition's own id (byte-identical to pre-MVP-5 behavior — every
+   * existing caller passing bare definitions is unaffected). Pass an
+   * explicit `EnemyBattleInstance` (MVP-5's StageEngine does) to place the
+   * same EnemyDefinition more than once in a single battle without actor-id
+   * collisions.
+   */
+  enemies: (EnemyDefinition | EnemyBattleInstance)[];
   questionEngine: QuestionEngine;
   config: BattleConfig;
   random: RandomService;
@@ -128,6 +137,7 @@ function actorFromCharacter(def: CharacterDefinition, initialHp?: number): Battl
   const maxHp = def.baseStats.maxHp;
   return {
     id: def.id,
+    definitionId: def.id,
     name: def.name,
     kind: 'player',
     attack: def.baseStats.attack,
@@ -142,9 +152,16 @@ function actorFromCharacter(def: CharacterDefinition, initialHp?: number): Battl
   };
 }
 
-function actorFromEnemy(def: EnemyDefinition): BattleActor {
+/** A bare EnemyDefinition normalizes to an instance whose instanceId is its own id (pre-MVP-5 behavior, unchanged). */
+function normalizeEnemyInput(input: EnemyDefinition | EnemyBattleInstance): EnemyBattleInstance {
+  return 'definition' in input ? input : { instanceId: input.id, definition: input };
+}
+
+function actorFromEnemy(instance: EnemyBattleInstance): BattleActor {
+  const def = instance.definition;
   return {
-    id: def.id,
+    id: instance.instanceId,
+    definitionId: def.id,
     name: def.name,
     kind: 'enemy',
     attack: def.baseStats.attack,
@@ -163,7 +180,7 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
     options;
 
   const players: BattleActor[] = playerDefs.map((d) => actorFromCharacter(d, options.initialHpByPlayerId?.[d.id]));
-  const enemies: BattleActor[] = enemyDefs.map(actorFromEnemy);
+  const enemies: BattleActor[] = enemyDefs.map(normalizeEnemyInput).map(actorFromEnemy);
 
   // Defaults preserve MVP-1〜3 behavior exactly: one known spell (the
   // character's initialSpellId) at level 1, no command-boost bonuses.

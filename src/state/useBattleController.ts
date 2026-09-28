@@ -3,6 +3,7 @@ import { createBattleEngine, type BattleEngine } from '../engine/battle/BattleEn
 import type {
   BattleState,
   CharacterDefinition,
+  EnemyBattleInstance,
   EnemyDefinition,
   ItemBattleSlot,
   PlayerCommandModifiers,
@@ -18,8 +19,8 @@ import type { StarLevel } from '../types/stats';
 export interface UseBattleControllerArgs {
   /** 1〜3 characters (spec §4.1). */
   players: CharacterDefinition[];
-  /** 1 or more enemies (spec §2.1). */
-  enemies: EnemyDefinition[];
+  /** 1 or more enemies (spec §2.1). See CreateBattleEngineOptions.enemies for the instance-id normalization rule. */
+  enemies: (EnemyDefinition | EnemyBattleInstance)[];
   questions: readonly QuestionDefinition[];
   spellsById: Record<string, SpellDefinition>;
   initialItems: ItemBattleSlot[];
