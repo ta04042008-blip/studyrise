@@ -97,6 +97,13 @@ export interface EnemyDefinition {
   id: string;
   name: string;
   baseStats: BaseStats;
+  /**
+   * Marks this enemy as a Stage's boss (spec v0.5 §2.1/MVP-5 correction 2:
+   * boss identity is explicit content data, never inferred from a zone's
+   * position in a Stage's `zones[]`). Omitted/false for ordinary enemies —
+   * existing sample content needs no update.
+   */
+  isBoss?: boolean;
 }
 
 /** Guard status currently held by an actor; mitigates exactly one incoming attack (spec §5.7). */
@@ -104,9 +111,29 @@ export interface GuardStatus {
   mitigationPercent: number;
 }
 
+/**
+ * A single enemy placement within a Zone: a stable content definition id
+ * (CLAUDE.md §15 — never mutated, never used as the battle actor id) plus a
+ * battle-local instance id (MVP-5 correction 1). This is what lets the same
+ * EnemyDefinition appear more than once in one Zone without actor-id
+ * collisions inside BattleEngine.
+ */
+export interface EnemyBattleInstance {
+  instanceId: string;
+  definition: EnemyDefinition;
+}
+
 /** Flattened runtime actor (current/max HP+MP resolved from a definition). */
 export interface BattleActor {
+  /** Battle-local instance id — unique within this battle, NOT necessarily the content definition id (see EnemyBattleInstance). */
   id: string;
+  /**
+   * Stable content definition id this actor was instantiated from
+   * (CharacterDefinition.id or EnemyDefinition.id). Optional only so
+   * hand-built test fixtures that don't care about the distinction don't
+   * need updating; every actor BattleEngine itself constructs always sets it.
+   */
+  definitionId?: string;
   name: string;
   kind: 'player' | 'enemy';
   attack: number;

@@ -27,6 +27,33 @@ function mulberry32(seed: number): () => number {
   };
 }
 
+/**
+ * Deterministically derives a new numeric seed from a base seed plus any
+ * number of string/number parts (spec MVP-5: a Stage's `runSeed` must fan
+ * out into independent-but-reproducible streams per zone/purpose, e.g.
+ * `deriveSeed(runSeed, zoneId, 'battle')` vs `deriveSeed(runSeed, zoneId,
+ * 'reward')`). Pure and side-effect-free — calling it twice with the same
+ * arguments always returns the same value, so it is safe to call from a
+ * React render body without perturbing anything (CLAUDE.md §10: UI re-render
+ * counts must never change game randomness).
+ *
+ * FNV-1a-style string hashing, mixed with the base seed and a separator
+ * between parts so e.g. `("ab", "c")` and `("a", "bc")` do not collide.
+ */
+export function deriveSeed(runSeed: number, ...parts: (string | number)[]): number {
+  let h = (runSeed >>> 0) ^ 0x811c9dc5;
+  for (const part of parts) {
+    const s = String(part);
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    h ^= 0x9e3779b9; // separator mix so part boundaries matter
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
 export function createRandomService(seed: number): RandomService {
   const next = mulberry32(seed);
 

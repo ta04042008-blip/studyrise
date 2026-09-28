@@ -6,6 +6,8 @@ interface RewardScreenProps {
   characterNameById: Record<string, string>;
   /** Only ever actionable once controller.phase.complete is true (spec: proceeding to the next battle is gated on the last character's reward being applied). */
   onProceedToNextBattle: () => void;
+  /** Label for the completion-banner button (e.g. Final Zone says "ステージクリアへ" instead of the default). */
+  nextLabel?: string;
 }
 
 /**
@@ -13,7 +15,7 @@ interface RewardScreenProps {
  * and dispatches to it. No reward generation/rarity/synergy calculation
  * happens here — see RogueliteEngine.
  */
-export function RewardScreen({ controller, characterNameById, onProceedToNextBattle }: RewardScreenProps) {
+export function RewardScreen({ controller, characterNameById, onProceedToNextBattle, nextLabel }: RewardScreenProps) {
   const { phase } = controller;
   const session = phase.currentRewardSession;
   const targetName = characterNameById[session.targetCharacterId] ?? session.targetCharacterId;
@@ -52,7 +54,7 @@ export function RewardScreen({ controller, characterNameById, onProceedToNextBat
         <div className="reward-screen__complete">
           <p>全員の報酬選択が完了しました。</p>
           <button type="button" onClick={onProceedToNextBattle}>
-            次の戦闘へ
+            {nextLabel ?? '次の戦闘へ'}
           </button>
         </div>
       )}
