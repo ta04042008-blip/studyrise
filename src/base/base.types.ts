@@ -21,6 +21,8 @@ export interface AreaDefinition {
  * union, so Rules of Hooks is never at risk (user's explicit requirement).
  */
 export type AppPhase =
+  | 'BOOT_LOADING'
+  | 'RUN_RESUME_CHOICE'
   | 'BASE_HOME'
   | 'AREA_SELECT'
   | 'STAGE_SELECT'

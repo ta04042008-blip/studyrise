@@ -74,8 +74,10 @@ function driveZone1AnsweringPlan(maxSteps = 1500) {
   return 'timeout';
 }
 
-function driveToStageStart() {
-  fireEvent.click(screen.getByRole('button', { name: '出撃' }));
+async function driveToStageStart() {
+  // MVP-9: Base Home only renders after the async SaveSystem boot load
+  // resolves (BOOT_LOADING first).
+  fireEvent.click(await screen.findByRole('button', { name: '出撃' }));
   fireEvent.click(screen.getByRole('button', { name: sampleArea.name }));
   fireEvent.click(screen.getByRole('button', { name: sampleStage.name }));
 
@@ -91,9 +93,9 @@ function driveToStageStart() {
 }
 
 describe('useBaseController — 記録 screen shows navigation and an empty history before any battle', () => {
-  it('拠点 → 記録 shows the zero-record summary', () => {
+  it('拠点 → 記録 shows the zero-record summary', async () => {
     render(<Harness />);
-    fireEvent.click(screen.getByRole('button', { name: '記録' }));
+    fireEvent.click(await screen.findByRole('button', { name: '記録' }));
     expect(screen.getByText('記録')).toBeTruthy();
     expect(screen.getByText('まだ回答履歴がありません。')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: '拠点へ戻る' }));
@@ -102,9 +104,9 @@ describe('useBaseController — 記録 screen shows navigation and an empty hist
 });
 
 describe('useBaseController — 記録 screen after a battle with CORRECT/INCORRECT/UNKNOWN answers', () => {
-  it('records exactly the 3 answers and derives the summary from them, back at Base', () => {
+  it('records exactly the 3 answers and derives the summary from them, back at Base', async () => {
     render(<Harness />);
-    driveToStageStart();
+    await driveToStageStart();
 
     const outcome = driveZone1AnsweringPlan();
     expect(outcome).toBe('won');

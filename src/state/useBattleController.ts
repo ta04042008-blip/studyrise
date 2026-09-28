@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createBattleEngine, type BattleEngine } from '../engine/battle/BattleEngine';
+import { createBattleEngine, restoreBattleEngine, type BattleEngine } from '../engine/battle/BattleEngine';
 import type {
+  BattleEngineSnapshot,
   BattleState,
   CharacterDefinition,
   EnemyBattleInstance,
@@ -12,7 +13,7 @@ import type {
 } from '../engine/battle/BattleEngine.types';
 import { createQuestionEngine } from '../engine/question/QuestionEngine';
 import type { MultipleChoiceAnswer, QuestionDefinition } from '../engine/question/QuestionEngine.types';
-import { createRandomService } from '../engine/random/RandomService';
+import { createRandomService, createRandomServiceFromState } from '../engine/random/RandomService';
 import { battleConfig } from '../config/battleConfig';
 import type { StarLevel } from '../types/stats';
 import type { QuestionResult } from '../engine/learningHistory/LearningHistory.types';
@@ -40,6 +41,26 @@ export interface UseBattleControllerArgs {
    * no recording (e.g. tests that don't care about learning history).
    */
   onQuestionResult?: (result: QuestionResult) => void;
+  /**
+   * MVP-9: resumes an in-progress battle from a previously exported
+   * snapshot instead of building fresh actors/timeline. When provided, this
+   * takes effect only at this hook's initial construction (mirrors the
+   * `useMemo(..., [seed])` "construct once per mounted battle" contract) —
+   * `players`/`enemies`/`initialItems`/`knownSpellsByPlayerId`/
+   * `initialHpByPlayerId` are ignored in that case (the snapshot's
+   * BattleState already carries the fully resolved actors); `seed` is also
+   * ignored (the snapshot's own randomState is used instead).
+   */
+  restoreSnapshot?: BattleEngineSnapshot;
+  /**
+   * MVP-9: fired after every dispatched command leaves the engine in a new
+   * stable resting phase (CLAUDE.md §10/§13/§19 — every BattleEngine public
+   * method already returns only once battle state is at rest, so there is
+   * no unstable intermediate snapshot to accidentally persist here). Never
+   * driven by a useEffect watching arbitrary React state — only by this
+   * hook's own `sync()`, right after each command it actually dispatches.
+   */
+  onSnapshotChange?: (snapshot: BattleEngineSnapshot) => void;
 }
 
 export interface BattleController {
@@ -71,8 +92,27 @@ export function useBattleController({
   playerCommandModifiers,
   initialHpByPlayerId,
   onQuestionResult,
+  restoreSnapshot,
+  onSnapshotChange,
 }: UseBattleControllerArgs): BattleController {
   const engines = useMemo(() => {
+    if (restoreSnapshot) {
+      const random = createRandomServiceFromState(restoreSnapshot.randomState);
+      // MVP-9: QuestionEngine's own dispersion-affecting state must be
+      // restored too — a fresh QuestionEngine (lastPicked: null) can pick a
+      // DIFFERENT next question than a non-reloaded session would have,
+      // even with the exact same RNG cursor (see QuestionEngineSnapshot's
+      // doc comment).
+      const questionEngine = createQuestionEngine(questions, random, restoreSnapshot.questionEngineSnapshot);
+      const battleEngine: BattleEngine = restoreBattleEngine(restoreSnapshot, {
+        questionEngine,
+        config: battleConfig,
+        random,
+        spellsById,
+        playerCommandModifiers: playerCommandModifiers ?? {},
+      });
+      return { questionEngine, battleEngine };
+    }
     const random = createRandomService(seed);
     const questionEngine = createQuestionEngine(questions, random);
     const battleEngine: BattleEngine = createBattleEngine({
@@ -89,6 +129,9 @@ export function useBattleController({
     });
     return { questionEngine, battleEngine };
     // Instantiate once per mounted battle; `seed` change means a new battle.
+    // `restoreSnapshot` is deliberately read only on this first construction
+    // (never re-triggers a restore later in the same mount) — see this
+    // hook's own doc comment on UseBattleControllerArgs.restoreSnapshot.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed]);
 
@@ -103,11 +146,19 @@ export function useBattleController({
   // the UI would never render its actual initial state.
   useEffect(() => {
     setState(engines.battleEngine.getState());
+    // MVP-9: this fires exactly once per newly (re)constructed engine — a
+    // fresh battle's initial state (Zone開始) or a resumed battle's restored
+    // state — mirroring the existing "sync once per engine construction"
+    // contract this effect already had, never a generic "state changed"
+    // watcher (CLAUDE.md §18/§28).
+    onSnapshotChange?.(engines.battleEngine.exportSnapshot());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engines]);
 
   const sync = useCallback(() => {
     setState(engines.battleEngine.getState());
-  }, [engines]);
+    onSnapshotChange?.(engines.battleEngine.exportSnapshot());
+  }, [engines, onSnapshotChange]);
 
   const selectCommand = useCallback(
     (command: QuestionCommandKind) => {

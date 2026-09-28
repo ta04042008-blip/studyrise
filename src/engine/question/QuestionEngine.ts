@@ -3,6 +3,23 @@ import type { RandomService } from '../random/RandomService';
 import type { QuestionDefinition } from './QuestionEngine.types';
 import { validateQuestionPool } from './questionValidation';
 
+/**
+ * MVP-9: QuestionEngine's one piece of mutable, pick-affecting state
+ * (user's explicit audit instruction §1). `lastPicked` is not cosmetic —
+ * it changes the CANDIDATE POOL SIZE `pickQuestion` hands to
+ * `random.pick()` (see the dispersion filter below), and `random.pick`
+ * selects by `floor(next() * items.length)`, so a different pool length
+ * with the exact same RNG draw can select a different question entirely.
+ * A restored QuestionEngine that starts with `lastPicked: null` (instead of
+ * whatever it actually was at snapshot time) can therefore diverge from a
+ * non-reloaded session's next pick even though the RNG cursor itself
+ * continues identically — this is why it must be captured and restored
+ * explicitly, never left to a fresh engine's default.
+ */
+export interface QuestionEngineSnapshot {
+  lastPicked: { id: string; unit: string; format: string } | null;
+}
+
 export interface QuestionEngine {
   /** Subjects with at least one valid question (spec §12.3: 教科 is selectable per problem command). */
   listSubjects(): string[];
@@ -12,9 +29,21 @@ export interface QuestionEngine {
   pickQuestion(subject: string, star: StarLevel): QuestionDefinition;
   /** Questions that failed validation at load time (for dev-time reporting; CLAUDE.md §14/§19). */
   getInvalidCount(): number;
+  /** MVP-9: exports the dispersion-affecting state — see QuestionEngineSnapshot. */
+  exportSnapshot(): QuestionEngineSnapshot;
 }
 
-export function createQuestionEngine(rawPool: readonly QuestionDefinition[], random: RandomService): QuestionEngine {
+/**
+ * `initialSnapshot` (MVP-9, optional) resumes `lastPicked` from a previously
+ * exported QuestionEngineSnapshot instead of starting fresh — omitting it is
+ * byte-identical to every existing call site's behavior (lastPicked starts
+ * `null`), so this is purely additive.
+ */
+export function createQuestionEngine(
+  rawPool: readonly QuestionDefinition[],
+  random: RandomService,
+  initialSnapshot?: QuestionEngineSnapshot,
+): QuestionEngine {
   const { validQuestions, invalid } = validateQuestionPool(rawPool);
 
   if (invalid.length > 0 && typeof console !== 'undefined') {
@@ -23,7 +52,7 @@ export function createQuestionEngine(rawPool: readonly QuestionDefinition[], ran
     }
   }
 
-  let lastPicked: { id: string; unit: string; format: string } | null = null;
+  let lastPicked: { id: string; unit: string; format: string } | null = initialSnapshot?.lastPicked ?? null;
 
   function candidatesFor(subject: string, star: StarLevel): QuestionDefinition[] {
     return validQuestions.filter((q) => q.subject === subject && q.star === star);
@@ -65,6 +94,10 @@ export function createQuestionEngine(rawPool: readonly QuestionDefinition[], ran
 
     getInvalidCount() {
       return invalid.length;
+    },
+
+    exportSnapshot() {
+      return { lastPicked };
     },
   };
 }

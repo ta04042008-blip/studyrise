@@ -11,6 +11,24 @@ import { filterQuestionsByScope } from './questionScope';
  * calls — just reshaping already-chosen base state into StageEngine's
  * required input shape.
  */
+/**
+ * Resolves the 3-slot departure item selection (catalog ids, possibly with
+ * empty slots) into full battle-ready `ItemBattleSlot`s at their default
+ * use count — shared by a fresh departure (`buildStageLaunchConfig`) and a
+ * resumed Run (`buildResumedStageLaunchConfig`, MVP-9), since both start
+ * from the same kind of selection and need the exact same resolution.
+ */
+export function resolveBattleItemsFromSlots(
+  itemSlots: DepartureDraft['itemSlots'],
+  itemCatalogById: Record<string, DepartureItemCatalogEntry>,
+): ItemBattleSlot[] {
+  return itemSlots
+    .filter((itemId): itemId is string => itemId !== null)
+    .map((itemId) => itemCatalogById[itemId])
+    .filter((entry): entry is DepartureItemCatalogEntry => entry !== undefined)
+    .map((entry) => ({ item: entry.item, remainingUses: entry.defaultUses }));
+}
+
 export function buildStageLaunchConfig(
   draft: DepartureDraft,
   stage: StageDefinition,
@@ -18,17 +36,11 @@ export function buildStageLaunchConfig(
   itemCatalogById: Record<string, DepartureItemCatalogEntry>,
   runSeed: number,
 ): StageLaunchConfig {
-  const battleItems: ItemBattleSlot[] = draft.itemSlots
-    .filter((itemId): itemId is string => itemId !== null)
-    .map((itemId) => itemCatalogById[itemId])
-    .filter((entry): entry is DepartureItemCatalogEntry => entry !== undefined)
-    .map((entry) => ({ item: entry.item, remainingUses: entry.defaultUses }));
-
   return {
     party: draft.party,
     stage,
     questions: filterQuestionsByScope(questionPool, draft.questionScope),
-    battleItems,
+    battleItems: resolveBattleItemsFromSlots(draft.itemSlots, itemCatalogById),
     runSeed,
   };
 }

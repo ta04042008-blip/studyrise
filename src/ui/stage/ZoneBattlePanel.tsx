@@ -2,6 +2,7 @@ import { BattleScreen } from '../battle/BattleScreen';
 import { useBattleController } from '../../state/useBattleController';
 import type { RunResolver } from '../../engine/stage/StageEngine';
 import type {
+  BattleEngineSnapshot,
   CharacterDefinition,
   EnemyBattleInstance,
   ItemBattleSlot,
@@ -24,6 +25,10 @@ interface ZoneBattlePanelProps {
   onLose: (remainingBattleItems: ItemBattleSlot[]) => void;
   /** Learning-history event boundary (spec v0.8 §13, user's explicit MVP-8 instruction) — threaded straight through to `useBattleController`. */
   onQuestionResult?: (result: QuestionResult) => void;
+  /** MVP-9: resume this Zone's battle from a previously saved snapshot instead of building fresh actors from `seed`. */
+  restoreSnapshot?: BattleEngineSnapshot;
+  /** MVP-9: fired after every dispatched command leaves the battle at a new stable resting phase — see useBattleController's onSnapshotChange doc. */
+  onSnapshotChange?: (snapshot: BattleEngineSnapshot) => void;
 }
 
 /**
@@ -45,6 +50,8 @@ export function ZoneBattlePanel({
   onWin,
   onLose,
   onQuestionResult,
+  restoreSnapshot,
+  onSnapshotChange,
 }: ZoneBattlePanelProps) {
   // Pure, randomness-free (MVP-5 correction 4: same single source StageEngine's KO-revival math uses) — safe to call every render.
   const battleInputs = runResolver.resolveBattleInputsForRun(party, runState);
@@ -60,6 +67,8 @@ export function ZoneBattlePanel({
     initialHpByPlayerId: battleInputs.initialHpByPlayerId,
     seed,
     onQuestionResult,
+    restoreSnapshot,
+    onSnapshotChange,
   });
 
   const { state } = battleController;

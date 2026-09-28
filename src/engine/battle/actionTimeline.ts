@@ -1,4 +1,4 @@
-import type { RandomService } from '../random/RandomService';
+import type { RandomService, RandomState } from '../random/RandomService';
 
 /**
  * Speed-based action gauge/timeline (spec §5.2). A fast actor can act
@@ -88,6 +88,8 @@ function pickWinner(candidates: readonly TimelineActor[], random: RandomService)
  */
 export interface CloneableRandomService extends RandomService {
   clone(): CloneableRandomService;
+  /** Exports this stream's current cursor (MVP-9 §18.16/user's explicit instruction: resume must continue the same future timeline tie-break sequence, not reseed). */
+  exportState(): RandomState;
 }
 
 /** mulberry32 — same small deterministic PRNG as RandomService, but exposed as clonable state. */
@@ -123,6 +125,9 @@ function timelineRandomFromState(seedState: number): CloneableRandomService {
       // cloning leaks back into the clone (and vice versa).
       return timelineRandomFromState(a);
     },
+    exportState() {
+      return { algorithm: 'mulberry32', state: a };
+    },
   };
 }
 
@@ -135,6 +140,18 @@ function timelineRandomFromState(seedState: number): CloneableRandomService {
  */
 export function createTimelineRandomService(seed: number): CloneableRandomService {
   return timelineRandomFromState(seed >>> 0);
+}
+
+/**
+ * Resumes the timeline tie-break stream from a previously exported
+ * `RandomState` (MVP-9) — continuing the exact same future sequence rather
+ * than reseeding, mirroring `createRandomServiceFromState`.
+ */
+export function createTimelineRandomServiceFromState(state: RandomState): CloneableRandomService {
+  if (state.algorithm !== 'mulberry32') {
+    throw new Error(`createTimelineRandomServiceFromState: unsupported algorithm "${state.algorithm}"`);
+  }
+  return timelineRandomFromState(state.state);
 }
 
 /**

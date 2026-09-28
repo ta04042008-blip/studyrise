@@ -1,4 +1,4 @@
-import { useStageController } from './useStageController';
+import { useStageController, type UseStageControllerSaveHooks } from './useStageController';
 import type { StageLaunchConfig } from '../base/base.types';
 import type { StageEndContext } from '../engine/progression/ProgressionSystem.types';
 import type { QuestionResult } from '../engine/learningHistory/LearningHistory.types';
@@ -8,6 +8,8 @@ interface StageSessionScreenProps {
   onReturnToBase: (endContext: StageEndContext) => void;
   /** Learning-history event boundary (spec v0.8 §13, user's explicit MVP-8 instruction) — threaded straight through to `useStageController`. */
   onQuestionResult?: (result: QuestionResult) => void;
+  /** MVP-9: threaded straight through to `useStageController` — see its own doc. */
+  saveHooks?: UseStageControllerSaveHooks;
 }
 
 /**
@@ -20,6 +22,6 @@ interface StageSessionScreenProps {
  * shown some of the time — conditionally mounting a component is fine,
  * conditionally calling a hook inside one is not.
  */
-export function StageSessionScreen({ config, onReturnToBase, onQuestionResult }: StageSessionScreenProps) {
-  return useStageController(config, onReturnToBase, onQuestionResult);
+export function StageSessionScreen({ config, onReturnToBase, onQuestionResult, saveHooks }: StageSessionScreenProps) {
+  return useStageController(config, onReturnToBase, onQuestionResult, saveHooks);
 }

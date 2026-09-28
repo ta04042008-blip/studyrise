@@ -1,6 +1,7 @@
 import type { StarLevel } from '../../types/stats';
 import type { BattleConfig } from '../../config/battleConfig';
 import type { RandomService } from '../random/RandomService';
+import { exportRandomState } from '../random/RandomService';
 import type { QuestionEngine } from '../question/QuestionEngine';
 import type { MultipleChoiceAnswer } from '../question/QuestionEngine.types';
 import { calculateAttackDamage } from './damage';
@@ -8,6 +9,7 @@ import { applyEffect } from './effects';
 import { spellLevelData } from './spellLevel';
 import {
   createTimelineRandomService,
+  createTimelineRandomServiceFromState,
   createTimelineState,
   previewUpcomingOrder,
   resolveNextActor,
@@ -18,6 +20,7 @@ import {
 import { decideQuestionCommandTargeting, decideSpellOrItemTargeting } from './targetSelection';
 import type {
   BattleActor,
+  BattleEngineSnapshot,
   BattleState,
   CharacterDefinition,
   EnemyBattleInstance,
@@ -78,8 +81,39 @@ export interface CreateBattleEngineOptions {
   initialHpByPlayerId?: Record<string, number>;
 }
 
+/**
+ * MVP-9: resumes a BattleEngine from a previously exported
+ * `BattleEngineSnapshot` instead of building fresh actors/timeline from
+ * content definitions — the snapshot's `state` already carries the fully
+ * resolved actors, so `restoreBattleEngine` never re-derives stats. `random`
+ * MUST be the exact instance restored from `snapshot.randomState` (via
+ * `createRandomServiceFromState`) and MUST be the same instance
+ * `questionEngine` was constructed with — mirroring `CreateBattleEngineOptions`,
+ * where the caller already wires one shared RandomService across
+ * QuestionEngine and BattleEngine (see useBattleController). `timelineRandom`
+ * is restored internally from `snapshot.timelineRandomState` instead, since
+ * that stream is never exposed outside BattleEngine.
+ */
+export interface RestoreBattleEngineOptions {
+  questionEngine: QuestionEngine;
+  config: BattleConfig;
+  /** The same RandomService instance `questionEngine` was built with, restored from `snapshot.randomState`. */
+  random: RandomService;
+  spellsById: Record<string, SpellDefinition>;
+  /**
+   * Freshly re-derived from the current RunBuild (e.g. via
+   * RogueliteEngine.resolveBattleInputsForRun), NOT read from the snapshot —
+   * RunBuild is already persisted separately (StageRunState/RunSave) and is
+   * the single source of truth, so re-deriving here avoids duplicating it
+   * (CLAUDE.md §15/user's explicit "don't duplicate derivable data").
+   */
+  playerCommandModifiers: Record<string, PlayerCommandModifiers>;
+}
+
 export interface BattleEngine {
   getState(): BattleState;
+  /** MVP-9: exports everything needed to resume this exact battle later — see BattleEngineSnapshot. */
+  exportSnapshot(): BattleEngineSnapshot;
   /**
    * COMMAND_SELECT → TARGET_SELECT when the command needs a choice among
    * more than one alive enemy (Attack/Search), otherwise straight to
@@ -200,6 +234,117 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
     ]),
   );
 
+  // Timeline gauge persists for the whole battle (MVP-3 correction 1). At
+  // this exact moment (battle just constructed) every actor is alive by
+  // definition, so this is equivalent to filtering by currentHp > 0 — see
+  // buildEngine's own aliveTimelineActors() for the general (mid-battle)
+  // case, which this deliberately mirrors without needing that closure yet.
+  const initialTimeline: TimelineState = createTimelineState(
+    [...players, ...enemies].map((a) => ({ id: a.id, speed: a.speed })),
+  );
+
+  // Dedicated, clonable random stream for timeline tie-breaks only (MVP-3
+  // correction 2) — never the same object as `random` (used for
+  // damage/crit/enemy-AI-target rolls), so previewing the future order can
+  // never perturb what the battle actually rolls. Seeded once,
+  // deterministically, from the main battle RandomService.
+  const timelineRandom: CloneableRandomService = createTimelineRandomService(random.int(0x7fffffff));
+
+  const state: BattleState = {
+    phase: 'COMMAND_SELECT',
+    players,
+    enemies,
+    currentActorId: players[0].id,
+    upcomingActorIds: [],
+    timeline: initialTimeline,
+    pendingCommand: null,
+    pendingTargetSelection: null,
+    pendingOutcome: null,
+    lastPlayerOutcome: null,
+    lastNonQuestionOutcome: null,
+    enemyActionLog: [],
+    searchByEnemyId: {},
+    battleItems: initialItems,
+    knownSpellsByPlayerId,
+    outcome: null,
+  };
+
+  return buildEngine({
+    state,
+    random,
+    timelineRandom,
+    config,
+    spellsById,
+    questionEngine,
+    commandModifiers,
+    enemyPlannedActions: {},
+    revealedCountByEnemyId: {},
+    skipInitialResolve: false,
+  });
+}
+
+/**
+ * MVP-9: resumes a battle from a previously exported `BattleEngineSnapshot`
+ * (see BattleEngineSnapshot's own doc comment for why this cannot be
+ * approximated from `BattleState.searchByEnemyId` alone). Deep-clones the
+ * snapshot's mutable pieces so the resumed engine never aliases whatever
+ * object the caller loaded from storage. Never calls
+ * resolveTurnsUntilNextPlayerOrEnd() — the snapshot already reflects
+ * whichever phase/actor the battle was actually in when it was saved.
+ */
+export function restoreBattleEngine(snapshot: BattleEngineSnapshot, options: RestoreBattleEngineOptions): BattleEngine {
+  const { questionEngine, config, random, spellsById, playerCommandModifiers } = options;
+
+  const state: BattleState = JSON.parse(JSON.stringify(snapshot.state));
+  const enemyPlannedActions: Record<string, PlannedEnemyAction[]> = JSON.parse(
+    JSON.stringify(snapshot.enemyPlannedActions),
+  );
+  const revealedCountByEnemyId: Record<string, number> = { ...snapshot.revealedCountByEnemyId };
+  const timelineRandom: CloneableRandomService = createTimelineRandomServiceFromState(snapshot.timelineRandomState);
+
+  return buildEngine({
+    state,
+    random,
+    timelineRandom,
+    config,
+    spellsById,
+    questionEngine,
+    commandModifiers: playerCommandModifiers,
+    enemyPlannedActions,
+    revealedCountByEnemyId,
+    skipInitialResolve: true,
+  });
+}
+
+interface BuildEngineParams {
+  state: BattleState;
+  random: RandomService;
+  timelineRandom: CloneableRandomService;
+  config: BattleConfig;
+  spellsById: Record<string, SpellDefinition>;
+  questionEngine: QuestionEngine;
+  commandModifiers: Record<string, PlayerCommandModifiers>;
+  enemyPlannedActions: Record<string, PlannedEnemyAction[]>;
+  revealedCountByEnemyId: Record<string, number>;
+  /** true for restoreBattleEngine — the snapshot already reflects a fully-resolved turn, so the initial speed-timeline resolution must not run again. */
+  skipInitialResolve: boolean;
+}
+
+/**
+ * Everything BattleEngine actually does, shared by `createBattleEngine`
+ * (fresh `state`) and `restoreBattleEngine` (resumed `state`) — the two
+ * callers differ only in how `state`/`random`/`timelineRandom`/
+ * `enemyPlannedActions`/`revealedCountByEnemyId` are produced, never in how
+ * they're used from here on.
+ */
+function buildEngine(params: BuildEngineParams): BattleEngine {
+  const { random, timelineRandom, config, spellsById, questionEngine, commandModifiers, enemyPlannedActions, revealedCountByEnemyId } =
+    params;
+  const state = params.state;
+  const players = state.players;
+  const enemies = state.enemies;
+  const knownSpellsByPlayerId = state.knownSpellsByPlayerId;
+
   function actorById(id: string): BattleActor {
     const found = players.find((p) => p.id === id) ?? enemies.find((e) => e.id === id);
     if (!found) {
@@ -224,43 +369,7 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
   // KO'd actor is simply left out of aliveTimelineActors() from then on —
   // its leftover gauge value is never read again, and every surviving
   // actor's own gauge is untouched.
-  let timeline: TimelineState = createTimelineState(aliveTimelineActors());
-
-  // Dedicated, clonable random stream for timeline tie-breaks only (MVP-3
-  // correction 2) — never the same object as `random` (used for
-  // damage/crit/enemy-AI-target rolls), so previewing the future order can
-  // never perturb what the battle actually rolls. Seeded once,
-  // deterministically, from the main battle RandomService.
-  const timelineRandom: CloneableRandomService = createTimelineRandomService(random.int(0x7fffffff));
-
-  // Enemy AI's actual upcoming-action queue, one per enemy. Search never
-  // predicts separately — it only reveals a prefix of this exact same
-  // queue, and the enemy's real turn shifts its action from the queue's
-  // front, so the two can never diverge (MVP-3 correction 4).
-  const enemyPlannedActions: Record<string, PlannedEnemyAction[]> = {};
-  // How many of the front entries of a given enemy's queue are currently
-  // "revealed" by a successful Search. Decremented whenever that enemy's
-  // queue front is actually consumed.
-  const revealedCountByEnemyId: Record<string, number> = {};
-
-  const state: BattleState = {
-    phase: 'COMMAND_SELECT',
-    players,
-    enemies,
-    currentActorId: players[0].id,
-    upcomingActorIds: [],
-    timeline,
-    pendingCommand: null,
-    pendingTargetSelection: null,
-    pendingOutcome: null,
-    lastPlayerOutcome: null,
-    lastNonQuestionOutcome: null,
-    enemyActionLog: [],
-    searchByEnemyId: {},
-    battleItems: initialItems,
-    knownSpellsByPlayerId,
-    outcome: null,
-  };
+  let timeline: TimelineState = state.timeline;
 
   function warnRejected(action: string) {
     if (typeof console !== 'undefined') {
@@ -740,14 +849,30 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
     return JSON.parse(JSON.stringify(publicState)) as BattleState;
   }
 
+  function exportSnapshot(): BattleEngineSnapshot {
+    return {
+      state: snapshot(),
+      randomState: exportRandomState(random),
+      timelineRandomState: timelineRandom.exportState(),
+      enemyPlannedActions: JSON.parse(JSON.stringify(enemyPlannedActions)),
+      revealedCountByEnemyId: { ...revealedCountByEnemyId },
+      questionEngineSnapshot: questionEngine.exportSnapshot(),
+    };
+  }
+
   // Turn order is speed-driven from the very start of the battle (spec
   // §5.2): a faster enemy can act before any player ever gets a first
   // command, possibly more than once. Consult the timeline once up front
-  // instead of assuming a player always acts first.
-  resolveTurnsUntilNextPlayerOrEnd();
+  // instead of assuming a player always acts first. Skipped when resuming
+  // from a snapshot (MVP-9) — that state already reflects a fully-resolved
+  // turn, so resolving again would incorrectly advance it further.
+  if (!params.skipInitialResolve) {
+    resolveTurnsUntilNextPlayerOrEnd();
+  }
 
   return {
     getState: snapshot,
+    exportSnapshot,
     selectCommand,
     selectTarget,
     selectSubjectAndStar,
