@@ -3,6 +3,7 @@ import type { QuestionDefinition } from '../question/QuestionEngine.types';
 import type { TimelineState } from './actionTimeline';
 import type { Effect } from './effects';
 import type { RandomState } from '../random/RandomService';
+import type { QuestionEngineSnapshot } from '../question/QuestionEngine';
 
 /**
  * Battle phase state machine (CLAUDE.md §6). RESULT_APPLY is shared by two
@@ -365,4 +366,13 @@ export interface BattleEngineSnapshot {
   timelineRandomState: RandomState;
   enemyPlannedActions: Record<string, PlannedEnemyAction[]>;
   revealedCountByEnemyId: Record<string, number>;
+  /**
+   * MVP-9: QuestionEngine's dispersion-affecting `lastPicked` state (see
+   * QuestionEngineSnapshot's own doc comment). QuestionEngine is a sibling
+   * of BattleEngine, sharing the same RandomService — bundling its
+   * snapshot here (rather than a separate top-level channel) keeps "one
+   * saved value = one resumable Battle" true, matching how the shared
+   * `randomState` is already handled.
+   */
+  questionEngineSnapshot: QuestionEngineSnapshot;
 }

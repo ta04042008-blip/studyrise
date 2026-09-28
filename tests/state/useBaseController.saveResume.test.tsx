@@ -220,3 +220,169 @@ describe('useBaseController — Run resume across a simulated reload (MVP-9)', (
     expect(screen.queryByText('230')).toBeNull();
   });
 });
+
+describe('useBaseController — restore-order safety (MVP-9 audit item 2)', () => {
+  it('resuming a Battle and immediately reloading again (no action taken) never overwrites the restored live checkpoint with a fresh initial state', async () => {
+    const saveSystem = newSaveSystem();
+    render(<Harness saveSystem={saveSystem} />);
+    await driveToStageStart();
+    answerOneCorrectQuestion();
+
+    reload(saveSystem);
+    fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
+    await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+    const hpAfterFirstResume = currentHpText();
+
+    // White-box check: read what SaveSystem actually has stored right after
+    // that resume, with NO player action in between.
+    const bootAfterFirstResume = await saveSystem.loadBoot();
+    const snapshotAfterFirstResume = bootAfterFirstResume.run?.payload.liveBattleSnapshot;
+    expect(snapshotAfterFirstResume).toBeTruthy();
+
+    // Reload/resume TWICE more, doing nothing each time — a fresh engine's
+    // initial state must never sneak into the live checkpoint before the
+    // saved snapshot is restored.
+    for (let i = 0; i < 2; i++) {
+      reload(saveSystem);
+      fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
+      await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+      expect(currentHpText()).toBe(hpAfterFirstResume);
+
+      const boot = await saveSystem.loadBoot();
+      expect(boot.run?.payload.liveBattleSnapshot).toEqual(snapshotAfterFirstResume);
+    }
+  });
+
+  it('resuming a Reward phase and immediately reloading again (no action taken) never re-rolls or drops the restored candidates', async () => {
+    const saveSystem = newSaveSystem();
+    render(<Harness saveSystem={saveSystem} />);
+    await driveToStageStart();
+    expect(driveZoneBattleToWin()).toBe('won');
+    fireEvent.click(screen.getByRole('button', { name: 'ゾーンクリア → 報酬へ' }));
+    const candidatesBefore = Array.from(document.querySelectorAll('.reward-card__name')).map((el) => el.textContent);
+
+    reload(saveSystem);
+    fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
+    await screen.findByText(candidatesBefore[0] ?? '');
+    const bootAfterFirstResume = await saveSystem.loadBoot();
+    const snapshotAfterFirstResume = bootAfterFirstResume.run?.payload.liveRewardSnapshot;
+    expect(snapshotAfterFirstResume).toBeTruthy();
+
+    for (let i = 0; i < 2; i++) {
+      reload(saveSystem);
+      fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
+      await screen.findByText(candidatesBefore[0] ?? '');
+      const candidatesNow = Array.from(document.querySelectorAll('.reward-card__name')).map((el) => el.textContent);
+      expect(candidatesNow).toEqual(candidatesBefore);
+
+      const boot = await saveSystem.loadBoot();
+      expect(boot.run?.payload.liveRewardSnapshot).toEqual(snapshotAfterFirstResume);
+    }
+  });
+});
+
+describe('useBaseController — additional real-scenario coverage (MVP-9 audit item 3)', () => {
+  it('an unanswered QUESTION survives a reload: same questionId shown, choice selection resets to unselected', async () => {
+    const saveSystem = newSaveSystem();
+    render(<Harness saveSystem={saveSystem} />);
+    await driveToStageStart();
+
+    fireEvent.click(screen.getByRole('button', { name: 'アタック' }));
+    clickIfPresent('.target-select-view button');
+    clickIfPresent('.subject-star-select button');
+    const questionBefore = document.querySelector('.question-view__text')!.textContent!.trim();
+    expect(document.querySelectorAll('.question-view input[type=radio]:checked')).toHaveLength(0);
+
+    reload(saveSystem);
+    fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
+    await screen.findByText(questionBefore);
+
+    // Same question, never re-rolled, and the never-confirmed selection is
+    // simply absent again (spec: unconfirmed UI selection is not saved).
+    expect(document.querySelector('.question-view__text')?.textContent?.trim()).toBe(questionBefore);
+    expect(document.querySelectorAll('.question-view input[type=radio]:checked')).toHaveLength(0);
+  });
+
+  it('Search-revealed enemy actions and turn order survive a reload, including the HIDDEN full planned-action queue (white-box)', async () => {
+    const saveSystem = newSaveSystem();
+    render(<Harness saveSystem={saveSystem} />);
+    await driveToStageStart();
+
+    fireEvent.click(screen.getByRole('button', { name: 'サーチ' }));
+    clickIfPresent('.subject-star-select button');
+    const questionText = document.querySelector('.question-view__text')!.textContent!.trim();
+    const idx = CORRECT_INDEX_BY_TEXT[questionText] ?? 0;
+    fireEvent.click(document.querySelectorAll('.question-view input[type=radio]')[idx]);
+    fireEvent.click(screen.getByRole('button', { name: '回答する' }));
+    // submitAnswer() only computes the outcome (COMMAND_ANIMATION); the
+    // actual searchByEnemyId/revealedCount mutation happens in
+    // applyPendingResult(), triggered by the next advance() call.
+    fireEvent.click(screen.getByRole('button', { name: '次へ' }));
+
+    const searchPanelBefore = document.querySelector('.search-info-panel')?.textContent;
+    const turnOrderBefore = document.querySelector('.turn-order-view')?.textContent;
+    expect(searchPanelBefore).toBeTruthy();
+
+    const bootBefore = await saveSystem.loadBoot();
+    const hiddenPlannedBefore = bootBefore.run?.payload.liveBattleSnapshot?.enemyPlannedActions;
+    const hiddenRevealedCountBefore = bootBefore.run?.payload.liveBattleSnapshot?.revealedCountByEnemyId;
+    expect(hiddenPlannedBefore).toBeTruthy();
+
+    reload(saveSystem);
+    fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
+    await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+
+    // Player-visible: identical revealed actions and identical turn order.
+    expect(document.querySelector('.search-info-panel')?.textContent).toBe(searchPanelBefore);
+    expect(document.querySelector('.turn-order-view')?.textContent).toBe(turnOrderBefore);
+
+    // Hidden (never shown to the player): the FULL planned-action queue and
+    // revealed-count bookkeeping must also match exactly — not just the
+    // player-visible prefix (user's explicit MVP-9 instruction).
+    const bootAfter = await saveSystem.loadBoot();
+    expect(bootAfter.run?.payload.liveBattleSnapshot?.enemyPlannedActions).toEqual(hiddenPlannedBefore);
+    expect(bootAfter.run?.payload.liveBattleSnapshot?.revealedCountByEnemyId).toEqual(hiddenRevealedCountBefore);
+  });
+
+  it('Zone 2 mid-battle (after a Zone 1 clear + reward pick) survives a reload: zone index / HP / MP / RunBuild / item pool / timeline / phase all match — not just Zone 1', async () => {
+    const saveSystem = newSaveSystem();
+    render(<Harness saveSystem={saveSystem} />);
+    await driveToStageStart();
+
+    expect(driveZoneBattleToWin()).toBe('won');
+    fireEvent.click(screen.getByRole('button', { name: 'ゾーンクリア → 報酬へ' }));
+    const card = document.querySelector<HTMLElement>('.reward-card')!;
+    fireEvent.click(card);
+    fireEvent.click(screen.getByRole('button', { name: '決定' })); // grants a RunBuild entry
+    fireEvent.click(document.querySelector<HTMLElement>('.reward-screen__complete button')!);
+    fireEvent.click(screen.getByRole('button', { name: '次のゾーンへ' }));
+    await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+
+    // Take a couple of confirmed actions in Zone 2 so HP/MP/timeline/items are non-trivial.
+    answerOneCorrectQuestion();
+    clickIfPresent('.command-animation-view button, .explanation-view button');
+    answerOneCorrectQuestion();
+
+    const bootBefore = await saveSystem.loadBoot();
+    const before = bootBefore.run?.payload;
+    expect(before?.stageRunState.currentZoneIndex).toBe(1); // zone_2, not zone_1
+
+    reload(saveSystem);
+    fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
+    await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+
+    const bootAfter = await saveSystem.loadBoot();
+    const after = bootAfter.run?.payload;
+
+    expect(after?.stageRunState.currentZoneIndex).toBe(before?.stageRunState.currentZoneIndex);
+    // HP + RunBuild (spells/command boosts/temp stat boosts gained from the Zone 1 reward).
+    expect(after?.stageRunState.runState).toEqual(before?.stageRunState.runState);
+    // Battle item pool (party-shared, carries across zones).
+    expect(after?.stageRunState.battleItems).toEqual(before?.stageRunState.battleItems);
+    // Per-actor HP/MP, exactly as BattleEngine tracks them.
+    expect(after?.liveBattleSnapshot?.state.players).toEqual(before?.liveBattleSnapshot?.state.players);
+    // Timeline (turn order gauges) and current Battle phase.
+    expect(after?.liveBattleSnapshot?.state.timeline).toEqual(before?.liveBattleSnapshot?.state.timeline);
+    expect(after?.liveBattleSnapshot?.state.phase).toBe(before?.liveBattleSnapshot?.state.phase);
+  });
+});

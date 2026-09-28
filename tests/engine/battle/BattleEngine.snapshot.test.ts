@@ -41,7 +41,7 @@ describe('BattleEngine — exportSnapshot()/restoreBattleEngine() (MVP-9)', () =
 
     const snap = engine.exportSnapshot();
     const random = createRandomService(999); // irrelevant seed — restore must ignore it and use snap.randomState
-    const questionEngine = createQuestionEngine([mc()], random);
+    const questionEngine = createQuestionEngine([mc()], random, snap.questionEngineSnapshot);
     const restored = restoreBattleEngine(snap, {
       questionEngine,
       config: battleConfig,
@@ -105,7 +105,11 @@ describe('BattleEngine — exportSnapshot()/restoreBattleEngine() (MVP-9)', () =
     // discarding the live `reloaded` instance and its in-memory random.
     const snap = reloaded.exportSnapshot();
     const freshRandom = createRandomService(1); // must be ignored — restore continues from snap.randomState
-    const freshQuestionEngine = createQuestionEngine([mc({ star: 1 }), mc({ id: 'q2', star: 1, unit: 'u2' })], freshRandom);
+    const freshQuestionEngine = createQuestionEngine(
+      [mc({ star: 1 }), mc({ id: 'q2', star: 1, unit: 'u2' })],
+      freshRandom,
+      snap.questionEngineSnapshot,
+    );
     const resumed = restoreBattleEngine(snap, {
       questionEngine: freshQuestionEngine,
       config: battleConfig,
@@ -160,7 +164,11 @@ describe('BattleEngine — exportSnapshot()/restoreBattleEngine() (MVP-9)', () =
     expect(snap.revealedCountByEnemyId['enemy']).toBe(revealedBeforeReload.length);
 
     const random = createRandomService(1); // must be ignored
-    const questionEngine = createQuestionEngine([mc({ id: 'q1', star: 3 }), mc({ id: 'q2', star: 1, unit: 'u2' })], random);
+    const questionEngine = createQuestionEngine(
+      [mc({ id: 'q1', star: 3 }), mc({ id: 'q2', star: 1, unit: 'u2' })],
+      random,
+      snap.questionEngineSnapshot,
+    );
     const restored = restoreBattleEngine(snap, {
       questionEngine,
       config: battleConfig,

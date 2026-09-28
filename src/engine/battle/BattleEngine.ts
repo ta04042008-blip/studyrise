@@ -856,6 +856,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       timelineRandomState: timelineRandom.exportState(),
       enemyPlannedActions: JSON.parse(JSON.stringify(enemyPlannedActions)),
       revealedCountByEnemyId: { ...revealedCountByEnemyId },
+      questionEngineSnapshot: questionEngine.exportSnapshot(),
     };
   }
 

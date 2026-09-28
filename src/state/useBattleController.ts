@@ -98,7 +98,12 @@ export function useBattleController({
   const engines = useMemo(() => {
     if (restoreSnapshot) {
       const random = createRandomServiceFromState(restoreSnapshot.randomState);
-      const questionEngine = createQuestionEngine(questions, random);
+      // MVP-9: QuestionEngine's own dispersion-affecting state must be
+      // restored too — a fresh QuestionEngine (lastPicked: null) can pick a
+      // DIFFERENT next question than a non-reloaded session would have,
+      // even with the exact same RNG cursor (see QuestionEngineSnapshot's
+      // doc comment).
+      const questionEngine = createQuestionEngine(questions, random, restoreSnapshot.questionEngineSnapshot);
       const battleEngine: BattleEngine = restoreBattleEngine(restoreSnapshot, {
         questionEngine,
         config: battleConfig,
