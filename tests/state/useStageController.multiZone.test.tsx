@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useStageController } from '../../src/state/useStageController';
+import { createSampleStageLaunchConfig } from '../../src/data/createSampleStageLaunchConfig';
 
 afterEach(cleanup);
 
 function Harness() {
-  return <>{useStageController()}</>;
+  return <>{useStageController(createSampleStageLaunchConfig(), () => {})}</>;
 }
 
 const CORRECT_INDEX_BY_TEXT: Record<string, number> = {

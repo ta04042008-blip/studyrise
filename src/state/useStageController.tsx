@@ -8,22 +8,15 @@ import type { StageRunState } from '../engine/stage/StageEngine.types';
 import { stageConfig } from '../config/stageConfig';
 import { createRogueliteEngine } from '../engine/roguelite/RogueliteEngine';
 import { createRandomService } from '../engine/random/RandomService';
-import { sampleParty } from '../data/characters/sampleCharacters';
-import { sampleStage, sampleEnemyDefinitionsById } from '../data/stages/sampleStage';
-import { sampleQuestions } from '../data/questions/sampleQuestions';
-import { sampleSpell } from '../data/spells/sampleSpell';
-import { sampleAdditionalSpellHeal, sampleAdditionalSpellIce } from '../data/spells/sampleAdditionalSpells';
-import { sampleItem } from '../data/items/sampleItem';
+import { sampleEnemyDefinitionsById } from '../data/stages/sampleStage';
+import { spellsById } from '../data/spells/spellsById';
 import { sampleRewardDefinitions } from '../data/roguelite/sampleRewardDefinitions';
 import { rewardConfig } from '../config/rewardConfig';
-import type { ItemBattleSlot, SpellDefinition } from '../engine/battle/BattleEngine.types';
+import type { ItemBattleSlot } from '../engine/battle/BattleEngine.types';
 import type { RunState } from '../engine/roguelite/RogueliteEngine.types';
+import type { StageLaunchConfig } from '../base/base.types';
 
-const spellsById: Record<string, SpellDefinition> = Object.fromEntries(
-  [sampleSpell, sampleAdditionalSpellIce, sampleAdditionalSpellHeal].map((s) => [s.id, s]),
-);
-
-const characterNameById: Record<string, string> = Object.fromEntries(sampleParty.map((c) => [c.id, c.name]));
+export type { StageLaunchConfig } from '../base/base.types';
 
 const stageEngine = createStageEngine({ config: stageConfig });
 
@@ -42,62 +35,78 @@ const runResolver: RunResolver = createRogueliteEngine({
   random: createRandomService(0),
 });
 
-const DEFAULT_RUN_SEED = 1;
-
 /**
- * MVP-5 entry point: generalizes MVP-4's Battle → Reward → Battle harness
- * into StageEngine's Battle Zone1 → Reward → Battle Zone2 → ... → Boss →
- * Reward → StageResult flow (CLAUDE.md §21, spec v0.5 §2). No Stage-select
- * screen yet (MVP-5 scope) — always the one sample Stage, always Zone 1 on
- * (re)start (spec §2.4).
+ * MVP-6 entry point for exactly one Stage attempt (spec v0.6 §2/§18.13-18.14).
+ * `config` is REQUIRED — this hook never falls back to sample content on its
+ * own (user's explicit MVP-6 correction: no implicit sample-data fallback in
+ * production code). The base layer is the only caller in production, via
+ * `buildStageLaunchConfig` after 出撃確認 (src/base/buildStageLaunchConfig.ts);
+ * tests/dev code may use `createSampleStageLaunchConfig()`
+ * (src/data/createSampleStageLaunchConfig.ts) to build one explicitly.
+ *
+ * Must be called unconditionally on every render of whatever component
+ * hosts it — `StageSessionScreen` is that one component, mounted/unmounted
+ * by the base layer's phase switch, never called from behind an `if` inside
+ * a shared hook (Rules of Hooks, user's explicit MVP-6 requirement).
  */
-export function useStageController() {
-  const [runSeed, setRunSeed] = useState(DEFAULT_RUN_SEED);
+export function useStageController(config: StageLaunchConfig, onReturnToBase: () => void) {
+  const { party, stage, questions, battleItems, runSeed: initialRunSeed } = config;
+
+  const [runSeed, setRunSeed] = useState(initialRunSeed);
 
   const [stageState, setStageState] = useState<StageRunState>(() =>
-    stageEngine.createInitialState(sampleStage, sampleParty, runSeed, runResolver),
+    stageEngine.createInitialState(stage, party, runSeed, runResolver),
   );
 
-  const zone = stageEngine.currentZone(sampleStage, stageState);
-  const battleSeed = stageEngine.deriveZoneBattleSeed(sampleStage, stageState);
-  const rewardSeed = stageEngine.deriveZoneRewardSeed(sampleStage, stageState);
+  const characterNameById = useMemo<Record<string, string>>(
+    () => Object.fromEntries(party.map((c) => [c.id, c.name])),
+    [party],
+  );
 
-  // One stable item loadout per zone attempt (spec §5.10: unused items return to inventory at zone end — MVP-5 doesn't yet model that transfer, so each zone simply starts with a fresh 3-slot loadout, same as MVP-4's harness).
-  const initialItems = useMemo<ItemBattleSlot[]>(() => [{ item: sampleItem, remainingUses: 2 }], [zone.id]);
+  const zone = stageEngine.currentZone(stage, stageState);
+  const battleSeed = stageEngine.deriveZoneBattleSeed(stage, stageState);
+  const rewardSeed = stageEngine.deriveZoneRewardSeed(stage, stageState);
+
+  // One stable item loadout per zone attempt (spec §5.10: unused items
+  // return to inventory at zone end — MVP-6 doesn't yet model that
+  // transfer, so each zone simply starts fresh from the launch-time
+  // loadout, same as MVP-5's harness).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const initialItems = useMemo<ItemBattleSlot[]>(() => battleItems.map((slot) => ({ ...slot })), [zone.id]);
 
   function restart() {
     const nextSeed = runSeed + 1;
     setRunSeed(nextSeed);
-    setStageState(stageEngine.createInitialState(sampleStage, sampleParty, nextSeed, runResolver));
+    setStageState(stageEngine.createInitialState(stage, party, nextSeed, runResolver));
   }
 
   const devPanel = import.meta.env.DEV && (
     <div className="dev-panel">
       <p>
-        runSeed: {stageState.runSeed} / zone: {stageState.currentZoneIndex + 1}/{sampleStage.zones.length} ({zone.id})
+        runSeed: {stageState.runSeed} / zone: {stageState.currentZoneIndex + 1}/{stage.zones.length} ({zone.id})
       </p>
     </div>
   );
 
   switch (stageState.phase) {
     case 'ZONE_BATTLE': {
-      const enemies = stageEngine.resolveZoneEnemies(sampleStage, stageState, sampleEnemyDefinitionsById);
+      const enemies = stageEngine.resolveZoneEnemies(stage, stageState, sampleEnemyDefinitionsById);
       return (
         <>
-          <h1>StudyRise — MVP-5 ステージ進行 検証</h1>
+          <h1>StudyRise — Stage攻略</h1>
           {devPanel}
           <ZoneBattlePanel
             key={zone.id}
-            party={sampleParty}
+            party={party}
             enemies={enemies}
             runState={stageState.runState}
             runResolver={runResolver}
-            questions={sampleQuestions}
+            questions={questions}
             spellsById={spellsById}
             initialItems={initialItems}
             seed={battleSeed}
             onWin={(survivorHp) => setStageState((s) => stageEngine.recordZoneWin(s, survivorHp))}
-            onLose={() => setStageState((s) => stageEngine.recordZoneDefeat(s, sampleParty, runResolver))}
+            onLose={() => setStageState((s) => stageEngine.recordZoneDefeat(s, party, runResolver))}
           />
         </>
       );
@@ -106,11 +115,11 @@ export function useStageController() {
       const isFinalZone = zone.isFinalZone;
       return (
         <>
-          <h1>StudyRise — MVP-5 ステージ進行 検証</h1>
+          <h1>StudyRise — Stage攻略</h1>
           {devPanel}
           <ZoneRewardPanel
             key={zone.id}
-            party={sampleParty}
+            party={party}
             isRareRewardEvent={zone.isRareRewardEvent}
             runState={stageState.runState}
             rewardSeed={rewardSeed}
@@ -122,7 +131,7 @@ export function useStageController() {
               setStageState((s) => stageEngine.updateRunState(s, nextRunState))
             }
             onProceedFromReward={() =>
-              setStageState((s) => stageEngine.completeZoneReward(sampleStage, s, sampleParty, runResolver))
+              setStageState((s) => stageEngine.completeZoneReward(stage, s, party, runResolver))
             }
           />
         </>
@@ -131,13 +140,11 @@ export function useStageController() {
     case 'INTER_ZONE_CHOICE': {
       return (
         <>
-          <h1>StudyRise — MVP-5 ステージ進行 検証</h1>
+          <h1>StudyRise — Stage攻略</h1>
           {devPanel}
           <InterZoneChoiceView
-            onContinue={() =>
-              setStageState((s) => stageEngine.continueToNextZone(sampleStage, s, sampleParty, runResolver))
-            }
-            onSelfReturn={() => setStageState((s) => stageEngine.selfReturn(s, sampleParty, runResolver))}
+            onContinue={() => setStageState((s) => stageEngine.continueToNextZone(stage, s, party, runResolver))}
+            onSelfReturn={() => setStageState((s) => stageEngine.selfReturn(s, party, runResolver))}
           />
         </>
       );
@@ -145,8 +152,8 @@ export function useStageController() {
     case 'STAGE_RESULT': {
       return (
         <>
-          <h1>StudyRise — MVP-5 ステージ進行 検証</h1>
-          <StageResultView result={stageState.result!} onRestart={restart} />
+          <h1>StudyRise — Stage攻略</h1>
+          <StageResultView result={stageState.result!} onReturnToBase={onReturnToBase} onRestart={restart} />
         </>
       );
     }

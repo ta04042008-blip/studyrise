@@ -1,14 +1,13 @@
-import { useStageController } from './state/useStageController';
+import { useBaseController } from './state/useBaseController';
 import './App.css';
 
 /**
- * MVP-5 entry point: delegates entirely to useStageController, which drives
- * one Stage's full Zone1 → Reward → Zone2 → ... → Boss → Reward →
- * StageResult flow via StageEngine/BattleEngine/RogueliteEngine (spec v0.5
- * §2, CLAUDE.md §21).
+ * MVP-6 entry point: delegates entirely to useBaseController, which drives
+ * 拠点ホーム → エリア選択 → ステージ選択 → 出撃準備 → 出撃確認 → ステージ
+ * (via StageSessionScreen) → 拠点 (spec v0.6 §3, CLAUDE.md §21).
  */
 function App() {
-  return <div className="app">{useStageController()}</div>;
+  return <div className="app">{useBaseController()}</div>;
 }
 
 export default App;
