@@ -40,6 +40,11 @@ describe('validateGameContent — MVP-10 official content bundle', () => {
     expect(allEnemyDefinitions.filter((e) => e.isBoss)).toHaveLength(3);
   });
 
+  it('3 playable characters (葉山智也/南雲彩乃/岡村駆), matching spec §17.2', () => {
+    expect(sampleParty).toHaveLength(3);
+    expect(sampleParty.map((c) => c.name)).toEqual(['葉山智也', '南雲彩乃', '岡村駆']);
+  });
+
   it('50 official questions (25 数学 + 25 英語, 5 per ★)', () => {
     expect(sampleQuestions).toHaveLength(50);
     for (const subject of ['数学', '英語']) {
