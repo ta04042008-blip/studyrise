@@ -78,7 +78,25 @@ export function useRunScreen() {
     onComplete: setRunState,
   });
 
-  const handleProceedToReward = useCallback(() => setPhaseKind('reward'), []);
+  const handleProceedToReward = useCallback(() => {
+    // Spec §2.4/§8: surviving characters carry their HP into the next zone
+    // (MP alone resets to 0, already true — BattleEngine always starts a
+    // fresh actor's MP at 0 regardless of initialHpByPlayerId). This is the
+    // one point where the just-finished battle's real ending HP must be
+    // written into RunState — RogueliteEngine's reward application (HP
+    // boost/heal) and resolveBattleInputsForRun both read
+    // runState.currentHpByCharacterId as their starting point, so if this
+    // snapshot is skipped, every zone would silently restart at full HP
+    // instead of carrying real damage forward. KO'd characters carry over
+    // at 0 — MVP-4 does not invent a revival percentage (spec §8 leaves it
+    // unconfirmed), so they simply remain KO'd going into the reward phase
+    // and the next battle, exactly like an un-implemented rule should.
+    setRunState((prev) => ({
+      ...prev,
+      currentHpByCharacterId: Object.fromEntries(battleController.state.players.map((p) => [p.id, p.currentHp])),
+    }));
+    setPhaseKind('reward');
+  }, [battleController]);
 
   const handleProceedToNextBattle = useCallback(() => {
     setZoneIndex((z) => z + 1);

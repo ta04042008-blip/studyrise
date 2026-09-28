@@ -176,3 +176,79 @@ describe('RogueliteEngine → BattleEngine — full Battle1 → Reward → Battl
     expect(battle2.getState().knownSpellsByPlayerId[testCharacterA.id]).toHaveLength(2); // initial + the granted NEW_SPELL
   });
 });
+
+describe('RogueliteEngine → BattleEngine — HP carryover honesty (spec §2.4/§8)', () => {
+  it('a survivor\'s exact ending HP (not full HP) is what the next battle actually starts with', () => {
+    const rogueliteEngine = createRogueliteEngine({
+      spellsById: testSpellsById,
+      rewardDefinitions: testRewardDefinitions,
+      config: testConfig,
+      random: createRandomService(1),
+    });
+    const runState = rogueliteEngine.createInitialRunState([testCharacterA]);
+    // Simulate "Battle1 ended with this character damaged but alive" —
+    // this is exactly what useRunScreen's handleProceedToReward must snapshot
+    // from the just-finished BattleEngine before entering the reward phase.
+    runState.currentHpByCharacterId[testCharacterA.id] = 37;
+
+    const inputs = rogueliteEngine.resolveBattleInputsForRun([testCharacterA], runState);
+    expect(inputs.initialHpByPlayerId[testCharacterA.id]).toBe(37); // never reset to maxHp
+
+    const random = createRandomService(1);
+    const battle2 = createBattleEngine({
+      players: inputs.players,
+      enemies: [{ id: 'enemy', name: 'Enemy', baseStats: { attack: 5, defense: 0, speed: 1, maxHp: 999 } }],
+      questionEngine: createQuestionEngine([question()], random),
+      config: battleConfig,
+      random,
+      spellsById: testSpellsById,
+      initialItems: [],
+      knownSpellsByPlayerId: inputs.knownSpellsByPlayerId,
+      playerCommandModifiers: inputs.playerCommandModifiers,
+      initialHpByPlayerId: inputs.initialHpByPlayerId,
+    });
+    expect(battle2.getState().players[0].currentHp).toBe(37);
+    expect(battle2.getState().players[0].currentMp).toBe(0); // MP always resets to 0 regardless of HP carryover
+  });
+
+  it('a new zone\'s enemies always start at their own full initial HP, unaffected by the previous battle', () => {
+    const rogueliteEngine = createRogueliteEngine({
+      spellsById: testSpellsById,
+      rewardDefinitions: testRewardDefinitions,
+      config: testConfig,
+      random: createRandomService(1),
+    });
+    const runState = rogueliteEngine.createInitialRunState([testCharacterA]);
+    const inputs = rogueliteEngine.resolveBattleInputsForRun([testCharacterA], runState);
+    const random = createRandomService(1);
+    const battle2 = createBattleEngine({
+      players: inputs.players,
+      enemies: [{ id: 'enemy', name: 'Enemy', baseStats: { attack: 5, defense: 0, speed: 1, maxHp: 42 } }],
+      questionEngine: createQuestionEngine([question()], random),
+      config: battleConfig,
+      random,
+      spellsById: testSpellsById,
+      initialItems: [],
+      knownSpellsByPlayerId: inputs.knownSpellsByPlayerId,
+      playerCommandModifiers: inputs.playerCommandModifiers,
+      initialHpByPlayerId: inputs.initialHpByPlayerId,
+    });
+    expect(battle2.getState().enemies[0].currentHp).toBe(42);
+  });
+
+  it('a KO\'d character (HP 0) carries over at exactly 0 — MVP-4 invents no revival percentage', () => {
+    const rogueliteEngine = createRogueliteEngine({
+      spellsById: testSpellsById,
+      rewardDefinitions: testRewardDefinitions,
+      config: testConfig,
+      random: createRandomService(1),
+    });
+    const runState = rogueliteEngine.createInitialRunState([testCharacterA]);
+    runState.currentHpByCharacterId[testCharacterA.id] = 0; // KO'd at the end of Battle1
+
+    const inputs = rogueliteEngine.resolveBattleInputsForRun([testCharacterA], runState);
+    // Not revived to any fraction of maxHp — spec §8's revival rate is
+    // explicitly unconfirmed, so RogueliteEngine must not invent one.
+    expect(inputs.initialHpByPlayerId[testCharacterA.id]).toBe(0);
+  });
+});
