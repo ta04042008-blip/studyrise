@@ -345,8 +345,10 @@ button {
   background: rgba(255, 255, 255, 0.06);
 }
 
+/* Foreground stacking is assigned by each battle child.
+ * Do not force position:relative here: that rule used to cancel the
+ * absolute HUD/actor positioning on direct BattleScreen children. */
 .battle-screen > :not(.battle-screen__background) {
-  position: relative;
   z-index: 1;
 }
 
