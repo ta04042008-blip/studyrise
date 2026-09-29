@@ -853,6 +853,7 @@ body:has(.battle-screen) {
   .battle-screen__player-slot--command-guard,
   .battle-screen__player-slot--command-charge,
   .battle-screen__player-slot--command-search,
+  .battle-screen__player-slot--enemy-hit,
   .battle-screen__enemy-slot--hit,
   .battle-screen__enemy-slot--critical {
     animation: none;
@@ -867,3 +868,95 @@ body:has(.battle-screen) {
 @keyframes studyrise-player-charge { 0%,100%{filter:brightness(1);translate:0 0} 40%{filter:brightness(1.55);translate:0 -5px} 65%{filter:brightness(1.25);translate:0 -2px} }
 @keyframes studyrise-player-search { 0%,100%{filter:brightness(1)} 35%{filter:brightness(1.4);translate:4px 0} 65%{translate:-3px 0} }
 @keyframes studyrise-command-progress { from{transform:scaleX(0)} to{transform:scaleX(1)} }
+
+/* --- Battle enemy-turn / KO / end-flow polish --- */
+@media (min-width: 768px) and (orientation: landscape) {
+  .battle-screen__player-slot { position: relative; }
+
+  .battle-screen__player-slot--enemy-hit {
+    animation: studyrise-player-enemy-hit 420ms ease-out 1;
+  }
+
+  .battle-screen__damage-pop--player-hit {
+    top: 2px;
+  }
+
+  .battle-screen__player-slot--ko .battle-screen__actor-art,
+  .battle-screen__enemy-slot--ko .battle-screen__actor-art {
+    opacity: .24;
+    filter: grayscale(.8) brightness(.7);
+    transform: translateY(8px);
+    transition: opacity 360ms ease, filter 360ms ease, transform 360ms ease;
+  }
+
+  .battle-screen__player-slot--ko::after,
+  .battle-screen__enemy-slot--ko::after {
+    opacity: .35;
+  }
+
+  .battle-end-view {
+    width: min(620px, calc(100vw - 64px));
+    max-height: none;
+    bottom: max(100px, calc(env(safe-area-inset-bottom) + 100px));
+    overflow: visible;
+    text-align: center;
+    padding: 18px 20px;
+    border: 2px solid rgba(255,255,255,.82);
+    background: rgba(8,20,34,.9);
+    box-shadow: 0 6px 18px rgba(0,0,0,.4);
+  }
+
+  .battle-end-view__eyebrow {
+    font-size: .78rem;
+    font-weight: 850;
+    letter-spacing: .18em;
+    opacity: .78;
+  }
+
+  .battle-end-view__title {
+    margin: 4px 0 !important;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1;
+    font-weight: 950;
+    text-shadow: 0 3px 4px rgba(0,0,0,.8);
+  }
+
+  .battle-end-view__message {
+    margin: 8px 0 0;
+    opacity: .9;
+  }
+
+  .zone-battle-panel {
+    position: relative;
+    min-height: 100svh;
+  }
+
+  .zone-battle-panel__end-action {
+    position: absolute;
+    left: 50%;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 12;
+    min-width: min(420px, 72vw);
+    min-height: 62px;
+    border: 2px solid rgba(255,255,255,.92);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 1.12rem;
+    font-weight: 850;
+    text-shadow: 0 2px 2px rgba(0,0,0,.8);
+    box-shadow: 0 4px 0 rgba(0,0,0,.45);
+    touch-action: manipulation;
+  }
+
+  .zone-battle-panel__end-action--win { background: rgba(16,78,160,.96); }
+  .zone-battle-panel__end-action--lose { background: rgba(86,35,42,.96); }
+  .zone-battle-panel__end-action:active { transform: translate(-50%, 2px); }
+}
+
+@keyframes studyrise-player-enemy-hit {
+  0%,100% { translate:0 0; filter:brightness(1); }
+  22% { translate:-10px 0; filter:brightness(1.7); }
+  44% { translate:7px 0; filter:brightness(1.2); }
+  68% { translate:-3px 0; }
+}
