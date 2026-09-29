@@ -42,7 +42,7 @@ const QUESTION: MultipleChoiceQuestion = {
   explanation: '1 + 1 = 2 です。',
 };
 
-function Harness() {
+function Harness({ stageId }: { stageId?: string }) {
   const controller = useBattleController({
     players: [TOMOYA],
     enemies: [ENEMY],
@@ -52,7 +52,24 @@ function Harness() {
     seed: 1,
   });
 
-  return <BattleScreen controller={controller} />;
+describe('BattleScreen stage background', () => {
+  it('renders the Stage1 background for stage_sample_placeholder', () => {
+    const { container } = render(<Harness stageId="stage_sample_placeholder" />);
+    const image = container.querySelector('.battle-screen__background-image') as HTMLImageElement | null;
+    expect(image).not.toBeNull();
+    expect(image?.src).toContain('/assets/studyrise/backgrounds/stages/stage_closed_route.png');
+    expect(screen.getByText('葉山智也')).toBeTruthy();
+  });
+
+  it('keeps the existing battle UI and omits the background when stage art is unavailable', () => {
+    const { container } = render(<Harness stageId="stage_unknown" />);
+    expect(container.querySelector('.battle-screen__background')).toBeNull();
+    expect(screen.getByText('葉山智也')).toBeTruthy();
+    expect(screen.getByText('テスト敵')).toBeTruthy();
+  });
+});
+
+  return <BattleScreen controller={controller} stageId={stageId} />;
 }
 
 describe('BattleScreen character battle art', () => {
