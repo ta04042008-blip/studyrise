@@ -1571,49 +1571,39 @@ button, input, select, textarea {
 
 
 
-/* Phone landscape: preserve the verified 1600x900 (16:9) tablet battle composition.
-   Fit by viewport height; wider phones intentionally show dark side gutters. */
+/* Phone landscape: render the verified 1600x900 tablet battle as one
+   reference surface, then scale the whole surface uniformly by viewport height.
+   Side gutters are intentional on displays wider than 16:9. */
 @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
-  body:has(.battle-screen) {
-    margin: 0;
-    overflow: hidden;
-    background: #08121d;
-  }
+  body:has(.battle-screen) { margin:0; overflow:hidden; background:#08121d; }
 
   .app:has(.battle-screen) {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100dvh;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background: #08121d;
+    position:fixed;
+    left:50%;
+    top:0;
+    width:1600px;
+    height:900px;
+    min-width:1600px;
+    min-height:900px;
+    margin:0;
+    padding:0;
+    overflow:hidden;
+    background:#08121d;
+    transform:translateX(-50%) scale(calc(100dvh / 900));
+    transform-origin:50% 0;
   }
 
   .battle-screen {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    width: calc(100dvh * 16 / 9);
-    height: 100dvh;
-    min-height: 0;
-    padding: 0;
-    transform: translateX(-50%);
-    overflow: hidden;
+    display:block;
+    position:relative;
+    width:1600px;
+    height:900px;
+    min-height:900px;
+    padding:16px;
+    box-sizing:border-box;
+    overflow:hidden;
   }
 
-  .battle-screen__background {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  .battle-screen__background-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center center;
-  }
+  .battle-screen__background { position:absolute; inset:0; width:100%; height:100%; }
+  .battle-screen__background-image { width:100%; height:100%; object-fit:cover; object-position:center center; }
 }
