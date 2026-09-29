@@ -11,7 +11,6 @@ import { CommandAnimationView } from './CommandAnimationView';
 import { ExplanationView } from './ExplanationView';
 import { SpellItemResultView } from './SpellItemResultView';
 import { EnemyActionLog } from './EnemyActionLog';
-import { SearchInfoPanel } from './SearchInfoPanel';
 import { BattleEndView } from './BattleEndView';
 import { GameImage } from '../../presentation/assets/GameImage';
 import {
@@ -39,6 +38,9 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
   const actorHpById = Object.fromEntries(allActors.map((a) => [a.id, { current: a.currentHp, max: a.maxHp }]));
   const currentActor = allActors.find((a) => a.id === state.currentActorId);
   const currentKnownSpells = state.knownSpellsByPlayerId[state.currentActorId] ?? [];
+  const searchTurnInfo = Object.entries(state.searchByEnemyId)
+    .filter(([, actions]) => actions.length > 0)
+    .map(([enemyId, actions]) => ({ enemyName: actorNameById[enemyId] ?? enemyId, actions }));
   const commandAnimationOutcome = state.phase === 'COMMAND_ANIMATION' ? state.pendingOutcome : undefined;
   const attackAnimationOutcome = commandAnimationOutcome?.command === 'attack' ? commandAnimationOutcome : undefined;
   const nonQuestionOutcome = state.phase === 'RESULT_APPLY' ? state.lastNonQuestionOutcome : undefined;
@@ -134,9 +136,9 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
       <TurnOrderView
         currentActorName={currentActor?.name ?? state.currentActorId}
         upcomingActorNames={state.upcomingActorIds.map((id) => actorNameById[id] ?? id)}
+        searchInfo={searchTurnInfo}
+        actorNameById={actorNameById}
       />
-
-      <SearchInfoPanel searchByEnemyId={state.searchByEnemyId} actorNameById={actorNameById} />
 
       {state.phase === 'COMMAND_SELECT' && (
         <>
