@@ -119,8 +119,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
                 </div>
               )}
             </div>
-            );
-          })}
+          ))}
         </div>
         <div className="battle-screen__actors-side battle-screen__actors-side--enemies" style={{ left: '69%', right: 'auto' }}>
           {state.enemies.map((enemy) => {
@@ -162,6 +161,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
                 </div>
               )}
             </div>
+            );
           })}
         </div>
       </div>
