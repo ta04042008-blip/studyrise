@@ -362,6 +362,15 @@ button {
 /* --- Full-screen battle stage surface --- */
 
 /*
+ * The shared app shell lives inside the browser's default body margin.
+ * Remove that margin only while BattleScreen is mounted so the stage surface
+ * reaches every viewport edge without shifting non-battle screens.
+ */
+body:has(.battle-screen) {
+  margin: 0;
+}
+
+/*
  * Battle is the only current screen that should escape the shared .app
  * max-width/padding shell. This lets the stage artwork fill the whole
  * browser viewport while leaving every non-battle screen unchanged.
