@@ -74,14 +74,14 @@ export const enemyArtById: Record<string, EnemyArtDefinition> = {
   enemy_clamp: { runtimeFilename: 'mech_crustacean.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
   enemy_relay: { runtimeFilename: 'mech_lizard.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
   enemy_drainer: { runtimeFilename: 'mech_fish.png', visualSize: 'standard', motionType: 'swimming', baseline: 'hover' },
-  enemy_purger: { runtimeFilename: 'purger.png', visualSize: 'standard', motionType: 'quadruped', baseline: 'ground' },
+  enemy_purger: { runtimeFilename: '28CB8B3A-DDCF-4D94-B3D2-8D427908699C.PNG', visualSize: 'standard', motionType: 'swimming', baseline: 'hover' },
   enemy_shielder: { runtimeFilename: 'armored_turtle.png', visualSize: 'large', motionType: 'quadruped', baseline: 'ground' },
   enemy_scrib: { runtimeFilename: 'mech_mantis.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
-  enemy_sentinel: { runtimeFilename: 'sentinel.png', visualSize: 'large', motionType: 'quadruped', baseline: 'ground' },
-  enemy_auditor: { runtimeFilename: 'auditor.png', visualSize: 'large', motionType: 'flying', baseline: 'hover' },
+  enemy_sentinel: { runtimeFilename: 'mech_deer.png', visualSize: 'large', motionType: 'quadruped', baseline: 'ground' },
+  enemy_auditor: { runtimeFilename: 'mech_moth.png', visualSize: 'large', motionType: 'flying', baseline: 'hover' },
   enemy_boss_ogre_placeholder: { runtimeFilename: 'heavy_quadruped.png', visualSize: 'extra-large', motionType: 'quadruped', displayScale: 1.04, baseline: 'ground' },
   enemy_boss_nereid: { runtimeFilename: 'aqua_manta.png', visualSize: 'extra-large', motionType: 'swimming', displayScale: 1.03, baseline: 'hover' },
-  enemy_boss_mnemos: { runtimeFilename: 'mnemos.png', visualSize: 'extra-large', motionType: 'flying', displayScale: 1.03, baseline: 'hover' },
+  enemy_boss_mnemos: { runtimeFilename: 'arcane_orbiter.png', visualSize: 'extra-large', motionType: 'hover', displayScale: 1.03, baseline: 'hover' },
 };
 
 /** Stage1〜3 backgrounds, keyed by StageDefinition.id. */
