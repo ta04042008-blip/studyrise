@@ -544,7 +544,11 @@ body:has(.battle-screen) {
   }
 
   .subject-star-select,
-  .question-view {
+  .question-view,
+  .command-animation-view,
+  .explanation-view,
+  .spell-item-result-view,
+  .battle-end-view {
     position: absolute;
     left: 50%;
     bottom: max(14px, env(safe-area-inset-bottom));
@@ -564,7 +568,11 @@ body:has(.battle-screen) {
   }
 
   .subject-star-select p,
-  .question-view__text { margin-top: 0; }
+  .question-view__text,
+  .command-animation-view p:first-child,
+  .explanation-view__text,
+  .spell-item-result-view p:first-child,
+  .battle-end-view p:first-child { margin-top: 0; }
 
   .subject-star-select select { min-height: 44px; margin: 4px 10px 8px 6px; font-size: 1rem; }
   .question-view__choices { margin-bottom: 10px; }
