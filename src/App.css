@@ -242,13 +242,14 @@ button {
 }
 
 
-/* --- Battle actor art (Phase C-5) --- */
+/* --- Battle actor art / placement (Phase C-6) --- */
 
 .battle-screen__actors {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
   gap: 16px;
+  min-height: 128px;
 }
 
 .battle-screen__actors-side {
@@ -256,6 +257,7 @@ button {
   align-items: flex-end;
   gap: 8px;
   min-width: 0;
+  min-height: 128px;
 }
 
 .battle-screen__actors-side--players {
@@ -268,6 +270,7 @@ button {
 
 .battle-screen__actor-art {
   display: block;
+  flex: 0 0 128px;
   width: 128px;
   height: 128px;
   object-fit: contain;
@@ -277,5 +280,24 @@ button {
 @media (min-width: 768px) {
   .battle-screen__actors {
     min-height: 160px;
+  }
+
+  .battle-screen__actors-side {
+    min-height: 160px;
+    justify-content: center;
+  }
+
+  /*
+   * A single visible actor sits near the established iPad anchors:
+   * player ≈ 30% / enemy ≈ 70% of the battle width.
+   * When a side has multiple art elements, keep the whole group centered
+   * inside its half so 3-person parties / multiple enemies still fit.
+   */
+  .battle-screen__actors-side--players:not(:has(.battle-screen__actor-art:nth-child(2))) {
+    transform: translateX(10%);
+  }
+
+  .battle-screen__actors-side--enemies:not(:has(.battle-screen__actor-art:nth-child(2))) {
+    transform: translateX(-10%);
   }
 }
