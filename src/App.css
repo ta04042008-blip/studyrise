@@ -1297,3 +1297,85 @@ body:has(.battle-screen) {
     height: 20px;
   }
 }
+
+/* Enemy roster completion: safe spacing, grounded motion families and oversized encounter guardrails. */
+@media (min-width: 768px) and (orientation: landscape) {
+  .battle-screen__actors-side--enemies {
+    max-width: 46vw;
+    align-items: flex-end;
+  }
+
+  .battle-screen__enemy-slot {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    max-width: 30vw;
+  }
+
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(2)) {
+    gap: clamp(2px, .7vw, 10px);
+  }
+
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(3)) .battle-screen__enemy-slot {
+    --enemy-box-width: min(15vw, 164px);
+    --enemy-box-height: min(22vh, 128px);
+  }
+
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(3))
+    .battle-screen__enemy-slot--size-large {
+    --enemy-box-width: min(17vw, 184px);
+    --enemy-box-height: min(25vh, 144px);
+  }
+
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(3))
+    .battle-screen__enemy-slot--size-extra-large {
+    --enemy-box-width: min(19vw, 204px);
+    --enemy-box-height: min(27vh, 160px);
+  }
+
+  /* Grounded idle families only deform upward from the feet. */
+  .battle-screen__enemy-slot--baseline-ground:not(.battle-screen__enemy-slot--ko):not(.battle-screen__enemy-slot--hit):not([class*="battle-screen__enemy-slot--command-"])
+    .battle-screen__actor-art--enemy {
+    animation-name: studyrise-enemy-grounded-idle;
+    transform-origin: 50% 100%;
+  }
+
+  .battle-screen__enemy-slot--motion-crawler:not(.battle-screen__enemy-slot--ko):not(.battle-screen__enemy-slot--hit):not([class*="battle-screen__enemy-slot--command-"])
+    .battle-screen__actor-art--enemy {
+    animation-name: studyrise-enemy-crawler-idle;
+  }
+
+  .battle-screen__enemy-slot--size-extra-large:not(.battle-screen__enemy-slot--ko):not(.battle-screen__enemy-slot--hit):not([class*="battle-screen__enemy-slot--command-"])
+    .battle-screen__actor-art--enemy {
+    animation-duration: 2800ms;
+  }
+
+  /* Keep hit/KO text inside the actor's own visual box at every size. */
+  .battle-screen__enemy-slot .battle-screen__damage-pop {
+    left: 50%;
+    top: 18%;
+    transform: translateX(-50%);
+  }
+
+  .battle-screen__enemy-slot--size-extra-large .battle-screen__damage-pop {
+    top: 22%;
+    font-size: 1.08rem;
+  }
+
+  /* End-state controls remain above oversized enemy art. */
+  .battle-end-view,
+  .zone-battle-panel__end-action {
+    z-index: 8;
+  }
+}
+
+@keyframes studyrise-enemy-grounded-idle {
+  0%, 100% { transform: scale(var(--enemy-display-scale)) scaleY(1); }
+  50% { transform: scale(var(--enemy-display-scale)) scaleY(1.008); }
+}
+
+@keyframes studyrise-enemy-crawler-idle {
+  0%, 100% { transform: scale(var(--enemy-display-scale)) scaleY(1); }
+  50% { transform: scale(var(--enemy-display-scale)) scaleY(1.005); }
+}

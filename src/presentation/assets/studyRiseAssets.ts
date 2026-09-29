@@ -79,9 +79,9 @@ export const enemyArtById: Record<string, EnemyArtDefinition> = {
   enemy_scrib: { runtimeFilename: 'scrib.png', visualSize: 'standard', motionType: 'ground', baseline: 'ground' },
   enemy_sentinel: { runtimeFilename: 'sentinel.png', visualSize: 'large', motionType: 'quadruped', baseline: 'ground' },
   enemy_auditor: { runtimeFilename: 'auditor.png', visualSize: 'large', motionType: 'flying', baseline: 'hover' },
-  enemy_boss_ogre_placeholder: { runtimeFilename: 'janus.png', visualSize: 'extra-large', motionType: 'quadruped', baseline: 'ground' },
-  enemy_boss_nereid: { runtimeFilename: 'nereid.png', visualSize: 'extra-large', motionType: 'swimming', baseline: 'hover' },
-  enemy_boss_mnemos: { runtimeFilename: 'mnemos.png', visualSize: 'extra-large', motionType: 'flying', baseline: 'hover' },
+  enemy_boss_ogre_placeholder: { runtimeFilename: 'janus.png', visualSize: 'extra-large', motionType: 'quadruped', displayScale: 1.04, baseline: 'ground' },
+  enemy_boss_nereid: { runtimeFilename: 'nereid.png', visualSize: 'extra-large', motionType: 'swimming', displayScale: 1.03, baseline: 'hover' },
+  enemy_boss_mnemos: { runtimeFilename: 'mnemos.png', visualSize: 'extra-large', motionType: 'flying', displayScale: 1.03, baseline: 'hover' },
 };
 
 /** Stage1〜3 backgrounds, keyed by StageDefinition.id. */

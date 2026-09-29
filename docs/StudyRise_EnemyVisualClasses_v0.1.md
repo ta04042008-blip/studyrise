@@ -53,3 +53,20 @@ extra-large は単なる画像拡大ではなく専用の構図区分とする�
 - 複数敵編成時は必要に応じて自動縮小する。
 - 撃破・被弾・待機の移動量は画像サイズに比例させすぎない。
 - 超大型であることを戦闘計算の強さへ自動変換しない。
+
+
+## 実装済み安全領域（2026-09-29）
+
+- 1〜2体編成では各visualSizeを優先する。
+- 3体以上では敵側46vw内へ自動縮小し、HP HUD・Turn Order・下部コマンド領域を保護する。
+- ground型の待機変形はtransform-originを足元(50% 100%)へ固定する。
+- hover型は接地型とは別のbody baselineと影位置を使う。
+- extra-largeは単体時に最大表示し、複数編成時には自動縮小する。
+- damage pop / KO / battle-end UIはvisualSizeに依存せず前面表示する。
+- displayScaleは見た目だけに作用し、BattleEngineのHP/攻撃/防御/報酬には影響しない。
+
+## 新規敵追加チェック
+
+新しい敵画像を正式採用するときは、EnemyDefinitionを変更する前にAsset Manifest側で
+runtimeFilename / visualSize / motionType / baseline / 必要時のみdisplayScale を決定する。
+画像が未配置の敵IDを先にregistryへ追加しない。
