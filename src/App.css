@@ -543,6 +543,33 @@ body:has(.battle-screen) {
     opacity: 0.9;
   }
 
+  .subject-star-select,
+  .question-view {
+    position: absolute;
+    left: 50%;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: min(620px, calc(100vw - 48px));
+    max-height: min(48vh, 360px);
+    overflow: auto;
+    padding: 12px 14px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    background: rgba(15, 24, 34, 0.82);
+    color: #fff;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 6;
+  }
+
+  .subject-star-select p,
+  .question-view__text { margin-top: 0; }
+
+  .subject-star-select select { min-height: 44px; margin: 4px 10px 8px 6px; font-size: 1rem; }
+  .question-view__choices { margin-bottom: 10px; }
+  .question-view__choices label { display: block; padding: 6px 8px; }
+
   .target-select-view {
     position: absolute;
     left: 50%;
