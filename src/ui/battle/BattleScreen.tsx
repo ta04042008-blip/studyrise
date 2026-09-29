@@ -1,5 +1,4 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { createPortal } from 'react-dom';
 import type { BattleController } from '../../state/useBattleController';
 import { HpBar } from './HpBar';
 import { TurnOrderView } from './TurnOrderView';
@@ -188,35 +187,16 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
               onCancel={() => setSpellSelectOpen(false)}
             />
           ) : (
-            <>
-              <div className="command-menu-host command-menu-host--stage">
-                <CommandMenu
-                  enabled
-                  knownSpells={currentKnownSpells}
-                  playerMp={currentActor?.currentMp ?? 0}
-                  items={state.battleItems}
-                  onSelectCommand={controller.selectCommand}
-                  onUseSpell={controller.useSpell}
-                  onOpenSpellSelect={() => setSpellSelectOpen(true)}
-                  onUseItem={controller.useItem}
-                />
-              </div>
-              {createPortal(
-                <div className="command-menu-host command-menu-host--phone-gutters">
-                  <CommandMenu
-                    enabled
-                    knownSpells={currentKnownSpells}
-                    playerMp={currentActor?.currentMp ?? 0}
-                    items={state.battleItems}
-                    onSelectCommand={controller.selectCommand}
-                    onUseSpell={controller.useSpell}
-                    onOpenSpellSelect={() => setSpellSelectOpen(true)}
-                    onUseItem={controller.useItem}
-                  />
-                </div>,
-                document.body,
-              )}
-            </>
+            <CommandMenu
+              enabled
+              knownSpells={currentKnownSpells}
+              playerMp={currentActor?.currentMp ?? 0}
+              items={state.battleItems}
+              onSelectCommand={controller.selectCommand}
+              onUseSpell={controller.useSpell}
+              onOpenSpellSelect={() => setSpellSelectOpen(true)}
+              onUseItem={controller.useItem}
+            />
           )}
         </>
       )}
