@@ -69,7 +69,7 @@ export const characterArtById: Record<string, CharacterArtDefinition> = {
 
 /** All 13 Area 1 enemies, keyed by EnemyDefinition.id. */
 export const enemyArtById: Record<string, EnemyArtDefinition> = {
-  enemy_slime_placeholder: { runtimeFilename: 'runner.png', visualSize: 'standard', motionType: 'quadruped', baseline: 'ground' },
+  enemy_slime_placeholder: { runtimeFilename: 'mech_fox.png', visualSize: 'standard', motionType: 'quadruped', baseline: 'ground' },
   enemy_goblin_placeholder: { runtimeFilename: 'watcher.png', visualSize: 'standard', motionType: 'flying', baseline: 'hover' },
   enemy_clamp: { runtimeFilename: 'clamp.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
   enemy_relay: { runtimeFilename: 'relay.png', visualSize: 'standard', motionType: 'hover', baseline: 'hover' },
