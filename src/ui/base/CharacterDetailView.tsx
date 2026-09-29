@@ -44,40 +44,47 @@ export function CharacterDetailView({
   return (
     <div className="character-detail-view">
       <h1>{character.name}</h1>
-      <GameImage src={characterArtPath} alt={character.name} />
 
-      <dl className="character-detail-view__level">
-        <dt>Level</dt>
-        <dd>{characterState.level}</dd>
-        <dt>EXP</dt>
-        <dd>
-          {characterState.exp} / 次Lvまで {nextLevelExpRequired}
-        </dd>
-      </dl>
+      <div className="character-detail-view__content">
+        <div className="character-detail-view__art-panel">
+          <GameImage src={characterArtPath} alt={character.name} className="character-detail-view__art" />
+        </div>
 
-      <dl className="character-detail-view__stats">
-        <dt>HP</dt>
-        <dd>{resolvedBaseStats.maxHp}</dd>
-        <dt>学力</dt>
-        <dd>{resolvedBaseStats.attack}</dd>
-        <dt>忍耐力</dt>
-        <dd>{resolvedBaseStats.defense}</dd>
-        <dt>思考速度</dt>
-        <dd>{resolvedBaseStats.speed}</dd>
-        <dt>MP</dt>
-        <dd>{resolvedBaseStats.maxMp}</dd>
-        <dt>初期スペル</dt>
-        <dd>{initialSpell?.name ?? '不明'}</dd>
-      </dl>
+        <div className="character-detail-view__info">
+          <dl className="character-detail-view__level">
+            <dt>Level</dt>
+            <dd>{characterState.level}</dd>
+            <dt>EXP</dt>
+            <dd>
+              {characterState.exp} / 次Lvまで {nextLevelExpRequired}
+            </dd>
+          </dl>
 
-      <dl className="character-detail-view__equipment">
-        <dt>{SLOT_LABELS.weapon}</dt>
-        <dd>{resolveEquippedName(characterState.equipped.weaponInstanceId, equipmentInstances, equipmentDefsById)}</dd>
-        <dt>{SLOT_LABELS.armor}</dt>
-        <dd>{resolveEquippedName(characterState.equipped.armorInstanceId, equipmentInstances, equipmentDefsById)}</dd>
-        <dt>{SLOT_LABELS.accessory}</dt>
-        <dd>{resolveEquippedName(characterState.equipped.accessoryInstanceId, equipmentInstances, equipmentDefsById)}</dd>
-      </dl>
+          <dl className="character-detail-view__stats">
+            <dt>HP</dt>
+            <dd>{resolvedBaseStats.maxHp}</dd>
+            <dt>学力</dt>
+            <dd>{resolvedBaseStats.attack}</dd>
+            <dt>忍耐力</dt>
+            <dd>{resolvedBaseStats.defense}</dd>
+            <dt>思考速度</dt>
+            <dd>{resolvedBaseStats.speed}</dd>
+            <dt>MP</dt>
+            <dd>{resolvedBaseStats.maxMp}</dd>
+            <dt>初期スペル</dt>
+            <dd>{initialSpell?.name ?? '不明'}</dd>
+          </dl>
+
+          <dl className="character-detail-view__equipment">
+            <dt>{SLOT_LABELS.weapon}</dt>
+            <dd>{resolveEquippedName(characterState.equipped.weaponInstanceId, equipmentInstances, equipmentDefsById)}</dd>
+            <dt>{SLOT_LABELS.armor}</dt>
+            <dd>{resolveEquippedName(characterState.equipped.armorInstanceId, equipmentInstances, equipmentDefsById)}</dd>
+            <dt>{SLOT_LABELS.accessory}</dt>
+            <dd>{resolveEquippedName(characterState.equipped.accessoryInstanceId, equipmentInstances, equipmentDefsById)}</dd>
+          </dl>
+        </div>
+      </div>
 
       <button type="button" onClick={onBack}>
         一覧へ戻る
