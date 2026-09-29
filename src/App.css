@@ -357,3 +357,37 @@ button {
   position: relative;
   z-index: 1;
 }
+
+
+/* --- Full-screen battle stage surface --- */
+
+/*
+ * Battle is the only current screen that should escape the shared .app
+ * max-width/padding shell. This lets the stage artwork fill the whole
+ * browser viewport while leaving every non-battle screen unchanged.
+ */
+.app:has(.battle-screen) {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.battle-screen {
+  box-sizing: border-box;
+  min-height: 100svh;
+  width: 100%;
+  padding:
+    max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+}
+
+/* Use the dynamic viewport on browsers that support it so Safari chrome
+ * expansion/collapse does not leave a white strip around the battle scene. */
+@supports (min-height: 100dvh) {
+  .battle-screen {
+    min-height: 100dvh;
+  }
+}
