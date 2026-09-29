@@ -45,7 +45,7 @@ export function QuestionView({ question, onSubmit }: QuestionViewProps) {
       </button>
       <ul className="question-view__choices">
         {question.choices.map((choice, index) => (
-          <li key={choice}>
+          <li key={choice} className={selectedIndex === index ? 'question-view__choice--selected' : ''}>
             <label>
               <input
                 type="radio"
