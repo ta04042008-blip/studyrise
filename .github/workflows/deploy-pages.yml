@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build
-        run: npm run build -- --mode github-pages
+        run: npm run build -- --base=/studyrise/
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
