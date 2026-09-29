@@ -33,20 +33,21 @@ export function CommandMenu({
 
   return (
     <div className="command-menu">
-      <button type="button" disabled={!enabled} onClick={() => onSelectCommand('attack')}>
+      <button className="command-menu__button command-menu__button--attack" type="button" disabled={!enabled} onClick={() => onSelectCommand('attack')}>
         アタック
       </button>
-      <button type="button" disabled={!enabled} onClick={() => onSelectCommand('guard')}>
+      <button className="command-menu__button" type="button" disabled={!enabled} onClick={() => onSelectCommand('guard')}>
         ガード
       </button>
-      <button type="button" disabled={!enabled} onClick={() => onSelectCommand('charge')}>
+      <button className="command-menu__button" type="button" disabled={!enabled} onClick={() => onSelectCommand('charge')}>
         チャージ
       </button>
-      <button type="button" disabled={!enabled} onClick={() => onSelectCommand('search')}>
+      <button className="command-menu__button" type="button" disabled={!enabled} onClick={() => onSelectCommand('search')}>
         サーチ
       </button>
       {onlySpell ? (
         <button
+          className="command-menu__button"
           type="button"
           disabled={!enabled || playerMp < onlySpell.mpCost}
           onClick={() => onUseSpell(onlySpell.spellId)}
@@ -54,12 +55,13 @@ export function CommandMenu({
           スペル（MP{onlySpell.mpCost}）
         </button>
       ) : (
-        <button type="button" disabled={!enabled || knownSpells.length === 0} onClick={onOpenSpellSelect}>
+        <button className="command-menu__button" type="button" disabled={!enabled || knownSpells.length === 0} onClick={onOpenSpellSelect}>
           スペル
         </button>
       )}
       {items.map((slot) => (
         <button
+          className="command-menu__button"
           key={slot.item.id}
           type="button"
           disabled={!enabled || slot.remainingUses <= 0}

@@ -92,6 +92,12 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
           {state.enemies.map((enemy) => (
             <div key={enemy.id} className={['battle-screen__enemy-slot', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct ? 'battle-screen__enemy-slot--hit' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.isCritical ? 'battle-screen__enemy-slot--critical' : ''].filter(Boolean).join(' ')}>
               <GameImage src={resolveEnemyArtPath(enemy.definitionId)} alt={`${enemy.name} 戦闘`} className="battle-screen__actor-art battle-screen__actor-art--enemy" />
+              {attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct && (
+                <div className={`battle-screen__damage-pop${attackAnimationOutcome.isCritical ? ' battle-screen__damage-pop--critical' : ''}`}>
+                  {attackAnimationOutcome.isCritical && <span>CRITICAL!</span>}
+                  <strong>-{attackAnimationOutcome.damage}</strong>
+                </div>
+              )}
             </div>
           ))}
         </div>
