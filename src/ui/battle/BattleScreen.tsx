@@ -41,6 +41,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
   const currentKnownSpells = state.knownSpellsByPlayerId[state.currentActorId] ?? [];
   const commandAnimationOutcome = state.phase === 'COMMAND_ANIMATION' ? state.pendingOutcome : undefined;
   const attackAnimationOutcome = commandAnimationOutcome?.command === 'attack' ? commandAnimationOutcome : undefined;
+  const nonQuestionOutcome = state.phase === 'RESULT_APPLY' ? state.lastNonQuestionOutcome : undefined;
   const latestEnemyAction = state.phase === 'COMMAND_SELECT' && state.enemyActionLog.length > 0
     ? state.enemyActionLog[state.enemyActionLog.length - 1]
     : undefined;
@@ -86,6 +87,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
                 latestEnemyAction?.targetId === player.id ? 'battle-screen__player-slot--enemy-hit' : '',
                 player.currentHp <= 0 ? 'battle-screen__player-slot--ko' : '',
                 commandAnimationOutcome?.sourceActorId === player.id ? `battle-screen__player-slot--command-${commandAnimationOutcome.command}` : '',
+                nonQuestionOutcome?.sourceActorId === player.id ? `battle-screen__player-slot--command-${nonQuestionOutcome.command}` : '',
                 attackAnimationOutcome?.sourceActorId === player.id ? 'battle-screen__player-slot--attack-source' : '',
               ].filter(Boolean).join(' ')}
               data-party-index={index}
@@ -106,7 +108,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
         </div>
         <div className="battle-screen__actors-side battle-screen__actors-side--enemies" style={{ left: '69%', right: 'auto' }}>
           {state.enemies.map((enemy) => (
-            <div key={enemy.id} className={['battle-screen__enemy-slot', enemy.currentHp <= 0 ? 'battle-screen__enemy-slot--ko' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct ? 'battle-screen__enemy-slot--hit' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.isCritical ? 'battle-screen__enemy-slot--critical' : ''].filter(Boolean).join(' ')}>
+            <div key={enemy.id} className={['battle-screen__enemy-slot', nonQuestionOutcome?.targetId === enemy.id ? `battle-screen__enemy-slot--command-${nonQuestionOutcome.command}` : '', enemy.currentHp <= 0 ? 'battle-screen__enemy-slot--ko' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct ? 'battle-screen__enemy-slot--hit' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.isCritical ? 'battle-screen__enemy-slot--critical' : ''].filter(Boolean).join(' ')}>
               <GameImage src={resolveEnemyArtPath(enemy.definitionId)} alt={`${enemy.name} 戦闘`} className="battle-screen__actor-art battle-screen__actor-art--enemy" />
               {attackAnimationOutcome?.targetId === enemy.id && (
                 <div className={[
