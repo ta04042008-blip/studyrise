@@ -472,6 +472,38 @@ body:has(.battle-screen) {
     transform: translateX(-50%);
   }
 
+  .battle-screen__player-slot {
+    display: flex;
+    flex: 0 0 128px;
+    align-items: flex-end;
+    justify-content: center;
+    min-height: 128px;
+  }
+
+  /*
+   * Three-player iPad formation: keep the party on the player side while
+   * breaking the rigid straight line. This is presentation-only; party
+   * order and battle actor data are unchanged.
+   */
+  .battle-screen__actors-side--players:has(.battle-screen__player-slot:nth-child(3)) {
+    gap: 0;
+  }
+
+  .battle-screen__actors-side--players:has(.battle-screen__player-slot:nth-child(3))
+    .battle-screen__player-slot:nth-child(1) {
+    transform: translate(-12px, -4px);
+  }
+
+  .battle-screen__actors-side--players:has(.battle-screen__player-slot:nth-child(3))
+    .battle-screen__player-slot:nth-child(2) {
+    transform: translate(-24px, 8px);
+  }
+
+  .battle-screen__actors-side--players:has(.battle-screen__player-slot:nth-child(3))
+    .battle-screen__player-slot:nth-child(3) {
+    transform: translate(-36px, -2px);
+  }
+
   .battle-screen__actor-art--player,
   .battle-screen__actor-art--enemy {
     align-self: flex-end;
