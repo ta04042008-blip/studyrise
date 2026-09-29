@@ -3,7 +3,7 @@ import type { PlayerBaseStats } from '../../types/stats';
 import type { EquipmentDefinition, EquipmentInstance, PermanentCharacterState } from '../../engine/progression/ProgressionSystem.types';
 import { spellsById } from '../../data/spells/spellsById';
 import { GameImage } from '../../presentation/assets/GameImage';
-import { resolveCharacterArtPath } from '../../presentation/assets/studyRiseAssets';
+import { resolveCharacterDetailArtPath } from '../../presentation/assets/studyRiseAssets';
 import { resolveEquippedName } from './equipmentDisplay';
 
 interface CharacterDetailViewProps {
@@ -39,7 +39,7 @@ export function CharacterDetailView({
   onBack,
 }: CharacterDetailViewProps) {
   const initialSpell = spellsById[character.initialSpellId];
-  const characterArtPath = resolveCharacterArtPath(character.id);
+  const characterArtPath = resolveCharacterDetailArtPath(character.id);
 
   return (
     <div className="character-detail-view">
