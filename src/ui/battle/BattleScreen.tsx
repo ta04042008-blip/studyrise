@@ -14,10 +14,12 @@ import { EnemyActionLog } from './EnemyActionLog';
 import { SearchInfoPanel } from './SearchInfoPanel';
 import { BattleEndView } from './BattleEndView';
 import { GameImage } from '../../presentation/assets/GameImage';
-import { resolveCharacterBattleArtPath, resolveEnemyArtPath } from '../../presentation/assets/studyRiseAssets';
+import { resolveCharacterBattleArtPath, resolveEnemyArtPath, resolveStageBackgroundPath } from '../../presentation/assets/studyRiseAssets';
 
 interface BattleScreenProps {
   controller: BattleController;
+  /** Presentation-only StageDefinition.id used to resolve the battle background. */
+  stageId?: string;
 }
 
 /**
@@ -25,8 +27,9 @@ interface BattleScreenProps {
  * only reads `state` and dispatches to the controller. No damage/crit/HP
  * calculation happens in this component.
  */
-export function BattleScreen({ controller }: BattleScreenProps) {
+export function BattleScreen({ controller, stageId }: BattleScreenProps) {
   const { state } = controller;
+  const stageBackgroundPath = resolveStageBackgroundPath(stageId);
   const allActors = [...state.players, ...state.enemies];
   const actorNameById = Object.fromEntries(allActors.map((a) => [a.id, a.name]));
   const actorHpById = Object.fromEntries(allActors.map((a) => [a.id, { current: a.currentHp, max: a.maxHp }]));
@@ -42,6 +45,13 @@ export function BattleScreen({ controller }: BattleScreenProps) {
 
   return (
     <div className="battle-screen">
+      {stageBackgroundPath && (
+        <div className="battle-screen__background" aria-hidden="true">
+          <GameImage src={stageBackgroundPath} alt="" className="battle-screen__background-image" />
+          <div className="battle-screen__background-overlay" />
+        </div>
+      )}
+
       <div className="battle-screen__hp battle-screen__hp--players">
         {state.players.map((p) => (
           <HpBar key={p.id} label={p.name} current={p.currentHp} max={p.maxHp} isCurrentActor={p.id === state.currentActorId} />

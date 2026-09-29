@@ -321,3 +321,39 @@ button {
     flex-basis: 176px;
   }
 }
+
+
+/* --- Stage battle background (Phase C-4) --- */
+
+.battle-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+.battle-screen__background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.battle-screen__background-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  image-rendering: pixelated;
+}
+
+.battle-screen__background-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.battle-screen > :not(.battle-screen__background) {
+  position: relative;
+  z-index: 1;
+}
