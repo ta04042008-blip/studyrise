@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { QuestionCommandOutcome } from '../../engine/battle/BattleEngine.types';
 
 interface CommandAnimationViewProps {
@@ -39,6 +39,18 @@ function getAnimationText(outcome: QuestionCommandOutcome): string {
 export function CommandAnimationView({ outcome, onAdvance }: CommandAnimationViewProps) {
   const [advanced, setAdvanced] = useState(false);
 
+  // Attack motion is presentation-only and should flow into damage/result
+  // without requiring an extra tap. Other commands keep their existing
+  // manual confirmation until their own animations are implemented.
+  useEffect(() => {
+    if (outcome.command !== 'attack') return;
+    const timer = window.setTimeout(() => {
+      setAdvanced(true);
+      onAdvance();
+    }, 720);
+    return () => window.clearTimeout(timer);
+  }, [outcome, onAdvance]);
+
   function handleAdvance() {
     if (advanced) return;
     setAdvanced(true); // idempotency guard (CLAUDE.md §13)
@@ -48,9 +60,11 @@ export function CommandAnimationView({ outcome, onAdvance }: CommandAnimationVie
   return (
     <div className="command-animation-view">
       <p>{getAnimationText(outcome)}</p>
-      <button type="button" disabled={advanced} onClick={handleAdvance}>
-        次へ
-      </button>
+      {outcome.command !== 'attack' && (
+        <button type="button" disabled={advanced} onClick={handleAdvance}>
+          次へ
+        </button>
+      )}
     </div>
   );
 }
