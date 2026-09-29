@@ -1571,41 +1571,43 @@ button, input, select, textarea {
 
 
 
-/* Phone landscape battle canvas.
-   Keep the tablet composition/background coordinate system and fit the
-   complete 4:3 stage into the short phone viewport as one unit. */
+/* Phone landscape: center the complete 4:3 tablet battle surface.
+   The stage uses viewport height and leaves deliberate dark side gutters. */
 @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
   body:has(.battle-screen) {
+    margin: 0;
     overflow: hidden;
     background: #08121d;
   }
 
   .app:has(.battle-screen) {
     position: fixed;
-    left: 50%;
-    top: 50%;
-    width: 1024px;
-    height: 768px;
-    min-width: 1024px;
-    min-height: 768px;
-    transform:
-      translate(-50%, -50%)
-      scale(min(calc(100vw / 1024), calc(100dvh / 768)));
-    transform-origin: 50% 50%;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
     overflow: hidden;
+    background: #08121d;
   }
 
   .battle-screen {
-    display: block;
-    width: 1024px;
-    height: 768px;
-    min-height: 768px;
-    padding: 16px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: calc(100dvh * 4 / 3);
+    height: 100dvh;
+    min-height: 0;
+    padding: 0;
+    transform: translateX(-50%);
+    overflow: hidden;
   }
 
   .battle-screen__background {
-    width: 1024px;
-    height: 768px;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
 
   .battle-screen__background-image {
