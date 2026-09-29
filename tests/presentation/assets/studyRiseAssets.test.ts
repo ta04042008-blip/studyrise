@@ -16,8 +16,8 @@ describe('studyRiseAssets registries', () => {
     expect(Object.keys(characterArtById)).toHaveLength(3);
   });
 
-  it('has the 13 Area 1 enemies plus the 12 registered new enemy assets', () => {
-    expect(Object.keys(enemyArtById)).toHaveLength(25);
+  it('has exactly the 13 formal Area 1 enemy IDs', () => {
+    expect(Object.keys(enemyArtById)).toHaveLength(13);
   });
 
   it('has exactly the 3 Stage backgrounds', () => {
@@ -84,18 +84,6 @@ describe('resolveEnemyArtPath', () => {
     expect(resolveEnemyArtPath('enemy_boss_ogre_placeholder')).toBe('/assets/studyrise/enemies/janus.png');
     expect(resolveEnemyArtPath('enemy_boss_nereid')).toBe('/assets/studyrise/enemies/nereid.png');
     expect(resolveEnemyArtPath('enemy_boss_mnemos')).toBe('/assets/studyrise/enemies/mnemos.png');
-    expect(resolveEnemyArtPath('enemy_mech_crustacean')).toBe('/assets/studyrise/enemies/mech_crustacean.png');
-    expect(resolveEnemyArtPath('enemy_mech_moth')).toBe('/assets/studyrise/enemies/mech_moth.png');
-    expect(resolveEnemyArtPath('enemy_mech_deer')).toBe('/assets/studyrise/enemies/mech_deer.png');
-    expect(resolveEnemyArtPath('enemy_mech_fox')).toBe('/assets/studyrise/enemies/mech_fox.png');
-    expect(resolveEnemyArtPath('enemy_mech_mantis')).toBe('/assets/studyrise/enemies/mech_mantis.png');
-    expect(resolveEnemyArtPath('enemy_armored_turtle')).toBe('/assets/studyrise/enemies/armored_turtle.png');
-    expect(resolveEnemyArtPath('enemy_mech_fish')).toBe('/assets/studyrise/enemies/mech_fish.png');
-    expect(resolveEnemyArtPath('enemy_mech_lizard')).toBe('/assets/studyrise/enemies/mech_lizard.png');
-    expect(resolveEnemyArtPath('enemy_mech_owl')).toBe('/assets/studyrise/enemies/mech_owl.png');
-    expect(resolveEnemyArtPath('enemy_heavy_quadruped')).toBe('/assets/studyrise/enemies/heavy_quadruped.png');
-    expect(resolveEnemyArtPath('enemy_arcane_orbiter')).toBe('/assets/studyrise/enemies/arcane_orbiter.png');
-    expect(resolveEnemyArtPath('enemy_aqua_manta')).toBe('/assets/studyrise/enemies/aqua_manta.png');
   });
 
   it('returns undefined for an unknown id', () => {
