@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { QuestionCommandOutcome } from '../../engine/battle/BattleEngine.types';
 
 interface CommandAnimationViewProps {
@@ -37,13 +37,10 @@ function getAnimationText(outcome: QuestionCommandOutcome): string {
 }
 
 export function CommandAnimationView({ outcome, onAdvance }: CommandAnimationViewProps) {
-  const [advanced, setAdvanced] = useState(false);
-
   // Command presentation flows directly into result/explanation. This keeps
   // the battle rhythm consistent and does not alter BattleEngine outcomes.
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setAdvanced(true);
       onAdvance();
     }, outcome.command === 'attack' ? 760 : 680);
     return () => window.clearTimeout(timer);
