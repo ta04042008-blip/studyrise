@@ -72,17 +72,17 @@ describe('character art resolvers', () => {
 describe('resolveEnemyArtPath', () => {
   it('resolves every registered enemy id to its runtime path', () => {
     expect(resolveEnemyArtPath('enemy_slime_placeholder')).toBe('/assets/studyrise/enemies/mech_fox.png');
-    expect(resolveEnemyArtPath('enemy_goblin_placeholder')).toBe('/assets/studyrise/enemies/watcher.png');
-    expect(resolveEnemyArtPath('enemy_clamp')).toBe('/assets/studyrise/enemies/clamp.png');
-    expect(resolveEnemyArtPath('enemy_relay')).toBe('/assets/studyrise/enemies/relay.png');
-    expect(resolveEnemyArtPath('enemy_drainer')).toBe('/assets/studyrise/enemies/drainer.png');
+    expect(resolveEnemyArtPath('enemy_goblin_placeholder')).toBe('/assets/studyrise/enemies/mech_owl.png');
+    expect(resolveEnemyArtPath('enemy_clamp')).toBe('/assets/studyrise/enemies/mech_crustacean.png');
+    expect(resolveEnemyArtPath('enemy_relay')).toBe('/assets/studyrise/enemies/mech_lizard.png');
+    expect(resolveEnemyArtPath('enemy_drainer')).toBe('/assets/studyrise/enemies/mech_fish.png');
     expect(resolveEnemyArtPath('enemy_purger')).toBe('/assets/studyrise/enemies/purger.png');
-    expect(resolveEnemyArtPath('enemy_shielder')).toBe('/assets/studyrise/enemies/shielder.png');
-    expect(resolveEnemyArtPath('enemy_scrib')).toBe('/assets/studyrise/enemies/scrib.png');
+    expect(resolveEnemyArtPath('enemy_shielder')).toBe('/assets/studyrise/enemies/armored_turtle.png');
+    expect(resolveEnemyArtPath('enemy_scrib')).toBe('/assets/studyrise/enemies/mech_mantis.png');
     expect(resolveEnemyArtPath('enemy_sentinel')).toBe('/assets/studyrise/enemies/sentinel.png');
     expect(resolveEnemyArtPath('enemy_auditor')).toBe('/assets/studyrise/enemies/auditor.png');
-    expect(resolveEnemyArtPath('enemy_boss_ogre_placeholder')).toBe('/assets/studyrise/enemies/janus.png');
-    expect(resolveEnemyArtPath('enemy_boss_nereid')).toBe('/assets/studyrise/enemies/nereid.png');
+    expect(resolveEnemyArtPath('enemy_boss_ogre_placeholder')).toBe('/assets/studyrise/enemies/heavy_quadruped.png');
+    expect(resolveEnemyArtPath('enemy_boss_nereid')).toBe('/assets/studyrise/enemies/aqua_manta.png');
     expect(resolveEnemyArtPath('enemy_boss_mnemos')).toBe('/assets/studyrise/enemies/mnemos.png');
   });
 
