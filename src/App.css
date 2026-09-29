@@ -537,3 +537,60 @@ body:has(.battle-screen) {
     margin: 2px 0;
   }
 }
+
+
+/* --- iPad battle composition refinement (Stage 1 visual pass) --- */
+@media (min-width: 768px) and (orientation: landscape) {
+  /*
+   * Keep the established art sizes, but move the two sides apart and lower
+   * them onto the visible road surface. These offsets are presentation-only.
+   */
+  .battle-screen__actors-side {
+    bottom: 45%;
+    width: auto;
+    min-height: 128px;
+  }
+
+  .battle-screen__actors-side--players {
+    left: 30%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  .battle-screen__actors-side--enemies {
+    left: 70%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  /* Keep both sides on one shared baseline. */
+  .battle-screen__actor-art--player,
+  .battle-screen__actor-art--enemy {
+    align-self: flex-end;
+  }
+
+  /* HUD stays clear of the actors and uses less of the background. */
+  .battle-screen__hp {
+    width: min(27vw, 330px);
+    padding: 8px 10px;
+    background: rgba(15, 24, 34, 0.62);
+  }
+
+  .turn-order-view {
+    width: min(26vw, 310px);
+    background: rgba(15, 24, 34, 0.62);
+  }
+
+  .command-menu {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    width: max-content;
+    max-width: calc(100vw - 48px);
+    padding: 8px;
+    background: rgba(15, 24, 34, 0.62);
+  }
+
+  .command-menu button {
+    min-width: 96px;
+    padding-inline: 14px;
+  }
+}
