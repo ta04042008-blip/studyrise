@@ -13,6 +13,8 @@ import type { QuestionDefinition } from '../../engine/question/QuestionEngine.ty
 import type { QuestionResult } from '../../engine/learningHistory/LearningHistory.types';
 
 interface ZoneBattlePanelProps {
+  /** Presentation-only stage id used to resolve the battle background. */
+  stageId?: string;
   party: CharacterDefinition[];
   enemies: EnemyBattleInstance[];
   runState: RunState;
@@ -39,6 +41,7 @@ interface ZoneBattlePanelProps {
  * correct without relying on that detail.
  */
 export function ZoneBattlePanel({
+  stageId,
   party,
   enemies,
   runState,
@@ -75,7 +78,7 @@ export function ZoneBattlePanel({
 
   return (
     <>
-      <BattleScreen controller={battleController} />
+      <BattleScreen controller={battleController} stageId={stageId} />
       {state.phase === 'BATTLE_END' && state.outcome === 'win' && (
         <button
           type="button"

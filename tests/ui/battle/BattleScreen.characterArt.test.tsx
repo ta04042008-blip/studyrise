@@ -42,7 +42,7 @@ const QUESTION: MultipleChoiceQuestion = {
   explanation: '1 + 1 = 2 です。',
 };
 
-function Harness() {
+function Harness({ stageId }: { stageId?: string } = {}) {
   const controller = useBattleController({
     players: [TOMOYA],
     enemies: [ENEMY],
@@ -52,7 +52,7 @@ function Harness() {
     seed: 1,
   });
 
-  return <BattleScreen controller={controller} />;
+  return <BattleScreen controller={controller} stageId={stageId} />;
 }
 
 describe('BattleScreen character battle art', () => {
@@ -65,5 +65,24 @@ describe('BattleScreen character battle art', () => {
   it('does not render an enemy img when the enemy has no registered art', () => {
     render(<Harness />);
     expect(screen.queryByRole('img', { name: 'テスト敵 戦闘' })).toBeNull();
+  });
+});
+
+
+describe('BattleScreen stage background', () => {
+  it('renders the Stage1 background behind the existing battle UI', () => {
+    const { container } = render(<Harness stageId="stage_sample_placeholder" />);
+    const image = container.querySelector('.battle-screen__background-image') as HTMLImageElement | null;
+
+    expect(image).not.toBeNull();
+    expect(image?.src).toContain('/assets/studyrise/backgrounds/stages/stage_closed_route.png');
+    expect(screen.getByRole('button', { name: 'アタック' })).toBeTruthy();
+  });
+
+  it('keeps the battle UI usable when no stage background can be resolved', () => {
+    const { container } = render(<Harness />);
+
+    expect(container.querySelector('.battle-screen__background-image')).toBeNull();
+    expect(screen.getByRole('button', { name: 'アタック' })).toBeTruthy();
   });
 });

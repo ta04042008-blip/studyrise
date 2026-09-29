@@ -204,6 +204,7 @@ export function useStageController(
           {devPanel}
           <ZoneBattlePanel
             key={zone.id}
+            stageId={stage.id}
             party={party}
             enemies={enemies}
             runState={stageState.runState}
