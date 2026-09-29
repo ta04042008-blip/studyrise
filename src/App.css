@@ -1486,3 +1486,64 @@ body:has(.battle-screen) {
     filter: saturate(.9);
   }
 }
+
+
+/* Phone landscape battle layout.
+   Kept below the iPad landscape rules so only short landscape viewports are
+   overridden. Portrait and tablet landscape retain their existing layout. */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .battle-screen__actors-side {
+    bottom: 22%;
+    min-height: 96px;
+  }
+
+  .battle-screen__actors-side--players {
+    left: 28% !important;
+    transform: translateX(-50%) scale(.78);
+    transform-origin: 50% 100%;
+  }
+
+  .battle-screen__actors-side--enemies {
+    left: 72% !important;
+    max-width: 44vw;
+    transform: translateX(-50%) scale(.78);
+    transform-origin: 50% 100%;
+  }
+
+  .battle-screen__enemy-slot {
+    --enemy-box-width: 148px;
+    --enemy-box-height: 104px;
+    max-width: 25vw;
+  }
+
+  .battle-screen__enemy-slot--size-large {
+    --enemy-box-width: 168px;
+    --enemy-box-height: 120px;
+  }
+
+  .battle-screen__enemy-slot--size-extra-large {
+    --enemy-box-width: min(24vw, 196px);
+    --enemy-box-height: min(38vh, 142px);
+  }
+
+  .battle-screen__enemy-slot--baseline-hover {
+    --enemy-hover-offset: 12px;
+  }
+
+  .battle-screen__enemy-slot--size-extra-large.battle-screen__enemy-slot--baseline-hover {
+    --enemy-hover-offset: 16px;
+  }
+
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(3)) .battle-screen__enemy-slot {
+    --enemy-box-width: min(13vw, 120px);
+    --enemy-box-height: min(27vh, 96px);
+  }
+
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(3))
+    .battle-screen__enemy-slot--size-large,
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(3))
+    .battle-screen__enemy-slot--size-extra-large {
+    --enemy-box-width: min(15vw, 136px);
+    --enemy-box-height: min(31vh, 110px);
+  }
+}
