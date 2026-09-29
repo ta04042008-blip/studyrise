@@ -626,6 +626,43 @@ body:has(.battle-screen) {
   .target-select-view li { margin: 0; }
   .target-select-view button { min-width: 150px; }
 
+  .spell-select-view {
+    position: absolute;
+    left: 50%;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    width: min(760px, calc(100vw - 64px));
+    padding: 10px;
+    box-sizing: border-box;
+    border: 2px solid rgba(255,255,255,.9);
+    border-radius: 8px;
+    background: rgba(8,20,34,.94);
+    box-shadow: 0 4px 0 rgba(0,0,0,.5);
+    z-index: 7;
+  }
+
+  .spell-select-view button {
+    min-height: 58px;
+    border: 2px solid rgba(255,255,255,.82);
+    border-radius: 5px;
+    background: rgba(10,27,45,.96);
+    color: #fff;
+    font-weight: 750;
+    touch-action: manipulation;
+  }
+
+  .spell-select-view button:active:not(:disabled) {
+    transform: translateY(2px);
+    background: rgba(16,78,160,.96);
+  }
+
+  .spell-select-view button:disabled {
+    opacity: .46;
+  }
+
   .command-menu {
     position: absolute;
     left: 50%;
