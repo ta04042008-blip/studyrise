@@ -40,6 +40,9 @@ export function QuestionView({ question, onSubmit }: QuestionViewProps) {
         {question.subject} / {'★'.repeat(question.star)}
       </div>
       <p className="question-view__text">{question.text}</p>
+      <button className="question-view__dont-know" type="button" disabled={submitted} onClick={handleDontKnow}>
+        わからない
+      </button>
       <ul className="question-view__choices">
         {question.choices.map((choice, index) => (
           <li key={choice}>
@@ -59,9 +62,6 @@ export function QuestionView({ question, onSubmit }: QuestionViewProps) {
       <div className="question-view__actions">
         <button type="button" disabled={submitted || selectedIndex == null} onClick={handleAnswer}>
           回答する
-        </button>
-        <button type="button" disabled={submitted} onClick={handleDontKnow}>
-          わからない
         </button>
       </div>
     </div>
