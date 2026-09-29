@@ -594,3 +594,44 @@ body:has(.battle-screen) {
     padding-inline: 14px;
   }
 }
+
+
+/* --- iPad battle composition final-pass overrides --- */
+@media (min-width: 768px) and (orientation: landscape) {
+  /* Explicit block positioning overrides the older wide-layout flex rule. */
+  .battle-screen__hp {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    z-index: 4;
+  }
+
+  .battle-screen__hp--players {
+    left: max(16px, env(safe-area-inset-left));
+    right: auto;
+  }
+
+  .battle-screen__hp--enemies {
+    left: auto;
+    right: max(16px, env(safe-area-inset-right));
+  }
+
+  /* Place turn order independently between the two HP panels. */
+  .turn-order-view {
+    top: max(16px, env(safe-area-inset-top));
+    bottom: auto;
+    z-index: 4;
+  }
+
+  /* Lower both sides together while preserving the 30% / 70% centers. */
+  .battle-screen__actors-side {
+    bottom: 36%;
+  }
+
+  /* Keep the command strip low and clear of turn order / actor feet. */
+  .command-menu {
+    top: auto;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    z-index: 5;
+  }
+}
