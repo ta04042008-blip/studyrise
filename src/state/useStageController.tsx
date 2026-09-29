@@ -200,7 +200,6 @@ export function useStageController(
       const enemies = stageEngine.resolveZoneEnemies(stage, stageState, enemyDefinitionsById);
       return (
         <>
-          <h1>StudyRise — Stage攻略</h1>
           {devPanel}
           <ZoneBattlePanel
             key={zone.id}
