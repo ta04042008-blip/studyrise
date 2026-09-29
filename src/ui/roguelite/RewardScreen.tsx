@@ -23,7 +23,9 @@ export function RewardScreen({ controller, characterNameById, onProceedToNextBat
 
   return (
     <div className="reward-screen">
+      <div className="reward-screen__eyebrow">ZONE REWARD</div>
       <h2>{targetName}の報酬</h2>
+      <p className="reward-screen__lead">このゾーンで得た成長を1つ選択してください。</p>
       <p className="reward-screen__progress">
         {phase.currentCharacterIndex + 1} / {phase.characterOrder.length}人目
         {session.isRareRewardEvent ? '（希少報酬イベント）' : ''}
@@ -52,6 +54,7 @@ export function RewardScreen({ controller, characterNameById, onProceedToNextBat
 
       {phase.complete && (
         <div className="reward-screen__complete">
+          <div className="reward-screen__complete-eyebrow">REWARD COMPLETE</div>
           <p>全員の報酬選択が完了しました。</p>
           <button type="button" onClick={onProceedToNextBattle}>
             {nextLabel ?? '次の戦闘へ'}
