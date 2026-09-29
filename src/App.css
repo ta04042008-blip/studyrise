@@ -771,6 +771,47 @@ body:has(.battle-screen) {
   .battle-screen__damage-pop--critical { font-size: .9rem; }
   .battle-screen__damage-pop--critical strong { font-size: 2.2rem; }
 
+
+  .command-animation-view {
+    width: min(560px, calc(100vw - 64px));
+    bottom: max(94px, calc(env(safe-area-inset-bottom) + 94px));
+    padding: 10px 14px;
+    text-align: center;
+    overflow: hidden;
+  }
+  .command-animation-view p { margin: 0; font-weight: 800; }
+  .command-animation-view__progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 100%;
+    background: rgba(120,195,255,.9);
+    transform-origin: left center;
+    animation: studyrise-command-progress 680ms linear 1;
+  }
+
+  .explanation-view {
+    width: min(760px, calc(100vw - 64px));
+    max-height: min(43vh, 330px);
+    bottom: max(8px, env(safe-area-inset-bottom));
+    padding: 10px 14px;
+  }
+  .explanation-view__meta { opacity: .78; font-size: .82rem; }
+  .explanation-view__text { margin-bottom: 6px; font-weight: 700; }
+  .explanation-view p { margin-block: 5px; }
+  .explanation-view__result-detail { text-align: center; font-size: 1.12rem; font-weight: 850; }
+  .explanation-view__result-detail--success { text-shadow: 0 0 8px rgba(90,175,255,.45); }
+  .explanation-view__result-detail--miss { opacity: .82; }
+  .explanation-view__verdict { text-align: center; font-size: 1.35rem; font-weight: 900; margin-block: 8px 4px !important; }
+  .explanation-view button { display: block; min-width: 220px; margin: 8px auto 0; }
+
+  .battle-screen__damage-pop--miss strong {
+    font-size: 1.35rem;
+    letter-spacing: .08em;
+    opacity: .88;
+  }
+
   .enemy-action-log {
     position: absolute;
     left: 50%;
@@ -795,6 +836,11 @@ body:has(.battle-screen) {
 @media (min-width: 768px) {
   .battle-screen__enemy-slot { display:flex; flex:0 0 176px; align-items:flex-end; justify-content:center; min-height:128px; }
   .battle-screen__player-slot--attack-source { animation:studyrise-player-attack-step 560ms ease-in-out 1; position:relative; z-index:2; }
+  .battle-screen__player-slot--attack-source[data-party-index="1"] { animation-name:studyrise-player-attack-step-ayano; }
+  .battle-screen__player-slot--attack-source[data-party-index="2"] { animation-name:studyrise-player-attack-step-kakeru; }
+  .battle-screen__player-slot--command-guard { animation:studyrise-player-guard 520ms ease-out 1; }
+  .battle-screen__player-slot--command-charge { animation:studyrise-player-charge 620ms ease-out 1; }
+  .battle-screen__player-slot--command-search { animation:studyrise-player-search 600ms ease-out 1; }
   .battle-screen__enemy-slot--hit { animation:studyrise-enemy-hit 360ms ease-out 120ms 1; }
   .battle-screen__enemy-slot--critical { animation-name:studyrise-enemy-critical-hit; animation-duration:420ms; }
 }
@@ -804,6 +850,9 @@ body:has(.battle-screen) {
 
 @media (prefers-reduced-motion: reduce) {
   .battle-screen__player-slot--attack-source,
+  .battle-screen__player-slot--command-guard,
+  .battle-screen__player-slot--command-charge,
+  .battle-screen__player-slot--command-search,
   .battle-screen__enemy-slot--hit,
   .battle-screen__enemy-slot--critical {
     animation: none;
@@ -811,3 +860,10 @@ body:has(.battle-screen) {
 }
 
 @keyframes studyrise-damage-pop { 0%{opacity:0;transform:translate(-50%,-55%) scale(.8)} 22%{opacity:1;transform:translate(-50%,-115%) scale(1.14)} 70%{opacity:1;transform:translate(-50%,-145%) scale(1)} 100%{opacity:0;transform:translate(-50%,-175%) scale(.96)} }
+
+@keyframes studyrise-player-attack-step-ayano { 0%,100%{transform:translate(-24px,-20px)} 18%{transform:translate(-30px,-22px)} 46%{transform:translate(54px,-28px)} 60%{transform:translate(62px,-23px)} 80%{transform:translate(-4px,-20px)} }
+@keyframes studyrise-player-attack-step-kakeru { 0%,100%{transform:translate(-36px,-2px)} 16%{transform:translate(-45px,-2px)} 44%{transform:translate(64px,-5px)} 56%{transform:translate(72px,-2px)} 78%{transform:translate(-8px,-2px)} }
+@keyframes studyrise-player-guard { 0%,100%{filter:brightness(1);scale:1} 45%{filter:brightness(1.35);scale:1.04} }
+@keyframes studyrise-player-charge { 0%,100%{filter:brightness(1);translate:0 0} 40%{filter:brightness(1.55);translate:0 -5px} 65%{filter:brightness(1.25);translate:0 -2px} }
+@keyframes studyrise-player-search { 0%,100%{filter:brightness(1)} 35%{filter:brightness(1.4);translate:4px 0} 65%{translate:-3px 0} }
+@keyframes studyrise-command-progress { from{transform:scaleX(0)} to{transform:scaleX(1)} }
