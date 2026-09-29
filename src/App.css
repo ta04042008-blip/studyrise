@@ -1571,8 +1571,8 @@ button, input, select, textarea {
 
 
 
-/* Phone landscape: center the complete 4:3 tablet battle surface.
-   The stage uses viewport height and leaves deliberate dark side gutters. */
+/* Phone landscape: preserve the verified 1600x900 (16:9) tablet battle composition.
+   Fit by viewport height; wider phones intentionally show dark side gutters. */
 @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
   body:has(.battle-screen) {
     margin: 0;
@@ -1595,7 +1595,7 @@ button, input, select, textarea {
     position: absolute;
     top: 0;
     left: 50%;
-    width: calc(100dvh * 4 / 3);
+    width: calc(100dvh * 16 / 9);
     height: 100dvh;
     min-height: 0;
     padding: 0;
