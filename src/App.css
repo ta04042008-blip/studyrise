@@ -452,7 +452,7 @@ body:has(.battle-screen) {
 
   .battle-screen__actors-side {
     position: absolute;
-    bottom: 32%;
+    bottom: 28%;
     width: auto;
     min-height: 128px;
     gap: 6px;
