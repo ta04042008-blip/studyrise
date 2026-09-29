@@ -4,6 +4,8 @@ import {
   enemyArtById,
   stageBackgroundById,
   resolveCharacterArtPath,
+  resolveCharacterDetailArtPath,
+  resolveCharacterBattleArtPath,
   resolveEnemyArtPath,
   resolveStageBackgroundPath,
   resolveBaseHomeBackgroundPath,
@@ -23,26 +25,47 @@ describe('studyRiseAssets registries', () => {
   });
 });
 
-describe('resolveCharacterArtPath', () => {
-  it('resolves a known character id to its runtime path', () => {
-    expect(resolveCharacterArtPath('char_hero_placeholder')).toBe(
+describe('character art resolvers', () => {
+  it('resolves detail art for all 3 playable characters', () => {
+    expect(resolveCharacterDetailArtPath('char_hero_placeholder')).toBe(
       '/assets/studyrise/characters/hayama_tomoya.png',
     );
-    expect(resolveCharacterArtPath('char_mage_placeholder')).toBe(
+    expect(resolveCharacterDetailArtPath('char_mage_placeholder')).toBe(
       '/assets/studyrise/characters/nagumo_ayano.png',
     );
-    expect(resolveCharacterArtPath('char_knight_placeholder')).toBe(
+    expect(resolveCharacterDetailArtPath('char_knight_placeholder')).toBe(
       '/assets/studyrise/characters/okamura_kakeru.png',
     );
   });
 
-  it('returns undefined for an unknown id', () => {
-    expect(resolveCharacterArtPath('char_does_not_exist')).toBeUndefined();
+  it('resolves separate battle art paths for all 3 playable characters', () => {
+    expect(resolveCharacterBattleArtPath('char_hero_placeholder')).toBe(
+      '/assets/studyrise/characters/hayama_tomoya_battle.png',
+    );
+    expect(resolveCharacterBattleArtPath('char_mage_placeholder')).toBe(
+      '/assets/studyrise/characters/nagumo_ayano_battle.png',
+    );
+    expect(resolveCharacterBattleArtPath('char_knight_placeholder')).toBe(
+      '/assets/studyrise/characters/okamura_kakeru_battle.png',
+    );
+  });
+
+  it('keeps resolveCharacterArtPath as a detail-art compatibility alias', () => {
+    expect(resolveCharacterArtPath('char_hero_placeholder')).toBe(
+      resolveCharacterDetailArtPath('char_hero_placeholder'),
+    );
+  });
+
+  it('returns undefined for unknown ids', () => {
+    expect(resolveCharacterDetailArtPath('char_does_not_exist')).toBeUndefined();
+    expect(resolveCharacterBattleArtPath('char_does_not_exist')).toBeUndefined();
   });
 
   it('returns undefined for undefined input, without throwing', () => {
-    expect(() => resolveCharacterArtPath(undefined)).not.toThrow();
-    expect(resolveCharacterArtPath(undefined)).toBeUndefined();
+    expect(() => resolveCharacterDetailArtPath(undefined)).not.toThrow();
+    expect(() => resolveCharacterBattleArtPath(undefined)).not.toThrow();
+    expect(resolveCharacterDetailArtPath(undefined)).toBeUndefined();
+    expect(resolveCharacterBattleArtPath(undefined)).toBeUndefined();
   });
 });
 
