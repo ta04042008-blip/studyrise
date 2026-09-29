@@ -13,8 +13,29 @@ export interface CharacterArtDefinition {
   battleRuntimeFilename: string;
 }
 
+export type EnemyVisualSize = 'small' | 'standard' | 'large' | 'extra-large';
+
+export type EnemyMotionType =
+  | 'ground'
+  | 'quadruped'
+  | 'crawler'
+  | 'hover'
+  | 'flying'
+  | 'swimming';
+
 export interface EnemyArtDefinition {
   runtimeFilename: string;
+  /**
+   * Presentation-only visual class. This must never affect battle stats.
+   * extra-large is reserved for bosses / set-piece enemies that should exceed
+   * the normal enemy silhouette while remaining inside the battle safe area.
+   */
+  visualSize?: EnemyVisualSize;
+  motionType?: EnemyMotionType;
+  /** Fine-tuning multiplier inside the visual-size class. */
+  displayScale?: number;
+  /** Grounded actors align feet here; hover/flying/swimming align their body baseline. */
+  baseline?: 'ground' | 'hover';
 }
 
 export interface BackgroundArtDefinition {
@@ -107,6 +128,11 @@ export function resolveEnemyArtPath(definitionId: string | undefined): string | 
   }
   const art = enemyArtById[definitionId];
   return art ? ENEMIES_BASE_PATH + art.runtimeFilename : undefined;
+}
+
+/** Presentation metadata for per-enemy sizing / motion without touching Engine definitions. */
+export function resolveEnemyArtDefinition(definitionId: string | undefined): EnemyArtDefinition | undefined {
+  return definitionId === undefined ? undefined : enemyArtById[definitionId];
 }
 
 /** Resolves a StageDefinition.id to its runtime background path. */
