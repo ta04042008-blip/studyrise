@@ -52,6 +52,22 @@ function Harness({ stageId }: { stageId?: string }) {
     seed: 1,
   });
 
+  return <BattleScreen controller={controller} stageId={stageId} />;
+}
+
+describe('BattleScreen character battle art', () => {
+  it('renders Tomoya using the battle-specific asset path', () => {
+    render(<Harness />);
+    const image = screen.getByRole('img', { name: '葉山智也 戦闘' }) as HTMLImageElement;
+    expect(image.src).toContain('/assets/studyrise/characters/hayama_tomoya_battle.png');
+  });
+
+  it('does not render an enemy img when the enemy has no registered art', () => {
+    render(<Harness />);
+    expect(screen.queryByRole('img', { name: 'テスト敵 戦闘' })).toBeNull();
+  });
+});
+
 describe('BattleScreen stage background', () => {
   it('renders the Stage1 background for stage_sample_placeholder', () => {
     const { container } = render(<Harness stageId="stage_sample_placeholder" />);
@@ -66,21 +82,5 @@ describe('BattleScreen stage background', () => {
     expect(container.querySelector('.battle-screen__background')).toBeNull();
     expect(screen.getByText('葉山智也')).toBeTruthy();
     expect(screen.getByText('テスト敵')).toBeTruthy();
-  });
-});
-
-  return <BattleScreen controller={controller} stageId={stageId} />;
-}
-
-describe('BattleScreen character battle art', () => {
-  it('renders Tomoya using the battle-specific asset path', () => {
-    render(<Harness />);
-    const image = screen.getByRole('img', { name: '葉山智也 戦闘' }) as HTMLImageElement;
-    expect(image.src).toContain('/assets/studyrise/characters/hayama_tomoya_battle.png');
-  });
-
-  it('does not render an enemy img when the enemy has no registered art', () => {
-    render(<Harness />);
-    expect(screen.queryByRole('img', { name: 'テスト敵 戦闘' })).toBeNull();
   });
 });
