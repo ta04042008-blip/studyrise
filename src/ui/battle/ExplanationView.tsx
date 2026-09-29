@@ -49,13 +49,14 @@ export function ExplanationView({ outcome, onAdvance }: ExplanationViewProps) {
     question.format === 'multiple_choice' && index != null ? question.choices[index] : 'わからない';
 
   return (
-    <div className="explanation-view">
+    <div className={`explanation-view explanation-view--${outcome.command}`}>
       <div className="explanation-view__meta">
         {question.subject} / {'★'.repeat(question.star)} / {question.field} / {question.unit}
       </div>
       <p className="explanation-view__text">{question.text}</p>
       <p>あなたの回答: {choiceText(outcome.selectedAnswerIndex)}</p>
       {question.format === 'multiple_choice' && <p>正答: {question.choices[question.correctIndex]}</p>}
+      <div className={`explanation-view__command-badge explanation-view__command-badge--${outcome.command}`}>{outcome.command === 'attack' ? 'ATTACK' : outcome.command === 'guard' ? 'GUARD' : outcome.command === 'charge' ? 'CHARGE' : 'SEARCH'}</div>
       <p className={`explanation-view__result-detail explanation-view__result-detail--${outcome.correct ? 'success' : 'miss'}`}>{getResultDetailText(outcome)}</p>
       {showVerdict && (
         <>
