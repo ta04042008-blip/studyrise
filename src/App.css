@@ -1569,10 +1569,9 @@ button, input, select, textarea {
 }
 
 
-/* Phone landscape: preserve the tablet battle composition, but scale its
-   visual dimensions for short viewports. This block intentionally comes
-   after the authoritative iPad rules because modern landscape phones also
-   satisfy min-width:768px. */
+/* Phone landscape: use the same absolute battle layout as tablet even
+   when the phone's CSS viewport is narrower than 768px. The previous rule
+   only overrode sizes, leaving the base flex layout active on narrow phones. */
 @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
   .battle-screen {
     display: block;
@@ -1585,80 +1584,139 @@ button, input, select, textarea {
   }
 
   .battle-screen__hp {
+    position: absolute;
     top: max(6px, env(safe-area-inset-top));
-    width: min(27vw, 230px);
+    display: flex;
+    flex-direction: column;
     gap: 3px;
+    width: min(27vw, 230px);
     padding: 4px 6px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255,255,255,.22);
     border-radius: 7px;
+    background: rgba(15,24,34,.62);
+    z-index: 4;
   }
-
-  .battle-screen__hp--players { left: max(8px, env(safe-area-inset-left)); }
-  .battle-screen__hp--enemies { right: max(8px, env(safe-area-inset-right)); }
-  .battle-screen__hp .hp-bar__label { font-size: clamp(.58rem, 1.65vw, .72rem); line-height: 1.05; }
-  .battle-screen__hp .hp-bar__track { height: 5px; }
+  .battle-screen__hp--players { left: max(8px, env(safe-area-inset-left)); right:auto; }
+  .battle-screen__hp--enemies { left:auto; right:max(8px, env(safe-area-inset-right)); }
+  .battle-screen__hp .hp-bar__label { color:#fff; font-size:clamp(.58rem,1.65vw,.72rem); line-height:1.05; }
+  .battle-screen__hp .hp-bar__track { height:5px; }
 
   .turn-order-view {
-    top: max(6px, env(safe-area-inset-top));
-    max-width: 40vw;
-    transform: translateX(-50%) scale(.72);
-    transform-origin: 50% 0;
+    position:absolute;
+    top:max(6px,env(safe-area-inset-top));
+    left:50%;
+    bottom:auto;
+    max-width:40vw;
+    transform:translateX(-50%) scale(.72);
+    transform-origin:50% 0;
+    z-index:5;
   }
 
+  .battle-screen__actors {
+    position:absolute;
+    inset:0;
+    min-height:0;
+    pointer-events:none;
+  }
   .battle-screen__actors-side {
-    bottom: 25%;
-    min-height: 88px;
-    gap: 4px;
+    position:absolute;
+    bottom:25%;
+    width:auto;
+    min-height:88px;
+    gap:4px;
+    justify-content:center;
+    flex-wrap:nowrap;
   }
-
   .battle-screen__actors-side--players {
-    left: 30% !important;
-    right: auto !important;
-    transform: translateX(-50%) scale(.68);
-    transform-origin: 50% 100%;
+    left:30% !important; right:auto !important;
+    transform:translateX(-50%) scale(.68);
+    transform-origin:50% 100%;
+  }
+  .battle-screen__actors-side--enemies {
+    left:70% !important; right:auto !important;
+    max-width:46vw;
+    transform:translateX(-50%) scale(.68);
+    transform-origin:50% 100%;
   }
 
-  .battle-screen__actors-side--enemies {
-    left: 70% !important;
-    right: auto !important;
-    max-width: 46vw;
-    transform: translateX(-50%) scale(.68);
-    transform-origin: 50% 100%;
+  .battle-screen__player-slot {
+    display:flex;
+    flex:0 0 128px;
+    align-items:flex-end;
+    justify-content:center;
+    min-height:128px;
   }
+  .battle-screen__enemy-slot {
+    --enemy-display-scale:1;
+    --enemy-box-width:176px;
+    --enemy-box-height:128px;
+    position:relative;
+    display:flex;
+    flex:0 0 var(--enemy-box-width);
+    align-items:flex-end;
+    justify-content:center;
+    min-height:var(--enemy-box-height);
+  }
+  .battle-screen__actor-art--player { width:128px; height:128px; flex:0 0 128px; }
+  .battle-screen__enemy-slot .battle-screen__actor-art--enemy {
+    width:var(--enemy-box-width);
+    height:var(--enemy-box-height);
+    flex-basis:var(--enemy-box-width);
+    transform:scale(var(--enemy-display-scale));
+    transform-origin:50% 100%;
+  }
+  .battle-screen__enemy-slot--size-small { --enemy-box-width:144px; --enemy-box-height:112px; }
+  .battle-screen__enemy-slot--size-large { --enemy-box-width:208px; --enemy-box-height:154px; }
+  .battle-screen__enemy-slot--size-extra-large { --enemy-box-width:min(28vw,292px); --enemy-box-height:min(34vh,220px); }
 
   .command-menu {
-    bottom: max(5px, env(safe-area-inset-bottom));
-    width: min(94vw, 900px);
-    gap: 3px;
-    padding: 3px;
+    position:absolute;
+    left:50%;
+    top:auto;
+    bottom:max(5px,env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    display:flex;
+    flex-wrap:nowrap;
+    justify-content:center;
+    width:min(94vw,900px);
+    gap:3px;
+    padding:3px;
+    box-sizing:border-box;
+    background:rgba(8,20,34,.88);
+    z-index:7;
   }
-
   .command-menu button {
-    min-height: 40px;
-    padding: 4px 6px;
-    font-size: clamp(.62rem, 1.7vw, .82rem);
-    line-height: 1.05;
+    flex:1 1 0;
+    min-width:0;
+    min-height:40px;
+    padding:4px 6px;
+    font-size:clamp(.62rem,1.7vw,.82rem);
+    line-height:1.05;
   }
 
   .question-view {
-    width: min(88vw, 720px);
-    max-height: 72vh;
-    bottom: max(4px, env(safe-area-inset-bottom));
-    padding: 6px;
+    position:absolute;
+    left:50%;
+    width:min(88vw,720px);
+    max-height:72vh;
+    bottom:max(4px,env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    padding:6px;
+    box-sizing:border-box;
+    overflow:auto;
+    z-index:7;
   }
+  .question-view__meta { font-size:.62rem; margin-bottom:3px; }
+  .question-view__text { font-size:clamp(.72rem,1.8vw,.9rem); line-height:1.25; margin-bottom:5px; }
+  .question-view__dont-know { min-height:34px; margin-bottom:5px; }
+  .question-view__choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; }
+  .question-view__choices label { min-height:34px; font-size:.72rem; }
+  .question-view__actions { justify-content:center; margin-top:4px; }
+  .question-view__actions button { min-width:150px; min-height:34px; }
 
-  .question-view__meta { font-size: .62rem; margin-bottom: 3px; }
-  .question-view__text { font-size: clamp(.72rem, 1.8vw, .9rem); line-height: 1.25; margin-bottom: 5px; }
-  .question-view__dont-know { min-height: 34px; margin-bottom: 5px; }
-  .question-view__choices { gap: 4px; }
-  .question-view__choices label { min-height: 34px; font-size: .72rem; }
-  .question-view__actions { margin-top: 4px; }
-  .question-view__actions button { min-width: 150px; min-height: 34px; }
-
-  .spell-select-view,
-  .target-select-view,
-  .search-info-panel,
-  .spell-item-result-view {
-    max-height: 78vh;
-    overflow: auto;
+  .spell-select-view,.target-select-view,.search-info-panel,.spell-item-result-view {
+    max-height:78vh;
+    overflow:auto;
   }
 }
