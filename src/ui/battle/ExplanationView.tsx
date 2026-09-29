@@ -35,7 +35,7 @@ export function ExplanationView({ outcome, onAdvance }: ExplanationViewProps) {
 
   useEffect(() => {
     if (outcome.command !== 'attack') return;
-    const timer = window.setTimeout(() => setShowVerdict(true), 650);
+    const timer = window.setTimeout(() => setShowVerdict(true), 480);
     return () => window.clearTimeout(timer);
   }, [outcome]);
 
@@ -56,7 +56,7 @@ export function ExplanationView({ outcome, onAdvance }: ExplanationViewProps) {
       <p className="explanation-view__text">{question.text}</p>
       <p>あなたの回答: {choiceText(outcome.selectedAnswerIndex)}</p>
       {question.format === 'multiple_choice' && <p>正答: {question.choices[question.correctIndex]}</p>}
-      <p className="explanation-view__result-detail">{getResultDetailText(outcome)}</p>
+      <p className={`explanation-view__result-detail explanation-view__result-detail--${outcome.correct ? 'success' : 'miss'}`}>{getResultDetailText(outcome)}</p>
       {showVerdict && (
         <>
           <p className="explanation-view__verdict">{outcome.correct ? '正解！' : '不正解'}</p>
