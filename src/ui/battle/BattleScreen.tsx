@@ -73,13 +73,18 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
 
       <div className="battle-screen__actors" aria-label="戦闘キャラクター">
         <div className="battle-screen__actors-side battle-screen__actors-side--players" style={{ left: '31%', right: 'auto', bottom: '16%' }}>
-          {state.players.map((player) => (
-            <GameImage
+          {state.players.map((player, index) => (
+            <div
               key={player.id}
-              src={resolveCharacterBattleArtPath(player.definitionId)}
-              alt={`${player.name} 戦闘`}
-              className="battle-screen__actor-art battle-screen__actor-art--player"
-            />
+              className="battle-screen__player-slot"
+              data-party-index={index}
+            >
+              <GameImage
+                src={resolveCharacterBattleArtPath(player.definitionId)}
+                alt={`${player.name} 戦闘`}
+                className="battle-screen__actor-art battle-screen__actor-art--player"
+              />
+            </div>
           ))}
         </div>
         <div className="battle-screen__actors-side battle-screen__actors-side--enemies" style={{ left: '69%', right: 'auto', bottom: '16%' }}>
