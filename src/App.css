@@ -1199,3 +1199,75 @@ body:has(.battle-screen) {
     animation: none !important;
   }
 }
+
+/* Enemy visual classes: data-driven sizing/baselines for scalable enemy rosters. */
+@media (min-width: 768px) and (orientation: landscape) {
+  .battle-screen__enemy-slot {
+    --enemy-display-scale: 1;
+    --enemy-box-width: 176px;
+    --enemy-box-height: 128px;
+    --enemy-hover-offset: 0px;
+    flex-basis: var(--enemy-box-width);
+    min-height: var(--enemy-box-height);
+  }
+
+  .battle-screen__enemy-slot .battle-screen__actor-art--enemy {
+    width: var(--enemy-box-width);
+    height: var(--enemy-box-height);
+    transform: scale(var(--enemy-display-scale));
+    transform-origin: 50% 100%;
+  }
+
+  .battle-screen__enemy-slot--size-small {
+    --enemy-box-width: 144px;
+    --enemy-box-height: 112px;
+  }
+
+  .battle-screen__enemy-slot--size-large {
+    --enemy-box-width: 208px;
+    --enemy-box-height: 154px;
+  }
+
+  .battle-screen__enemy-slot--size-extra-large {
+    --enemy-box-width: min(28vw, 292px);
+    --enemy-box-height: min(34vh, 220px);
+  }
+
+  .battle-screen__enemy-slot--baseline-hover {
+    --enemy-hover-offset: 18px;
+    padding-bottom: var(--enemy-hover-offset);
+  }
+
+  .battle-screen__enemy-slot--size-extra-large.battle-screen__enemy-slot--baseline-hover {
+    --enemy-hover-offset: 24px;
+  }
+
+  /* Keep oversized encounters inside the enemy-side safe area when grouped. */
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(2))
+    .battle-screen__enemy-slot--size-extra-large {
+    --enemy-box-width: min(22vw, 236px);
+    --enemy-box-height: min(29vh, 184px);
+  }
+
+  /* Motion families alter only presentation timing; feet remain anchored. */
+  .battle-screen__enemy-slot--motion-quadruped:not(.battle-screen__enemy-slot--ko):not(.battle-screen__enemy-slot--hit)
+    .battle-screen__actor-art--enemy {
+    animation-duration: 2250ms;
+  }
+
+  .battle-screen__enemy-slot--motion-crawler:not(.battle-screen__enemy-slot--ko):not(.battle-screen__enemy-slot--hit)
+    .battle-screen__actor-art--enemy {
+    animation-duration: 1950ms;
+  }
+
+  .battle-screen__enemy-slot--baseline-hover:not(.battle-screen__enemy-slot--ko):not(.battle-screen__enemy-slot--hit)
+    .battle-screen__actor-art--enemy {
+    transform-origin: 50% 50%;
+    animation-name: studyrise-enemy-hover-idle;
+  }
+}
+
+@keyframes studyrise-enemy-hover-idle {
+  0%, 100% { transform: translateY(0) scale(var(--enemy-display-scale)); }
+  50% { transform: translateY(-4px) scale(var(--enemy-display-scale)); }
+}
