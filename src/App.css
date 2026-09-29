@@ -1610,7 +1610,7 @@ button, input, select, textarea {
 
 /* StudyRise phone policy: gameplay UI is landscape-only.
    Portrait phones show a rotation gate instead of the application screens. */
-@media (orientation: portrait) and (max-width: 767px) and (pointer: coarse) {
+@media (orientation: portrait) and (max-width: 767px) {
   body {
     margin: 0;
     min-height: 100dvh;
@@ -1639,7 +1639,6 @@ button, input, select, textarea {
   }
 
   #root {
-    visibility: hidden;
-    pointer-events: none;
+    display: none !important;
   }
 }
