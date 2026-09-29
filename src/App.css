@@ -309,4 +309,15 @@ button {
   .battle-screen__actor-art {
     flex: 0 0 128px;
   }
+
+  /*
+   * Wide enemies such as Runner lose too much visual size inside the shared
+   * 128×128 square. Keep player sprites unchanged, but allow enemy art a
+   * wider box while preserving the same 128px height/baseline.
+   */
+  .battle-screen__actor-art--enemy {
+    width: 176px;
+    height: 128px;
+    flex-basis: 176px;
+  }
 }
