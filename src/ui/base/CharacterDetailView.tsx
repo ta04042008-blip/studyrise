@@ -2,6 +2,8 @@ import type { CharacterDefinition } from '../../engine/battle/BattleEngine.types
 import type { PlayerBaseStats } from '../../types/stats';
 import type { EquipmentDefinition, EquipmentInstance, PermanentCharacterState } from '../../engine/progression/ProgressionSystem.types';
 import { spellsById } from '../../data/spells/spellsById';
+import { GameImage } from '../../presentation/assets/GameImage';
+import { resolveCharacterArtPath } from '../../presentation/assets/studyRiseAssets';
 import { resolveEquippedName } from './equipmentDisplay';
 
 interface CharacterDetailViewProps {
@@ -37,10 +39,12 @@ export function CharacterDetailView({
   onBack,
 }: CharacterDetailViewProps) {
   const initialSpell = spellsById[character.initialSpellId];
+  const characterArtPath = resolveCharacterArtPath(character.id);
 
   return (
     <div className="character-detail-view">
       <h1>{character.name}</h1>
+      <GameImage src={characterArtPath} alt={character.name} />
 
       <dl className="character-detail-view__level">
         <dt>Level</dt>

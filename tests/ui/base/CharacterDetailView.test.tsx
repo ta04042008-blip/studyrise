@@ -40,6 +40,12 @@ describe('CharacterDetailView (MVP-6 baseline + MVP-7 Level/EXP/装備 additions
     expect(screen.getByText(initialSpellName)).toBeTruthy();
   });
 
+  it('shows the registered character art path through GameImage', () => {
+    renderView();
+    const img = screen.getByRole('img', { name: character.name }) as HTMLImageElement;
+    expect(img.src).toContain('/assets/studyrise/characters/hayama_tomoya.png');
+  });
+
   it('shows Level / EXP / 次Lvまでの必要EXP and 装備 slots (MVP-7)', () => {
     renderView();
     expect(screen.getByText('Level')).toBeTruthy();
