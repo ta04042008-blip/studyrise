@@ -685,7 +685,9 @@ body:has(.battle-screen) {
   /* Question layout: prompt -> don't know -> choices -> answer. */
   .question-view {
     width: min(860px, calc(100vw - 64px));
-    max-height: min(52vh, 400px);
+    max-height: min(45vh, 350px);
+    bottom: max(8px, env(safe-area-inset-bottom));
+    padding-block: 10px;
   }
 
   .question-view__meta {
@@ -722,7 +724,7 @@ body:has(.battle-screen) {
 
   .question-view__choices li { min-width: 0; }
   .question-view__choices label {
-    min-height: 48px;
+    min-height: 44px;
     box-sizing: border-box;
     border: 2px solid rgba(255,255,255,.65);
     border-radius: 6px;
@@ -734,8 +736,20 @@ body:has(.battle-screen) {
   }
 
   .question-view__choices input { width: 20px; height: 20px; flex: 0 0 auto; }
-  .question-view__actions { justify-content: center; margin-top: 8px; }
-  .question-view__actions button { min-width: 220px; min-height: 50px; font-weight: 750; }
+  .question-view__choice--selected label {
+    border-color: rgba(115, 190, 255, .98);
+    background: rgba(16, 78, 160, .96);
+    box-shadow: inset 0 0 0 2px rgba(145, 210, 255, .32);
+  }
+  .question-view__actions { justify-content: center; margin-top: 6px; }
+  .question-view__actions button { min-width: 220px; min-height: 46px; font-weight: 750; }
+  .question-view__actions button:disabled {
+    opacity: .62;
+    color: rgba(255,255,255,.72);
+    border: 2px solid rgba(255,255,255,.7);
+    background: rgba(92, 101, 111, .7);
+    cursor: default;
+  }
 
   .battle-screen__enemy-slot { position: relative; }
   .battle-screen__damage-pop {
