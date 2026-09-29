@@ -1065,3 +1065,21 @@ body:has(.battle-screen) {
   0%,100% { filter:brightness(1); }
   45% { filter:brightness(1.45); }
 }
+
+/* Search revelation stays attached to the top turn-order strip while active. */
+@media (min-width: 768px) and (orientation: landscape) {
+  .turn-order-view__search {
+    display: block;
+    width: 100%;
+    margin-top: 3px;
+    padding-top: 3px;
+    border-top: 1px solid rgba(255,255,255,.28);
+    color: rgba(190,225,255,.98);
+    font-size: .76rem;
+    line-height: 1.25;
+    font-weight: 750;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
