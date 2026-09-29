@@ -73,7 +73,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
       </div>
 
       <div className="battle-screen__actors" aria-label="戦闘キャラクター">
-        <div className="battle-screen__actors-side battle-screen__actors-side--players" style={{ left: '31%', right: 'auto', bottom: '16%' }}>
+        <div className="battle-screen__actors-side battle-screen__actors-side--players" style={{ left: '31%', right: 'auto' }}>
           {state.players.map((player, index) => (
             <div
               key={player.id}
@@ -88,7 +88,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
             </div>
           ))}
         </div>
-        <div className="battle-screen__actors-side battle-screen__actors-side--enemies" style={{ left: '69%', right: 'auto', bottom: '16%' }}>
+        <div className="battle-screen__actors-side battle-screen__actors-side--enemies" style={{ left: '69%', right: 'auto' }}>
           {state.enemies.map((enemy) => (
             <div key={enemy.id} className={['battle-screen__enemy-slot', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct ? 'battle-screen__enemy-slot--hit' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.isCritical ? 'battle-screen__enemy-slot--critical' : ''].filter(Boolean).join(' ')}>
               <GameImage src={resolveEnemyArtPath(enemy.definitionId)} alt={`${enemy.name} 戦闘`} className="battle-screen__actor-art battle-screen__actor-art--enemy" />
