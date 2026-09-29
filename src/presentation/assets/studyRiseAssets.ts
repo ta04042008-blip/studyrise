@@ -1,26 +1,16 @@
 /**
- * Presentation-only asset registry (docs/StudyRise_AssetManifest_v0.1.md
- * §4/§5/§13). Maps stable content Definition IDs to runtime image paths
- * under `public/assets/studyrise/`. This module is UI-layer only:
- * BattleEngine / RogueliteEngine / StageEngine / ProgressionSystem /
- * SaveSystem never import it, and it never imports their Definition types
- * back (no reverse dependency) — it only ever receives plain `string`
- * ids from the caller. CharacterDefinition / EnemyDefinition gain no new
- * fields because of this file (CLAUDE.md §1/§7), and nothing here is
- * persisted (Save V1 keeps only stable ids, never filenames — manifest
- * §3), so adding/renaming/removing entries here can never require a Save
- * migration.
+ * Presentation-only asset registry (docs/StudyRise_AssetManifest_v0.1.md).
  *
- * All four `resolve*` functions are pure lookups: an unknown id or an
- * `undefined` input both resolve to `undefined` (never throw), matching
- * `BattleActor.definitionId?: string` so battle UI can call these
- * directly without a null check first (manifest §13's "registry entry
- * なし → 既存テキスト/HP UIへfallback" is implemented by the caller simply
- * treating `undefined` as "no art yet").
+ * Stable Definition IDs remain the only cross-layer identifiers. Runtime art
+ * paths are resolved here so presentation assets can change without touching
+ * Engine / Save / Definition schemas.
  */
 
 export interface CharacterArtDefinition {
-  runtimeFilename: string;
+  /** Full-body art used by character detail / profile surfaces. */
+  detailRuntimeFilename: string;
+  /** Battle-facing sprite/art. It may be absent on disk until that asset is produced. */
+  battleRuntimeFilename: string;
 }
 
 export interface EnemyArtDefinition {
@@ -36,20 +26,26 @@ const ENEMIES_BASE_PATH = '/assets/studyrise/enemies/';
 const BASE_HOME_BASE_PATH = '/assets/studyrise/backgrounds/base/';
 const STAGE_BACKGROUNDS_BASE_PATH = '/assets/studyrise/backgrounds/stages/';
 
-/** 3 playable characters (manifest §6). Keyed by `CharacterDefinition.id`. */
+/**
+ * 3 playable characters. Detail art and battle art are intentionally separate
+ * runtime assets even though both are keyed by the same stable character ID.
+ */
 export const characterArtById: Record<string, CharacterArtDefinition> = {
-  char_hero_placeholder: { runtimeFilename: 'hayama_tomoya.png' },
-  char_mage_placeholder: { runtimeFilename: 'nagumo_ayano.png' },
-  char_knight_placeholder: { runtimeFilename: 'okamura_kakeru.png' },
+  char_hero_placeholder: {
+    detailRuntimeFilename: 'hayama_tomoya.png',
+    battleRuntimeFilename: 'hayama_tomoya_battle.png',
+  },
+  char_mage_placeholder: {
+    detailRuntimeFilename: 'nagumo_ayano.png',
+    battleRuntimeFilename: 'nagumo_ayano_battle.png',
+  },
+  char_knight_placeholder: {
+    detailRuntimeFilename: 'okamura_kakeru.png',
+    battleRuntimeFilename: 'okamura_kakeru_battle.png',
+  },
 };
 
-/**
- * All 13 Area 1 enemies — 8 normal (§7) + 2 強敵 (§8) + 3 Boss (§9). Keyed
- * by `EnemyDefinition.id`, one flat map (mirrors the existing
- * `enemyDefinitionsById` content registry's shape — no separate
- * normal/strong/boss maps, since art lookup doesn't need that
- * distinction: each id already resolves to its own file).
- */
+/** All 13 Area 1 enemies, keyed by EnemyDefinition.id. */
 export const enemyArtById: Record<string, EnemyArtDefinition> = {
   enemy_slime_placeholder: { runtimeFilename: 'runner.png' },
   enemy_goblin_placeholder: { runtimeFilename: 'watcher.png' },
@@ -66,31 +62,44 @@ export const enemyArtById: Record<string, EnemyArtDefinition> = {
   enemy_boss_mnemos: { runtimeFilename: 'mnemos.png' },
 };
 
-/** Stage1〜3 backgrounds (manifest §10). Keyed by `StageDefinition.id`. */
+/** Stage1〜3 backgrounds, keyed by StageDefinition.id. */
 export const stageBackgroundById: Record<string, BackgroundArtDefinition> = {
   stage_sample_placeholder: { runtimeFilename: 'stage_closed_route.png' },
   stage_haruka_02: { runtimeFilename: 'stage_circulation_district.png' },
   stage_haruka_03: { runtimeFilename: 'stage_record_tower.png' },
 };
 
-/**
- * 拠点 background (manifest §10/§11). Not keyed by a Definition id — the
- * base home screen has no `BaseDefinition`/stable id of its own (it is a
- * single fixed screen, see `BaseHomeScreen.tsx`), so this is the one
- * asset resolved unconditionally rather than by a lookup.
- */
+/** Fixed BaseHome background (BaseHome has no Definition ID of its own). */
 export const baseHomeBackgroundArt: BackgroundArtDefinition = { runtimeFilename: 'base_home.png' };
 
-/** Resolves a `CharacterDefinition.id` (or `BattleActor.definitionId`) to its runtime art path, or `undefined` if unknown/absent. */
-export function resolveCharacterArtPath(definitionId: string | undefined): string | undefined {
+/** Resolves full-body detail/profile art for a playable character. */
+export function resolveCharacterDetailArtPath(definitionId: string | undefined): string | undefined {
   if (definitionId === undefined) {
     return undefined;
   }
   const art = characterArtById[definitionId];
-  return art ? CHARACTERS_BASE_PATH + art.runtimeFilename : undefined;
+  return art ? CHARACTERS_BASE_PATH + art.detailRuntimeFilename : undefined;
 }
 
-/** Resolves an `EnemyDefinition.id` (or `BattleActor.definitionId`) to its runtime art path, or `undefined` if unknown/absent. */
+/** Resolves battle-facing art/sprite for a playable character. */
+export function resolveCharacterBattleArtPath(definitionId: string | undefined): string | undefined {
+  if (definitionId === undefined) {
+    return undefined;
+  }
+  const art = characterArtById[definitionId];
+  return art ? CHARACTERS_BASE_PATH + art.battleRuntimeFilename : undefined;
+}
+
+/**
+ * Backward-compatible alias for callers created before detail/battle art were
+ * separated. It intentionally resolves to detail art. New code should call the
+ * explicit detail or battle resolver instead.
+ */
+export function resolveCharacterArtPath(definitionId: string | undefined): string | undefined {
+  return resolveCharacterDetailArtPath(definitionId);
+}
+
+/** Resolves an EnemyDefinition.id (or BattleActor.definitionId) to runtime art. */
 export function resolveEnemyArtPath(definitionId: string | undefined): string | undefined {
   if (definitionId === undefined) {
     return undefined;
@@ -99,7 +108,7 @@ export function resolveEnemyArtPath(definitionId: string | undefined): string | 
   return art ? ENEMIES_BASE_PATH + art.runtimeFilename : undefined;
 }
 
-/** Resolves a `StageDefinition.id` to its runtime background path, or `undefined` if unknown/absent. */
+/** Resolves a StageDefinition.id to its runtime background path. */
 export function resolveStageBackgroundPath(stageId: string | undefined): string | undefined {
   if (stageId === undefined) {
     return undefined;
@@ -108,7 +117,7 @@ export function resolveStageBackgroundPath(stageId: string | undefined): string 
   return art ? STAGE_BACKGROUNDS_BASE_PATH + art.runtimeFilename : undefined;
 }
 
-/** Resolves the one fixed 拠点 background path. Always defined — there is no "unknown id" case (see `baseHomeBackgroundArt`). */
+/** Resolves the fixed BaseHome background path. */
 export function resolveBaseHomeBackgroundPath(): string {
   return BASE_HOME_BASE_PATH + baseHomeBackgroundArt.runtimeFilename;
 }
