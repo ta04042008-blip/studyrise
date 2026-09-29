@@ -12,6 +12,8 @@ interface InterZoneChoiceViewProps {
 export function InterZoneChoiceView({ onContinue, onSelfReturn }: InterZoneChoiceViewProps) {
   return (
     <div className="inter-zone-choice-view">
+      <div className="inter-zone-choice-view__eyebrow">ZONE COMPLETE</div>
+      <h2>次の行動を選択</h2>
       <p>次のゾーンへ進みますか？ それともここで帰還しますか？</p>
       <div className="inter-zone-choice-view__actions">
         <button type="button" onClick={onContinue}>
