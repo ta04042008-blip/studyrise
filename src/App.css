@@ -496,7 +496,7 @@ body:has(.battle-screen) {
 
   .battle-screen__actors-side--players:has(.battle-screen__player-slot:nth-child(3))
     .battle-screen__player-slot:nth-child(2) {
-    transform: translate(-24px, 8px);
+    transform: translate(-24px, -20px);
   }
 
   .battle-screen__actors-side--players:has(.battle-screen__player-slot:nth-child(3))
