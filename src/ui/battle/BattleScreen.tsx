@@ -37,6 +37,17 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
   const actorNameById = Object.fromEntries(allActors.map((a) => [a.id, a.name]));
   const actorHpById = Object.fromEntries(allActors.map((a) => [a.id, { current: a.currentHp, max: a.maxHp }]));
   const currentActor = allActors.find((a) => a.id === state.currentActorId);
+  const turnOrderActor = (actorId: string) => {
+    const actor = allActors.find((candidate) => candidate.id === actorId);
+    if (!actor) return { id: actorId, name: actorNameById[actorId] ?? actorId };
+    return {
+      id: actor.id,
+      name: actor.name,
+      artPath: actor.kind === 'player'
+        ? resolveCharacterBattleArtPath(actor.definitionId)
+        : resolveEnemyArtPath(actor.definitionId),
+    };
+  };
   const currentKnownSpells = state.knownSpellsByPlayerId[state.currentActorId] ?? [];
   const searchTurnInfo = Object.entries(state.searchByEnemyId)
     .filter(([, actions]) => actions.length > 0)
@@ -134,8 +145,8 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
       </div>
 
       <TurnOrderView
-        currentActorName={currentActor?.name ?? state.currentActorId}
-        upcomingActorNames={state.upcomingActorIds.map((id) => actorNameById[id] ?? id)}
+        currentActor={turnOrderActor(state.currentActorId)}
+        upcomingActors={state.upcomingActorIds.map(turnOrderActor)}
         searchInfo={searchTurnInfo}
         actorNameById={actorNameById}
       />
