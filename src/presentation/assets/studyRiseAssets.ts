@@ -21,10 +21,11 @@ export interface BackgroundArtDefinition {
   runtimeFilename: string;
 }
 
-const CHARACTERS_BASE_PATH = '/assets/studyrise/characters/';
-const ENEMIES_BASE_PATH = '/assets/studyrise/enemies/';
-const BASE_HOME_BASE_PATH = '/assets/studyrise/backgrounds/base/';
-const STAGE_BACKGROUNDS_BASE_PATH = '/assets/studyrise/backgrounds/stages/';
+const APP_BASE_PATH = import.meta.env.BASE_URL;
+const CHARACTERS_BASE_PATH = `${APP_BASE_PATH}assets/studyrise/characters/`;
+const ENEMIES_BASE_PATH = `${APP_BASE_PATH}assets/studyrise/enemies/`;
+const BASE_HOME_BASE_PATH = `${APP_BASE_PATH}assets/studyrise/backgrounds/base/`;
+const STAGE_BACKGROUNDS_BASE_PATH = `${APP_BASE_PATH}assets/studyrise/backgrounds/stages/`;
 
 /**
  * 3 playable characters. Detail art and battle art are intentionally separate
