@@ -543,6 +543,29 @@ body:has(.battle-screen) {
     opacity: 0.9;
   }
 
+  .target-select-view {
+    position: absolute;
+    left: 50%;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: min(520px, calc(100vw - 48px));
+    padding: 10px 12px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    background: rgba(15, 24, 34, 0.78);
+    color: #fff;
+    text-align: center;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 6;
+  }
+
+  .target-select-view p { margin: 0 0 8px; font-weight: 700; }
+  .target-select-view ul { display: flex; justify-content: center; gap: 8px; list-style: none; margin: 0; padding: 0; }
+  .target-select-view li { margin: 0; }
+  .target-select-view button { min-width: 150px; }
+
   .command-menu {
     position: absolute;
     left: 50%;
