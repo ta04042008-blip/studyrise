@@ -63,6 +63,9 @@ Saveはstable Definition IDを保持し、画像ファイル名や表示画像�
 export const characterArtById: Record<string, CharacterArtDefinition>
 export const enemyArtById: Record<string, EnemyArtDefinition>
 export const stageBackgroundById: Record<string, BackgroundArtDefinition>
+
+resolveCharacterDetailArtPath(characterId)
+resolveCharacterBattleArtPath(characterId)
 ```
 
 BattleActorには既に`definitionId`があるため、Battle UIは保存IDを変更せずに画像を解決できる。
@@ -89,11 +92,11 @@ master/source画像はrepositoryへ入れず、runtime用書き出し画像の�
 
 正式制作対象:
 
-| Stable ID | 表示名 | runtime filename | master canvas | 背景 |
-|---|---|---|---:|---|
-| `char_hero_placeholder` | 葉山智也 | `hayama_tomoya.png` | 512×768 | transparent |
-| `char_mage_placeholder` | 南雲彩乃 | `nagumo_ayano.png` | 512×768 | transparent |
-| `char_knight_placeholder` | 岡村駆 | `okamura_kakeru.png` | 512×768 | transparent |
+| Stable ID | 表示名 | 詳細画面 runtime filename | 戦闘用 runtime filename | master canvas | 背景 |
+|---|---|---|---|---:|---|
+| `char_hero_placeholder` | 葉山智也 | `hayama_tomoya.png` | `hayama_tomoya_battle.png` | 512×768 | transparent |
+| `char_mage_placeholder` | 南雲彩乃 | `nagumo_ayano.png` | `nagumo_ayano_battle.png` | 512×768 | transparent |
+| `char_knight_placeholder` | 岡村駆 | `okamura_kakeru.png` | `okamura_kakeru_battle.png` | 512×768 | transparent |
 
 共通:
 
@@ -111,8 +114,16 @@ master/source画像はrepositoryへ入れず、runtime用書き出し画像の�
 - 彩乃: 軽量・前傾 / 前進 / 決断
 - 駆: 縦長・装備多め / 観測 / 理性
 
+Character画像は用途を分離する。
+
+- 詳細画面用: 全身立ち絵。キャラクター確認・ステータス表示で使用する。
+- 戦闘用: Battle専用sprite/art。詳細画面用立ち絵とは別runtime filenameを持つ。
+- 同じstable Character IDからpresentation registryで用途別に解決する。
+- Save / CharacterDefinition / BattleActorへ画像filenameを保存・追加しない。
+- 戦闘用画像が未制作またはload失敗の場合は既存Battle UIへfallbackする。
+
 Battle正式レイアウトではplayer側を画面左、enemy側を画面右へ置く前提とし、
-Character masterは基本的に画面右方向へ意識を向けたポーズを推奨する。
+戦闘用Character artは基本的に画面右方向へ意識を向けたポーズを推奨する。
 
 ## 7. 通常Enemy master art
 
@@ -272,8 +283,9 @@ Stage3《記録塔》:
 正式画像投入中もゲームを壊さない。
 
 Character/Enemy:
+- detail/battleを用途別resolverで解決する
 - registry entryなし → 現在のテキスト/HP UIを表示
-- image load失敗 → image領域を隠し、name/HPは残す
+- runtime画像未配置またはimage load失敗 → image領域を隠し、name/HPは残す
 
 Background:
 - assetなし/失敗 → 現在のCSS PLACEHOLDER gradientへfallback
