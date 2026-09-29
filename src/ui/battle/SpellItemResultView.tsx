@@ -36,10 +36,11 @@ export function SpellItemResultView({ outcome, onAdvance }: SpellItemResultViewP
   }
 
   return (
-    <div className="spell-item-result-view">
-      <p>{outcome.command === 'spell' ? '呪文を唱えた！' : 'アイテムを使った！'}</p>
+    <div className={`spell-item-result-view spell-item-result-view--${outcome.command}`}>
+      <div className="spell-item-result-view__eyebrow">{outcome.command === 'spell' ? 'SPELL' : 'ITEM'}</div>
+      <p className="spell-item-result-view__title">{outcome.command === 'spell' ? 'スペル発動！' : 'アイテム使用！'}</p>
       {outcome.effects.map((effect, i) => (
-        <p key={i}>{describeEffect(effect)}</p>
+        <p className="spell-item-result-view__effect" key={i}>{describeEffect(effect)}</p>
       ))}
       <button type="button" disabled={advanced} onClick={handleAdvance}>
         次へ
