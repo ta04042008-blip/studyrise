@@ -543,6 +543,64 @@ body:has(.battle-screen) {
     opacity: 0.9;
   }
 
+  .subject-star-select,
+  .question-view,
+  .command-animation-view,
+  .explanation-view,
+  .spell-item-result-view,
+  .battle-end-view {
+    position: absolute;
+    left: 50%;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: min(620px, calc(100vw - 48px));
+    max-height: min(48vh, 360px);
+    overflow: auto;
+    padding: 12px 14px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    background: rgba(15, 24, 34, 0.82);
+    color: #fff;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 6;
+  }
+
+  .subject-star-select p,
+  .question-view__text,
+  .command-animation-view p:first-child,
+  .explanation-view__text,
+  .spell-item-result-view p:first-child,
+  .battle-end-view p:first-child { margin-top: 0; }
+
+  .subject-star-select select { min-height: 44px; margin: 4px 10px 8px 6px; font-size: 1rem; }
+  .question-view__choices { margin-bottom: 10px; }
+  .question-view__choices label { display: block; padding: 6px 8px; }
+
+  .target-select-view {
+    position: absolute;
+    left: 50%;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: min(520px, calc(100vw - 48px));
+    padding: 10px 12px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    background: rgba(15, 24, 34, 0.78);
+    color: #fff;
+    text-align: center;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 6;
+  }
+
+  .target-select-view p { margin: 0 0 8px; font-weight: 700; }
+  .target-select-view ul { display: flex; justify-content: center; gap: 8px; list-style: none; margin: 0; padding: 0; }
+  .target-select-view li { margin: 0; }
+  .target-select-view button { min-width: 150px; }
+
   .command-menu {
     position: absolute;
     left: 50%;
@@ -597,3 +655,14 @@ body:has(.battle-screen) {
     margin: 2px 0;
   }
 }
+
+/* --- Battle command motion prototype: Tomoya normal attack (iPad/wide) --- */
+@media (min-width: 768px) {
+  .battle-screen__enemy-slot { display:flex; flex:0 0 176px; align-items:flex-end; justify-content:center; min-height:128px; }
+  .battle-screen__player-slot--attack-source { animation:studyrise-player-attack-step 560ms ease-in-out 1; position:relative; z-index:2; }
+  .battle-screen__enemy-slot--hit { animation:studyrise-enemy-hit 360ms ease-out 120ms 1; }
+  .battle-screen__enemy-slot--critical { animation-name:studyrise-enemy-critical-hit; animation-duration:420ms; }
+}
+@keyframes studyrise-player-attack-step { 0%,100%{transform:translate(-12px,-4px)} 28%{transform:translate(22px,-8px)} 52%{transform:translate(38px,-4px)} 72%{transform:translate(12px,-4px)} }
+@keyframes studyrise-enemy-hit { 0%,100%{transform:translateX(0);filter:brightness(1)} 30%{transform:translateX(8px);filter:brightness(1.45)} 55%{transform:translateX(-5px);filter:brightness(1.15)} 75%{transform:translateX(3px)} }
+@keyframes studyrise-enemy-critical-hit { 0%,100%{transform:translateX(0) scale(1);filter:brightness(1)} 25%{transform:translateX(12px) scale(1.04);filter:brightness(1.75)} 50%{transform:translateX(-7px) scale(.98);filter:brightness(1.25)} 72%{transform:translateX(4px) scale(1.01)} }

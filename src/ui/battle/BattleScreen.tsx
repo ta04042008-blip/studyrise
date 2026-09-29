@@ -39,6 +39,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
   const actorHpById = Object.fromEntries(allActors.map((a) => [a.id, { current: a.currentHp, max: a.maxHp }]));
   const currentActor = allActors.find((a) => a.id === state.currentActorId);
   const currentKnownSpells = state.knownSpellsByPlayerId[state.currentActorId] ?? [];
+  const attackAnimationOutcome = state.phase === 'COMMAND_ANIMATION' && state.pendingOutcome?.command === 'attack' ? state.pendingOutcome : undefined;
   // UI-only "which spell" step (CLAUDE.md §9) — never a BattleEngine phase.
   // Reset whenever the acting player changes, so a stale open picker never
   // survives into someone else's turn.
@@ -76,7 +77,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
           {state.players.map((player, index) => (
             <div
               key={player.id}
-              className="battle-screen__player-slot"
+              className={['battle-screen__player-slot', attackAnimationOutcome?.sourceActorId === player.id && index === 0 ? 'battle-screen__player-slot--attack-source' : ''].filter(Boolean).join(' ')}
               data-party-index={index}
             >
               <GameImage
@@ -89,12 +90,9 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
         </div>
         <div className="battle-screen__actors-side battle-screen__actors-side--enemies" style={{ left: '69%', right: 'auto', bottom: '16%' }}>
           {state.enemies.map((enemy) => (
-            <GameImage
-              key={enemy.id}
-              src={resolveEnemyArtPath(enemy.definitionId)}
-              alt={`${enemy.name} 戦闘`}
-              className="battle-screen__actor-art battle-screen__actor-art--enemy"
-            />
+            <div key={enemy.id} className={['battle-screen__enemy-slot', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct ? 'battle-screen__enemy-slot--hit' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.isCritical ? 'battle-screen__enemy-slot--critical' : ''].filter(Boolean).join(' ')}>
+              <GameImage src={resolveEnemyArtPath(enemy.definitionId)} alt={`${enemy.name} 戦闘`} className="battle-screen__actor-art battle-screen__actor-art--enemy" />
+            </div>
           ))}
         </div>
       </div>
