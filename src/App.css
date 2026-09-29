@@ -1271,3 +1271,29 @@ body:has(.battle-screen) {
   0%, 100% { transform: translateY(0) scale(var(--enemy-display-scale)); }
   50% { transform: translateY(-4px) scale(var(--enemy-display-scale)); }
 }
+
+/* Ground shadows follow the visible feet instead of the slot box baseline. */
+@media (min-width: 768px) and (orientation: landscape) {
+  .battle-screen__player-slot::after,
+  .battle-screen__enemy-slot--baseline-ground::after {
+    bottom: 1px;
+  }
+
+  /* Formation offsets move the whole player slot, so the shadow now moves
+     with each actor and remains directly beneath the feet. */
+  .battle-screen__enemy-slot--baseline-hover::after {
+    bottom: calc(var(--enemy-hover-offset, 18px) - 2px);
+    opacity: .72;
+    transform: translateX(-50%) scale(.88);
+  }
+
+  .battle-screen__enemy-slot--size-large::after {
+    width: 126px;
+    height: 17px;
+  }
+
+  .battle-screen__enemy-slot--size-extra-large::after {
+    width: min(15vw, 168px);
+    height: 20px;
+  }
+}
