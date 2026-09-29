@@ -69,19 +69,19 @@ export const characterArtById: Record<string, CharacterArtDefinition> = {
 
 /** All 13 Area 1 enemies, keyed by EnemyDefinition.id. */
 export const enemyArtById: Record<string, EnemyArtDefinition> = {
-  enemy_slime_placeholder: { runtimeFilename: 'runner.png' },
-  enemy_goblin_placeholder: { runtimeFilename: 'watcher.png' },
-  enemy_clamp: { runtimeFilename: 'clamp.png' },
-  enemy_relay: { runtimeFilename: 'relay.png' },
-  enemy_drainer: { runtimeFilename: 'drainer.png' },
-  enemy_purger: { runtimeFilename: 'purger.png' },
-  enemy_shielder: { runtimeFilename: 'shielder.png' },
-  enemy_scrib: { runtimeFilename: 'scrib.png' },
-  enemy_sentinel: { runtimeFilename: 'sentinel.png' },
-  enemy_auditor: { runtimeFilename: 'auditor.png' },
-  enemy_boss_ogre_placeholder: { runtimeFilename: 'janus.png' },
-  enemy_boss_nereid: { runtimeFilename: 'nereid.png' },
-  enemy_boss_mnemos: { runtimeFilename: 'mnemos.png' },
+  enemy_slime_placeholder: { runtimeFilename: 'runner.png', visualSize: 'standard', motionType: 'quadruped', baseline: 'ground' },
+  enemy_goblin_placeholder: { runtimeFilename: 'watcher.png', visualSize: 'standard', motionType: 'flying', baseline: 'hover' },
+  enemy_clamp: { runtimeFilename: 'clamp.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
+  enemy_relay: { runtimeFilename: 'relay.png', visualSize: 'standard', motionType: 'hover', baseline: 'hover' },
+  enemy_drainer: { runtimeFilename: 'drainer.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
+  enemy_purger: { runtimeFilename: 'purger.png', visualSize: 'standard', motionType: 'quadruped', baseline: 'ground' },
+  enemy_shielder: { runtimeFilename: 'shielder.png', visualSize: 'large', motionType: 'quadruped', baseline: 'ground' },
+  enemy_scrib: { runtimeFilename: 'scrib.png', visualSize: 'standard', motionType: 'ground', baseline: 'ground' },
+  enemy_sentinel: { runtimeFilename: 'sentinel.png', visualSize: 'large', motionType: 'quadruped', baseline: 'ground' },
+  enemy_auditor: { runtimeFilename: 'auditor.png', visualSize: 'large', motionType: 'flying', baseline: 'hover' },
+  enemy_boss_ogre_placeholder: { runtimeFilename: 'janus.png', visualSize: 'extra-large', motionType: 'quadruped', baseline: 'ground' },
+  enemy_boss_nereid: { runtimeFilename: 'nereid.png', visualSize: 'extra-large', motionType: 'swimming', baseline: 'hover' },
+  enemy_boss_mnemos: { runtimeFilename: 'mnemos.png', visualSize: 'extra-large', motionType: 'flying', baseline: 'hover' },
 };
 
 /** Stage1〜3 backgrounds, keyed by StageDefinition.id. */
