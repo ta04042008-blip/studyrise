@@ -507,6 +507,31 @@ body:has(.battle-screen) {
   .battle-screen__actor-art--player,
   .battle-screen__actor-art--enemy {
     align-self: flex-end;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Soft ground shadows keep the pixel sprites visually planted without
+   * changing sprite assets, actor size, formation, or battle logic. */
+  .battle-screen__player-slot::after,
+  .battle-screen__enemy-slot::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -5px;
+    transform: translateX(-50%);
+    width: 76px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(8, 14, 18, 0.34);
+    filter: blur(2px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .battle-screen__enemy-slot::after {
+    width: 112px;
+    height: 16px;
   }
 
   .turn-order-view {
