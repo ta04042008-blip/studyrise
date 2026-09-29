@@ -77,10 +77,10 @@ export function ZoneBattlePanel({
   const { state } = battleController;
 
   return (
-    <>
+    <div className="zone-battle-panel">
       <BattleScreen controller={battleController} stageId={stageId} />
       {state.phase === 'BATTLE_END' && state.outcome === 'win' && (
-        <button
+        <button className="zone-battle-panel__end-action zone-battle-panel__end-action--win"
           type="button"
           onClick={() => onWin(Object.fromEntries(state.players.map((p) => [p.id, p.currentHp])), state.battleItems)}
         >
@@ -88,10 +88,10 @@ export function ZoneBattlePanel({
         </button>
       )}
       {state.phase === 'BATTLE_END' && state.outcome === 'lose' && (
-        <button type="button" onClick={() => onLose(state.battleItems)}>
+        <button className="zone-battle-panel__end-action zone-battle-panel__end-action--lose" type="button" onClick={() => onLose(state.battleItems)}>
           敗北 — ステージ失敗
         </button>
       )}
-    </>
+    </div>
   );
 }

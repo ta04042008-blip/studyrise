@@ -41,6 +41,9 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
   const currentKnownSpells = state.knownSpellsByPlayerId[state.currentActorId] ?? [];
   const commandAnimationOutcome = state.phase === 'COMMAND_ANIMATION' ? state.pendingOutcome : undefined;
   const attackAnimationOutcome = commandAnimationOutcome?.command === 'attack' ? commandAnimationOutcome : undefined;
+  const latestEnemyAction = state.phase === 'COMMAND_SELECT' && state.enemyActionLog.length > 0
+    ? state.enemyActionLog[state.enemyActionLog.length - 1]
+    : undefined;
   // UI-only "which spell" step (CLAUDE.md §9) — never a BattleEngine phase.
   // Reset whenever the acting player changes, so a stale open picker never
   // survives into someone else's turn.
@@ -80,6 +83,8 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
               key={player.id}
               className={[
                 'battle-screen__player-slot',
+                latestEnemyAction?.targetId === player.id ? 'battle-screen__player-slot--enemy-hit' : '',
+                player.currentHp <= 0 ? 'battle-screen__player-slot--ko' : '',
                 commandAnimationOutcome?.sourceActorId === player.id ? `battle-screen__player-slot--command-${commandAnimationOutcome.command}` : '',
                 attackAnimationOutcome?.sourceActorId === player.id ? 'battle-screen__player-slot--attack-source' : '',
               ].filter(Boolean).join(' ')}
@@ -90,12 +95,18 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
                 alt={`${player.name} 戦闘`}
                 className="battle-screen__actor-art battle-screen__actor-art--player"
               />
+              {latestEnemyAction?.targetId === player.id && (
+                <div className={`battle-screen__damage-pop battle-screen__damage-pop--player-hit${latestEnemyAction.isCritical ? ' battle-screen__damage-pop--critical' : ''}`}>
+                  {latestEnemyAction.isCritical && <span>CRITICAL!</span>}
+                  <strong>-{latestEnemyAction.damage}</strong>
+                </div>
+              )}
             </div>
           ))}
         </div>
         <div className="battle-screen__actors-side battle-screen__actors-side--enemies" style={{ left: '69%', right: 'auto' }}>
           {state.enemies.map((enemy) => (
-            <div key={enemy.id} className={['battle-screen__enemy-slot', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct ? 'battle-screen__enemy-slot--hit' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.isCritical ? 'battle-screen__enemy-slot--critical' : ''].filter(Boolean).join(' ')}>
+            <div key={enemy.id} className={['battle-screen__enemy-slot', enemy.currentHp <= 0 ? 'battle-screen__enemy-slot--ko' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct ? 'battle-screen__enemy-slot--hit' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.isCritical ? 'battle-screen__enemy-slot--critical' : ''].filter(Boolean).join(' ')}>
               <GameImage src={resolveEnemyArtPath(enemy.definitionId)} alt={`${enemy.name} 戦闘`} className="battle-screen__actor-art battle-screen__actor-art--enemy" />
               {attackAnimationOutcome?.targetId === enemy.id && (
                 <div className={[
