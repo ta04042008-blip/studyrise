@@ -245,6 +245,7 @@ button {
 /* --- Battle actor art (Phase C-5) --- */
 
 .battle-screen__actors {
+  position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -277,5 +278,35 @@ button {
 @media (min-width: 768px) {
   .battle-screen__actors {
     min-height: 160px;
+  }
+
+  /*
+   * iPad/wide battle baseline:
+   * - keep actor art at the existing 128×128 size
+   * - center the player group around x≈30%
+   * - center the enemy group around x≈70%
+   * - use the same bottom edge for both groups so feet line up
+   * - each side is wide enough for the current 3-player / multi-enemy party
+   */
+  .battle-screen__actors-side {
+    position: absolute;
+    bottom: 0;
+    width: 44%;
+    min-height: 128px;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+
+  .battle-screen__actors-side--players {
+    left: 8%;
+  }
+
+  .battle-screen__actors-side--enemies {
+    right: 8%;
+  }
+
+  .battle-screen__actor-art {
+    flex: 0 0 128px;
   }
 }
