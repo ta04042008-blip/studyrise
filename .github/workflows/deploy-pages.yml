@@ -1,4 +1,5 @@
 name: Deploy StudyRise to GitHub Pages
+# GitHub Pages source enabled; trigger initial deployment.
 
 on:
   push:
