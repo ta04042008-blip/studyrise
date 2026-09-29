@@ -58,6 +58,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
   const latestEnemyAction = state.phase === 'COMMAND_SELECT' && state.enemyActionLog.length > 0
     ? state.enemyActionLog[state.enemyActionLog.length - 1]
     : undefined;
+  const latestEnemyAttackerId = latestEnemyAction?.sourceActorId;
   // UI-only "which spell" step (CLAUDE.md §9) — never a BattleEngine phase.
   // Reset whenever the acting player changes, so a stale open picker never
   // survives into someone else's turn.
@@ -121,7 +122,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
         </div>
         <div className="battle-screen__actors-side battle-screen__actors-side--enemies" style={{ left: '69%', right: 'auto' }}>
           {state.enemies.map((enemy) => (
-            <div key={enemy.id} className={['battle-screen__enemy-slot', nonQuestionOutcome?.targetId === enemy.id ? `battle-screen__enemy-slot--command-${nonQuestionOutcome.command}` : '', enemy.currentHp <= 0 ? 'battle-screen__enemy-slot--ko' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct ? 'battle-screen__enemy-slot--hit' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.isCritical ? 'battle-screen__enemy-slot--critical' : ''].filter(Boolean).join(' ')}>
+            <div key={enemy.id} className={['battle-screen__enemy-slot', latestEnemyAttackerId === enemy.id ? 'battle-screen__enemy-slot--attack-source' : '', nonQuestionOutcome?.targetId === enemy.id ? `battle-screen__enemy-slot--command-${nonQuestionOutcome.command}` : '', enemy.currentHp <= 0 ? 'battle-screen__enemy-slot--ko' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct ? 'battle-screen__enemy-slot--hit' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.isCritical ? 'battle-screen__enemy-slot--critical' : ''].filter(Boolean).join(' ')}>
               <GameImage src={resolveEnemyArtPath(enemy.definitionId)} alt={`${enemy.name} 戦闘`} className="battle-screen__actor-art battle-screen__actor-art--enemy" />
               {attackAnimationOutcome?.targetId === enemy.id && (
                 <div className={[

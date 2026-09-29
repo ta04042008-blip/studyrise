@@ -1127,3 +1127,75 @@ body:has(.battle-screen) {
     animation: none !important;
   }
 }
+
+/* --- Battle motion finish: enemy attack, KO and victory pacing --- */
+@media (min-width: 768px) and (orientation: landscape) {
+  .battle-screen__enemy-slot--attack-source {
+    animation: studyrise-enemy-attack-step 560ms ease-in-out 1;
+    z-index: 3;
+  }
+
+  .battle-screen__player-slot--enemy-hit .battle-screen__actor-art--player {
+    animation: none;
+  }
+
+  .battle-screen__player-slot--ko .battle-screen__actor-art,
+  .battle-screen__enemy-slot--ko .battle-screen__actor-art {
+    animation: studyrise-actor-ko 520ms ease-out 1 both;
+    transform-origin: 50% 100%;
+  }
+
+  .battle-screen__enemy-slot--ko .battle-screen__actor-art {
+    animation-name: studyrise-enemy-defeat;
+    animation-duration: 650ms;
+  }
+
+  .battle-end-view--win {
+    animation: studyrise-battle-clear-in 440ms ease-out 1 both;
+  }
+
+  .battle-end-view--lose {
+    animation: studyrise-battle-failed-in 440ms ease-out 1 both;
+  }
+}
+
+@keyframes studyrise-enemy-attack-step {
+  0%,100% { transform:translateX(0); }
+  18% { transform:translateX(10px); }
+  46% { transform:translateX(-58px); }
+  58% { transform:translateX(-66px); }
+  80% { transform:translateX(-6px); }
+}
+
+@keyframes studyrise-actor-ko {
+  0% { opacity:1; filter:brightness(1); transform:scaleY(1); }
+  24% { opacity:1; filter:brightness(1.7); transform:scaleY(.96); }
+  100% { opacity:.24; filter:grayscale(.8) brightness(.7); transform:scaleY(.9); }
+}
+
+@keyframes studyrise-enemy-defeat {
+  0% { opacity:1; filter:brightness(1); transform:scale(1); }
+  22% { opacity:1; filter:brightness(1.8); transform:scale(1.03); }
+  48% { opacity:.75; filter:brightness(1.25); transform:scale(.98); }
+  100% { opacity:.08; filter:grayscale(.75) brightness(.65); transform:scale(.9); }
+}
+
+@keyframes studyrise-battle-clear-in {
+  0% { opacity:0; transform:translate(-50%, 10px) scale(.96); }
+  100% { opacity:1; transform:translate(-50%, 0) scale(1); }
+}
+
+@keyframes studyrise-battle-failed-in {
+  0% { opacity:0; transform:translate(-50%, 8px); }
+  100% { opacity:1; transform:translate(-50%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-screen__enemy-slot--attack-source,
+  .battle-screen__player-slot--ko .battle-screen__actor-art,
+  .battle-screen__enemy-slot--ko .battle-screen__actor-art,
+  .battle-end-view--win,
+  .battle-end-view--lose {
+    animation: none !important;
+  }
+}
