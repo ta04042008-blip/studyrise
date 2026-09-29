@@ -1379,3 +1379,110 @@ body:has(.battle-screen) {
   0%, 100% { transform: scale(var(--enemy-display-scale)) scaleY(1); }
   50% { transform: scale(var(--enemy-display-scale)) scaleY(1.005); }
 }
+
+/* Stage flow presentation: reward -> inter-zone -> result. */
+.reward-screen,
+.inter-zone-choice-view,
+.stage-result-view {
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) and (orientation: landscape) {
+  .reward-screen,
+  .inter-zone-choice-view,
+  .stage-result-view {
+    width: min(880px, calc(100vw - 64px));
+    margin: 24px auto;
+    padding: 20px;
+    border: 2px solid rgba(255,255,255,.82);
+    border-radius: 12px;
+    background: rgba(8,20,34,.94);
+    box-shadow: 0 8px 24px rgba(0,0,0,.36);
+  }
+
+  .reward-screen__eyebrow,
+  .reward-screen__complete-eyebrow,
+  .inter-zone-choice-view__eyebrow,
+  .stage-result-view__eyebrow {
+    font-size: .72rem;
+    font-weight: 900;
+    letter-spacing: .14em;
+    opacity: .72;
+  }
+
+  .reward-screen h2,
+  .inter-zone-choice-view h2,
+  .stage-result-view h2 {
+    margin: 5px 0 8px;
+  }
+
+  .reward-screen__lead,
+  .stage-result-view__message {
+    margin: 0 0 14px;
+    opacity: .86;
+  }
+
+  .reward-screen__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin: 14px 0;
+  }
+
+  .reward-card {
+    min-height: 126px;
+    padding: 14px;
+    border-radius: 10px;
+    text-align: left;
+    touch-action: manipulation;
+  }
+
+  .reward-card--selected {
+    outline: 3px solid rgba(115,195,255,.95);
+    outline-offset: 1px;
+  }
+
+  .reward-screen__actions,
+  .inter-zone-choice-view__actions,
+  .stage-result-view__actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .reward-screen__actions button,
+  .reward-screen__complete button,
+  .inter-zone-choice-view__actions button,
+  .stage-result-view__actions button {
+    min-height: 52px;
+    min-width: 180px;
+    padding: 10px 18px;
+    font-weight: 800;
+    touch-action: manipulation;
+  }
+
+  .reward-screen__complete {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,.24);
+    text-align: center;
+  }
+
+  .inter-zone-choice-view,
+  .stage-result-view {
+    text-align: center;
+  }
+
+  .stage-result-view__summary {
+    font-weight: 800;
+  }
+
+  .stage-result-view--cleared {
+    box-shadow: 0 8px 28px rgba(80,170,255,.22);
+  }
+
+  .stage-result-view--defeated {
+    filter: saturate(.9);
+  }
+}
