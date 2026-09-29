@@ -174,3 +174,69 @@ button {
     grid-column: 1 / -1;
   }
 }
+
+
+/* --- Character detail responsive layout (Phase C-3) --- */
+
+.character-detail-view__content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.character-detail-view__art-panel {
+  display: flex;
+  justify-content: center;
+}
+
+.character-detail-view__art {
+  display: block;
+  width: min(100%, 384px);
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.character-detail-view__info {
+  min-width: 0;
+}
+
+.character-detail-view__level,
+.character-detail-view__stats,
+.character-detail-view__equipment {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 20px;
+}
+
+.character-detail-view__level,
+.character-detail-view__equipment {
+  margin-block: 16px;
+}
+
+.character-detail-view__level dd,
+.character-detail-view__stats dd,
+.character-detail-view__equipment dd {
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .character-detail-view__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+    gap: 32px;
+    align-items: start;
+  }
+
+  .character-detail-view__art-panel {
+    justify-content: flex-start;
+  }
+
+  .character-detail-view__art {
+    width: min(100%, 420px);
+  }
+
+  .character-detail-view__info {
+    padding-top: 12px;
+  }
+}
