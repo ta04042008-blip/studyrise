@@ -82,6 +82,19 @@ export const enemyArtById: Record<string, EnemyArtDefinition> = {
   enemy_boss_ogre_placeholder: { runtimeFilename: 'janus.png', visualSize: 'extra-large', motionType: 'quadruped', displayScale: 1.04, baseline: 'ground' },
   enemy_boss_nereid: { runtimeFilename: 'nereid.png', visualSize: 'extra-large', motionType: 'swimming', displayScale: 1.03, baseline: 'hover' },
   enemy_boss_mnemos: { runtimeFilename: 'mnemos.png', visualSize: 'extra-large', motionType: 'flying', displayScale: 1.03, baseline: 'hover' },
+  // New enemy roster (2026-09-29): binary assets verified in public/assets/studyrise/enemies/.
+  enemy_mech_crustacean: { runtimeFilename: 'mech_crustacean.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
+  enemy_mech_moth: { runtimeFilename: 'mech_moth.png', visualSize: 'standard', motionType: 'flying', baseline: 'hover' },
+  enemy_mech_deer: { runtimeFilename: 'mech_deer.png', visualSize: 'large', motionType: 'quadruped', baseline: 'ground' },
+  enemy_mech_fox: { runtimeFilename: 'mech_fox.png', visualSize: 'standard', motionType: 'quadruped', baseline: 'ground' },
+  enemy_mech_mantis: { runtimeFilename: 'mech_mantis.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
+  enemy_armored_turtle: { runtimeFilename: 'armored_turtle.png', visualSize: 'large', motionType: 'quadruped', baseline: 'ground' },
+  enemy_mech_fish: { runtimeFilename: 'mech_fish.png', visualSize: 'standard', motionType: 'swimming', baseline: 'hover' },
+  enemy_mech_lizard: { runtimeFilename: 'mech_lizard.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
+  enemy_mech_owl: { runtimeFilename: 'mech_owl.png', visualSize: 'standard', motionType: 'flying', baseline: 'ground' },
+  enemy_heavy_quadruped: { runtimeFilename: 'heavy_quadruped.png', visualSize: 'extra-large', motionType: 'quadruped', baseline: 'ground' },
+  enemy_arcane_orbiter: { runtimeFilename: 'arcane_orbiter.png', visualSize: 'large', motionType: 'hover', baseline: 'hover' },
+  enemy_aqua_manta: { runtimeFilename: 'aqua_manta.png', visualSize: 'extra-large', motionType: 'swimming', baseline: 'hover' },
 };
 
 /** Stage1〜3 backgrounds, keyed by StageDefinition.id. */
