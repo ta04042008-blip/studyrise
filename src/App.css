@@ -400,3 +400,140 @@ body:has(.battle-screen) {
     min-height: 100dvh;
   }
 }
+
+
+/* --- iPad landscape battle HUD (presentation only) --- */
+@media (min-width: 768px) and (orientation: landscape) {
+  .battle-screen {
+    display: block;
+  }
+
+  .battle-screen__hp {
+    position: absolute;
+    top: max(16px, env(safe-area-inset-top));
+    width: min(30vw, 360px);
+    padding: 10px 12px;
+    box-sizing: border-box;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 12px;
+    background: rgba(15, 24, 34, 0.72);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+
+  .battle-screen__hp--players {
+    left: max(16px, env(safe-area-inset-left));
+  }
+
+  .battle-screen__hp--enemies {
+    right: max(16px, env(safe-area-inset-right));
+  }
+
+  .battle-screen__hp .hp-bar__label {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 650;
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+  }
+
+  .battle-screen__hp .hp-bar__track {
+    height: 9px;
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  .battle-screen__actors {
+    position: absolute;
+    inset: 0;
+    min-height: 0;
+    pointer-events: none;
+  }
+
+  .battle-screen__actors-side {
+    bottom: 34%;
+  }
+
+  .turn-order-view {
+    position: absolute;
+    top: max(16px, env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: min(30vw, 340px);
+    padding: 9px 12px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 12px;
+    background: rgba(15, 24, 34, 0.72);
+    color: #fff;
+    font-size: 0.84rem;
+    line-height: 1.25;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+
+  .turn-order-view__current {
+    font-weight: 700;
+  }
+
+  .turn-order-view__upcoming {
+    opacity: 0.9;
+  }
+
+  .command-menu {
+    position: absolute;
+    left: 50%;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 8px;
+    max-width: calc(100vw - 32px);
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    background: rgba(15, 24, 34, 0.72);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+
+  .command-menu button {
+    flex: 0 0 auto;
+    min-width: 104px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .command-menu button:disabled {
+    opacity: 0.48;
+  }
+
+  .enemy-action-log {
+    position: absolute;
+    left: 50%;
+    bottom: max(92px, calc(env(safe-area-inset-bottom) + 92px));
+    transform: translateX(-50%);
+    width: min(58vw, 700px);
+    padding: 8px 12px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    background: rgba(15, 24, 34, 0.72);
+    color: #fff;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+  }
+
+  .enemy-action-log p {
+    margin: 2px 0;
+  }
+}
