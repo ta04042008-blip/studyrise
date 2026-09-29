@@ -71,7 +71,7 @@ describe('character art resolvers', () => {
 
 describe('resolveEnemyArtPath', () => {
   it('resolves every registered enemy id to its runtime path', () => {
-    expect(resolveEnemyArtPath('enemy_slime_placeholder')).toBe('/assets/studyrise/enemies/runner.png');
+    expect(resolveEnemyArtPath('enemy_slime_placeholder')).toBe('/assets/studyrise/enemies/mech_fox.png');
     expect(resolveEnemyArtPath('enemy_goblin_placeholder')).toBe('/assets/studyrise/enemies/watcher.png');
     expect(resolveEnemyArtPath('enemy_clamp')).toBe('/assets/studyrise/enemies/clamp.png');
     expect(resolveEnemyArtPath('enemy_relay')).toBe('/assets/studyrise/enemies/relay.png');
