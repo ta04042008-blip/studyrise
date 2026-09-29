@@ -1093,3 +1093,37 @@ body:has(.battle-screen) {
   .turn-order-view__actor-icon > span { font-weight:900; font-size:.82rem; }
   .turn-order-view__arrow { opacity:.72; font-weight:900; font-size:1rem; }
 }
+
+/* Subtle battle idle motion. Kept on the art itself so formation transforms and command animations stay authoritative. */
+@media (min-width: 768px) and (orientation: landscape) {
+  .battle-screen__player-slot:not(.battle-screen__player-slot--ko):not([class*="battle-screen__player-slot--command-"]) .battle-screen__actor-art--player {
+    animation: studyrise-player-idle 1800ms ease-in-out infinite;
+    transform-origin: 50% 100%;
+  }
+
+  .battle-screen__enemy-slot:not(.battle-screen__enemy-slot--ko):not(.battle-screen__enemy-slot--hit):not([class*="battle-screen__enemy-slot--command-"]) .battle-screen__actor-art--enemy {
+    animation: studyrise-enemy-idle 2100ms ease-in-out infinite;
+    transform-origin: 50% 100%;
+  }
+
+  .battle-screen__player-slot[data-party-index="1"] .battle-screen__actor-art--player { animation-delay: -600ms; }
+  .battle-screen__player-slot[data-party-index="2"] .battle-screen__actor-art--player { animation-delay: -1200ms; }
+  .battle-screen__enemy-slot:nth-child(even) .battle-screen__actor-art--enemy { animation-delay: -850ms; }
+}
+
+@keyframes studyrise-player-idle {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(-2px) scaleY(1.012); }
+}
+
+@keyframes studyrise-enemy-idle {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(-2px) scaleY(1.01); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-screen__actor-art--player,
+  .battle-screen__actor-art--enemy {
+    animation: none !important;
+  }
+}
