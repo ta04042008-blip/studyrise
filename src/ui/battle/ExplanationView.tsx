@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { QuestionCommandOutcome } from '../../engine/battle/BattleEngine.types';
 
 interface ExplanationViewProps {
@@ -30,7 +30,14 @@ function getResultDetailText(outcome: QuestionCommandOutcome): string {
 /** 解説画面 (spec §12.8). */
 export function ExplanationView({ outcome, onAdvance }: ExplanationViewProps) {
   const [advanced, setAdvanced] = useState(false);
+  const [showVerdict, setShowVerdict] = useState(outcome.command !== 'attack');
   const { question } = outcome;
+
+  useEffect(() => {
+    if (outcome.command !== 'attack') return;
+    const timer = window.setTimeout(() => setShowVerdict(true), 650);
+    return () => window.clearTimeout(timer);
+  }, [outcome]);
 
   function handleAdvance() {
     if (advanced) return;
@@ -49,12 +56,16 @@ export function ExplanationView({ outcome, onAdvance }: ExplanationViewProps) {
       <p className="explanation-view__text">{question.text}</p>
       <p>あなたの回答: {choiceText(outcome.selectedAnswerIndex)}</p>
       {question.format === 'multiple_choice' && <p>正答: {question.choices[question.correctIndex]}</p>}
-      <p>{outcome.correct ? '正解！' : '不正解'}</p>
       <p className="explanation-view__result-detail">{getResultDetailText(outcome)}</p>
-      <p className="explanation-view__explanation">{question.explanation}</p>
-      <button type="button" disabled={advanced} onClick={handleAdvance}>
-        次へ
-      </button>
+      {showVerdict && (
+        <>
+          <p className="explanation-view__verdict">{outcome.correct ? '正解！' : '不正解'}</p>
+          <p className="explanation-view__explanation">{question.explanation}</p>
+          <button type="button" disabled={advanced} onClick={handleAdvance}>
+            次へ
+          </button>
+        </>
+      )}
     </div>
   );
 }
