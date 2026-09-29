@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import type { BattleController } from '../../state/useBattleController';
 import { HpBar } from './HpBar';
 import { TurnOrderView } from './TurnOrderView';
@@ -16,6 +16,7 @@ import { GameImage } from '../../presentation/assets/GameImage';
 import {
   resolveCharacterBattleArtPath,
   resolveEnemyArtPath,
+  resolveEnemyArtDefinition,
   resolveStageBackgroundPath,
 } from '../../presentation/assets/studyRiseAssets';
 
@@ -118,11 +119,31 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
         <div className="battle-screen__actors-side battle-screen__actors-side--enemies" style={{ left: '69%', right: 'auto' }}>
-          {state.enemies.map((enemy) => (
-            <div key={enemy.id} className={['battle-screen__enemy-slot', latestEnemyAttackerId === enemy.id ? 'battle-screen__enemy-slot--attack-source' : '', nonQuestionOutcome?.targetId === enemy.id ? `battle-screen__enemy-slot--command-${nonQuestionOutcome.command}` : '', enemy.currentHp <= 0 ? 'battle-screen__enemy-slot--ko' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct ? 'battle-screen__enemy-slot--hit' : '', attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.isCritical ? 'battle-screen__enemy-slot--critical' : ''].filter(Boolean).join(' ')}>
+          {state.enemies.map((enemy) => {
+            const visual = resolveEnemyArtDefinition(enemy.definitionId);
+            const visualSize = visual?.visualSize ?? 'standard';
+            const motionType = visual?.motionType ?? 'ground';
+            const baseline = visual?.baseline ?? (['hover', 'flying', 'swimming'].includes(motionType) ? 'hover' : 'ground');
+            return (
+            <div
+              key={enemy.id}
+              className={[
+                'battle-screen__enemy-slot',
+                `battle-screen__enemy-slot--size-${visualSize}`,
+                `battle-screen__enemy-slot--motion-${motionType}`,
+                `battle-screen__enemy-slot--baseline-${baseline}`,
+                latestEnemyAttackerId === enemy.id ? 'battle-screen__enemy-slot--attack-source' : '',
+                nonQuestionOutcome?.targetId === enemy.id ? `battle-screen__enemy-slot--command-${nonQuestionOutcome.command}` : '',
+                enemy.currentHp <= 0 ? 'battle-screen__enemy-slot--ko' : '',
+                attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.correct ? 'battle-screen__enemy-slot--hit' : '',
+                attackAnimationOutcome?.targetId === enemy.id && attackAnimationOutcome.isCritical ? 'battle-screen__enemy-slot--critical' : '',
+              ].filter(Boolean).join(' ')}
+              style={{ '--enemy-display-scale': visual?.displayScale ?? 1 } as CSSProperties}
+            >
               <GameImage src={resolveEnemyArtPath(enemy.definitionId)} alt={`${enemy.name} 戦闘`} className="battle-screen__actor-art battle-screen__actor-art--enemy" />
               {attackAnimationOutcome?.targetId === enemy.id && (
                 <div className={[
