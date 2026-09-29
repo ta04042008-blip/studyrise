@@ -1569,96 +1569,49 @@ button, input, select, textarea {
 }
 
 
-/* Phone landscape: preserve the tablet battle composition, but scale its
-   visual dimensions for short viewports. This block intentionally comes
-   after the authoritative iPad rules because modern landscape phones also
-   satisfy min-width:768px. */
+
+
+/* Phone landscape battle canvas.
+   Keep the tablet composition/background coordinate system and fit the
+   complete 4:3 stage into the short phone viewport as one unit. */
 @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  body:has(.battle-screen) {
+    overflow: hidden;
+    background: #08121d;
+  }
+
+  .app:has(.battle-screen) {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: 1024px;
+    height: 768px;
+    min-width: 1024px;
+    min-height: 768px;
+    transform:
+      translate(-50%, -50%)
+      scale(min(calc(100vw / 1024), calc(100dvh / 768)));
+    transform-origin: 50% 50%;
+    overflow: hidden;
+  }
+
   .battle-screen {
     display: block;
-    min-height: 100svh;
-    padding:
-      max(6px, env(safe-area-inset-top))
-      max(8px, env(safe-area-inset-right))
-      max(6px, env(safe-area-inset-bottom))
-      max(8px, env(safe-area-inset-left));
+    width: 1024px;
+    height: 768px;
+    min-height: 768px;
+    padding: 16px;
   }
 
-  .battle-screen__hp {
-    top: max(6px, env(safe-area-inset-top));
-    width: min(27vw, 230px);
-    gap: 3px;
-    padding: 4px 6px;
-    border-radius: 7px;
+  .battle-screen__background {
+    width: 1024px;
+    height: 768px;
   }
 
-  .battle-screen__hp--players { left: max(8px, env(safe-area-inset-left)); }
-  .battle-screen__hp--enemies { right: max(8px, env(safe-area-inset-right)); }
-  .battle-screen__hp .hp-bar__label { font-size: clamp(.58rem, 1.65vw, .72rem); line-height: 1.05; }
-  .battle-screen__hp .hp-bar__track { height: 5px; }
-
-  .turn-order-view {
-    top: max(6px, env(safe-area-inset-top));
-    max-width: 40vw;
-    transform: translateX(-50%) scale(.72);
-    transform-origin: 50% 0;
-  }
-
-  .battle-screen__actors-side {
-    bottom: 25%;
-    min-height: 88px;
-    gap: 4px;
-  }
-
-  .battle-screen__actors-side--players {
-    left: 30% !important;
-    right: auto !important;
-    transform: translateX(-50%) scale(.68);
-    transform-origin: 50% 100%;
-  }
-
-  .battle-screen__actors-side--enemies {
-    left: 70% !important;
-    right: auto !important;
-    max-width: 46vw;
-    transform: translateX(-50%) scale(.68);
-    transform-origin: 50% 100%;
-  }
-
-  .command-menu {
-    bottom: max(5px, env(safe-area-inset-bottom));
-    width: min(94vw, 900px);
-    gap: 3px;
-    padding: 3px;
-  }
-
-  .command-menu button {
-    min-height: 40px;
-    padding: 4px 6px;
-    font-size: clamp(.62rem, 1.7vw, .82rem);
-    line-height: 1.05;
-  }
-
-  .question-view {
-    width: min(88vw, 720px);
-    max-height: 72vh;
-    bottom: max(4px, env(safe-area-inset-bottom));
-    padding: 6px;
-  }
-
-  .question-view__meta { font-size: .62rem; margin-bottom: 3px; }
-  .question-view__text { font-size: clamp(.72rem, 1.8vw, .9rem); line-height: 1.25; margin-bottom: 5px; }
-  .question-view__dont-know { min-height: 34px; margin-bottom: 5px; }
-  .question-view__choices { gap: 4px; }
-  .question-view__choices label { min-height: 34px; font-size: .72rem; }
-  .question-view__actions { margin-top: 4px; }
-  .question-view__actions button { min-width: 150px; min-height: 34px; }
-
-  .spell-select-view,
-  .target-select-view,
-  .search-info-panel,
-  .spell-item-result-view {
-    max-height: 78vh;
-    overflow: auto;
+  .battle-screen__background-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
   }
 }
