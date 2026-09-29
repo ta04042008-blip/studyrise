@@ -76,14 +76,14 @@ describe('resolveEnemyArtPath', () => {
     expect(resolveEnemyArtPath('enemy_clamp')).toBe('/assets/studyrise/enemies/mech_crustacean.png');
     expect(resolveEnemyArtPath('enemy_relay')).toBe('/assets/studyrise/enemies/mech_lizard.png');
     expect(resolveEnemyArtPath('enemy_drainer')).toBe('/assets/studyrise/enemies/mech_fish.png');
-    expect(resolveEnemyArtPath('enemy_purger')).toBe('/assets/studyrise/enemies/purger.png');
+    expect(resolveEnemyArtPath('enemy_purger')).toBe('/assets/studyrise/enemies/28CB8B3A-DDCF-4D94-B3D2-8D427908699C.PNG');
     expect(resolveEnemyArtPath('enemy_shielder')).toBe('/assets/studyrise/enemies/armored_turtle.png');
     expect(resolveEnemyArtPath('enemy_scrib')).toBe('/assets/studyrise/enemies/mech_mantis.png');
-    expect(resolveEnemyArtPath('enemy_sentinel')).toBe('/assets/studyrise/enemies/sentinel.png');
-    expect(resolveEnemyArtPath('enemy_auditor')).toBe('/assets/studyrise/enemies/auditor.png');
+    expect(resolveEnemyArtPath('enemy_sentinel')).toBe('/assets/studyrise/enemies/mech_deer.png');
+    expect(resolveEnemyArtPath('enemy_auditor')).toBe('/assets/studyrise/enemies/mech_moth.png');
     expect(resolveEnemyArtPath('enemy_boss_ogre_placeholder')).toBe('/assets/studyrise/enemies/heavy_quadruped.png');
     expect(resolveEnemyArtPath('enemy_boss_nereid')).toBe('/assets/studyrise/enemies/aqua_manta.png');
-    expect(resolveEnemyArtPath('enemy_boss_mnemos')).toBe('/assets/studyrise/enemies/mnemos.png');
+    expect(resolveEnemyArtPath('enemy_boss_mnemos')).toBe('/assets/studyrise/enemies/arcane_orbiter.png');
   });
 
   it('returns undefined for an unknown id', () => {
