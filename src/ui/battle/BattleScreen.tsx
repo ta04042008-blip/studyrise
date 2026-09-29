@@ -162,7 +162,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
                 </div>
               )}
             </div>
-          ))}
+          })}
         </div>
       </div>
 
