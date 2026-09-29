@@ -663,6 +663,14 @@ body:has(.battle-screen) {
   .battle-screen__enemy-slot--hit { animation:studyrise-enemy-hit 360ms ease-out 120ms 1; }
   .battle-screen__enemy-slot--critical { animation-name:studyrise-enemy-critical-hit; animation-duration:420ms; }
 }
-@keyframes studyrise-player-attack-step { 0%,100%{transform:translate(-12px,-4px)} 28%{transform:translate(22px,-8px)} 52%{transform:translate(38px,-4px)} 72%{transform:translate(12px,-4px)} }
-@keyframes studyrise-enemy-hit { 0%,100%{transform:translateX(0);filter:brightness(1)} 30%{transform:translateX(8px);filter:brightness(1.45)} 55%{transform:translateX(-5px);filter:brightness(1.15)} 75%{transform:translateX(3px)} }
-@keyframes studyrise-enemy-critical-hit { 0%,100%{transform:translateX(0) scale(1);filter:brightness(1)} 25%{transform:translateX(12px) scale(1.04);filter:brightness(1.75)} 50%{transform:translateX(-7px) scale(.98);filter:brightness(1.25)} 72%{transform:translateX(4px) scale(1.01)} }
+@keyframes studyrise-player-attack-step { 0%,100%{transform:translate(-12px,-4px)} 18%{transform:translate(-20px,-4px)} 46%{transform:translate(58px,-7px)} 58%{transform:translate(66px,-4px)} 78%{transform:translate(4px,-4px)} }
+@keyframes studyrise-enemy-hit { 0%,100%{transform:translateX(0);filter:brightness(1)} 28%{transform:translateX(11px);filter:brightness(1.65)} 48%{transform:translateX(-7px);filter:brightness(1.2)} 70%{transform:translateX(4px)} }
+@keyframes studyrise-enemy-critical-hit { 0%,100%{transform:translateX(0) scale(1);filter:brightness(1)} 22%{transform:translateX(16px) scale(1.06);filter:brightness(1.9)} 45%{transform:translateX(-10px) scale(.97);filter:brightness(1.3)} 70%{transform:translateX(5px) scale(1.02)} }
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-screen__player-slot--attack-source,
+  .battle-screen__enemy-slot--hit,
+  .battle-screen__enemy-slot--critical {
+    animation: none;
+  }
+}
