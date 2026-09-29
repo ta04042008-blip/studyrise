@@ -1,8 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
 .app {
   max-width: 640px;
   margin: 0 auto;
   padding: 16px;
-  font-family: system-ui, sans-serif;
+  font-family: 'DotGothic16', monospace;
 }
 
 .battle-screen {
@@ -1605,4 +1607,18 @@ body:has(.battle-screen) {
 @media (min-width:768px) and (max-width:980px) {
   .equipment-list-screen__item { grid-template-columns:auto minmax(200px,1fr) minmax(140px,.8fr); }
   .equipment-list-screen__item button { width:100%; }
+}
+
+
+/* StudyRise global pixel font: all UI text, including controls and form fields. */
+html, body, button, input, select, textarea, option {
+  font-family: 'DotGothic16', monospace;
+}
+
+body {
+  font-synthesis: none;
+}
+
+button, input, select, textarea {
+  letter-spacing: .02em;
 }
