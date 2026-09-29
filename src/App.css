@@ -399,7 +399,7 @@ body:has(.battle-screen) {
 
 
 /* --- iPad landscape battle layout (authoritative) --- */
-@media (min-width: 768px) and (orientation: landscape) {
+@media (orientation: landscape) {
   .battle-screen {
     display: block;
   }
@@ -956,7 +956,7 @@ body:has(.battle-screen) {
 @keyframes studyrise-command-progress { from{transform:scaleX(0)} to{transform:scaleX(1)} }
 
 /* --- Battle enemy-turn / KO / end-flow polish --- */
-@media (min-width: 768px) and (orientation: landscape) {
+@media (orientation: landscape) {
   .battle-screen__player-slot { position: relative; }
 
   .battle-screen__player-slot--enemy-hit {
@@ -1069,7 +1069,7 @@ body:has(.battle-screen) {
 }
 
 /* Search revelation stays attached to the top turn-order strip while active. */
-@media (min-width: 768px) and (orientation: landscape) {
+@media (orientation: landscape) {
   .turn-order-view__search {
     display: block;
     width: 100%;
@@ -1086,7 +1086,7 @@ body:has(.battle-screen) {
   }
 }
 
-@media (min-width: 768px) and (orientation: landscape) {
+@media (orientation: landscape) {
   .turn-order-view__icon-row, .turn-order-view__next-entry { display:inline-flex; align-items:center; gap:5px; }
   .turn-order-view__label { font-size:.72rem; font-weight:800; opacity:.8; margin-right:2px; }
   .turn-order-view__actor-icon { width:34px; height:34px; flex:0 0 34px; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; border:2px solid rgba(255,255,255,.58); border-radius:7px; background:rgba(8,20,34,.9); box-sizing:border-box; }
@@ -1097,7 +1097,7 @@ body:has(.battle-screen) {
 }
 
 /* Subtle battle idle motion. Kept on the art itself so formation transforms and command animations stay authoritative. */
-@media (min-width: 768px) and (orientation: landscape) {
+@media (orientation: landscape) {
   .battle-screen__player-slot:not(.battle-screen__player-slot--ko):not([class*="battle-screen__player-slot--command-"]) .battle-screen__actor-art--player {
     animation: studyrise-player-idle 1800ms ease-in-out infinite;
     transform-origin: 50% 100%;
@@ -1131,7 +1131,7 @@ body:has(.battle-screen) {
 }
 
 /* --- Battle motion finish: enemy attack, KO and victory pacing --- */
-@media (min-width: 768px) and (orientation: landscape) {
+@media (orientation: landscape) {
   .battle-screen__enemy-slot--attack-source {
     animation: studyrise-enemy-attack-step 560ms ease-in-out 1;
     z-index: 3;
@@ -1203,7 +1203,7 @@ body:has(.battle-screen) {
 }
 
 /* Enemy visual classes: data-driven sizing/baselines for scalable enemy rosters. */
-@media (min-width: 768px) and (orientation: landscape) {
+@media (orientation: landscape) {
   .battle-screen__enemy-slot {
     --enemy-display-scale: 1;
     --enemy-box-width: 176px;
@@ -1275,7 +1275,7 @@ body:has(.battle-screen) {
 }
 
 /* Ground shadows follow the visible feet instead of the slot box baseline. */
-@media (min-width: 768px) and (orientation: landscape) {
+@media (orientation: landscape) {
   .battle-screen__player-slot::after,
   .battle-screen__enemy-slot--baseline-ground::after {
     bottom: 1px;
@@ -1301,7 +1301,7 @@ body:has(.battle-screen) {
 }
 
 /* Enemy roster completion: safe spacing, grounded motion families and oversized encounter guardrails. */
-@media (min-width: 768px) and (orientation: landscape) {
+@media (orientation: landscape) {
   .battle-screen__actors-side--enemies {
     max-width: 46vw;
     align-items: flex-end;
