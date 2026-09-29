@@ -26,24 +26,18 @@ function ActorIcon({ actor, current = false }: { actor: TurnOrderActor; current?
   );
 }
 
-/** Shows public turn order as actor icons; Search-revealed action text remains attached below it. */
 export function TurnOrderView({ currentActor, upcomingActors, searchInfo = [], actorNameById = {} }: TurnOrderViewProps) {
   return (
     <div className="turn-order-view">
       <span className="turn-order-view__icon-row">
         <span className="turn-order-view__label">現在</span>
         <ActorIcon actor={currentActor} current />
-        {upcomingActors.length > 0 && (
-          <>
+        {upcomingActors.map((actor, index) => (
+          <span className="turn-order-view__next-entry" key={`${actor.id}-${index}`}>
             <span className="turn-order-view__arrow">›</span>
-            {upcomingActors.map((actor, index) => (
-              <span className="turn-order-view__next-entry" key={`${actor.id}-${index}`}>
-                <ActorIcon actor={actor} />
-                {index < upcomingActors.length - 1 && <span className="turn-order-view__arrow">›</span>}
-              </span>
-            ))}
-          </>
-        )}
+            <ActorIcon actor={actor} />
+          </span>
+        ))}
       </span>
       {searchInfo.length > 0 && (
         <span className="turn-order-view__search">
