@@ -70,17 +70,17 @@ export const characterArtById: Record<string, CharacterArtDefinition> = {
 /** All 13 Area 1 enemies, keyed by EnemyDefinition.id. */
 export const enemyArtById: Record<string, EnemyArtDefinition> = {
   enemy_slime_placeholder: { runtimeFilename: 'mech_fox.png', visualSize: 'standard', motionType: 'quadruped', baseline: 'ground' },
-  enemy_goblin_placeholder: { runtimeFilename: 'watcher.png', visualSize: 'standard', motionType: 'flying', baseline: 'hover' },
-  enemy_clamp: { runtimeFilename: 'clamp.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
-  enemy_relay: { runtimeFilename: 'relay.png', visualSize: 'standard', motionType: 'hover', baseline: 'hover' },
-  enemy_drainer: { runtimeFilename: 'drainer.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
+  enemy_goblin_placeholder: { runtimeFilename: 'mech_owl.png', visualSize: 'standard', motionType: 'flying', baseline: 'hover' },
+  enemy_clamp: { runtimeFilename: 'mech_crustacean.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
+  enemy_relay: { runtimeFilename: 'mech_lizard.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
+  enemy_drainer: { runtimeFilename: 'mech_fish.png', visualSize: 'standard', motionType: 'swimming', baseline: 'hover' },
   enemy_purger: { runtimeFilename: 'purger.png', visualSize: 'standard', motionType: 'quadruped', baseline: 'ground' },
-  enemy_shielder: { runtimeFilename: 'shielder.png', visualSize: 'large', motionType: 'quadruped', baseline: 'ground' },
-  enemy_scrib: { runtimeFilename: 'scrib.png', visualSize: 'standard', motionType: 'ground', baseline: 'ground' },
+  enemy_shielder: { runtimeFilename: 'armored_turtle.png', visualSize: 'large', motionType: 'quadruped', baseline: 'ground' },
+  enemy_scrib: { runtimeFilename: 'mech_mantis.png', visualSize: 'standard', motionType: 'crawler', baseline: 'ground' },
   enemy_sentinel: { runtimeFilename: 'sentinel.png', visualSize: 'large', motionType: 'quadruped', baseline: 'ground' },
   enemy_auditor: { runtimeFilename: 'auditor.png', visualSize: 'large', motionType: 'flying', baseline: 'hover' },
-  enemy_boss_ogre_placeholder: { runtimeFilename: 'janus.png', visualSize: 'extra-large', motionType: 'quadruped', displayScale: 1.04, baseline: 'ground' },
-  enemy_boss_nereid: { runtimeFilename: 'nereid.png', visualSize: 'extra-large', motionType: 'swimming', displayScale: 1.03, baseline: 'hover' },
+  enemy_boss_ogre_placeholder: { runtimeFilename: 'heavy_quadruped.png', visualSize: 'extra-large', motionType: 'quadruped', displayScale: 1.04, baseline: 'ground' },
+  enemy_boss_nereid: { runtimeFilename: 'aqua_manta.png', visualSize: 'extra-large', motionType: 'swimming', displayScale: 1.03, baseline: 'hover' },
   enemy_boss_mnemos: { runtimeFilename: 'mnemos.png', visualSize: 'extra-large', motionType: 'flying', displayScale: 1.03, baseline: 'hover' },
 };
 
