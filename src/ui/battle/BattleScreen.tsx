@@ -13,6 +13,8 @@ import { SpellItemResultView } from './SpellItemResultView';
 import { EnemyActionLog } from './EnemyActionLog';
 import { SearchInfoPanel } from './SearchInfoPanel';
 import { BattleEndView } from './BattleEndView';
+import { GameImage } from '../../presentation/assets/GameImage';
+import { resolveCharacterBattleArtPath, resolveEnemyArtPath } from '../../presentation/assets/studyRiseAssets';
 
 interface BattleScreenProps {
   controller: BattleController;
@@ -49,6 +51,29 @@ export function BattleScreen({ controller }: BattleScreenProps) {
         {state.enemies.map((e) => (
           <HpBar key={e.id} label={e.name} current={e.currentHp} max={e.maxHp} />
         ))}
+      </div>
+
+      <div className="battle-screen__actors" aria-label="戦闘キャラクター">
+        <div className="battle-screen__actors-side battle-screen__actors-side--players">
+          {state.players.map((player) => (
+            <GameImage
+              key={player.id}
+              src={resolveCharacterBattleArtPath(player.definitionId)}
+              alt={`${player.name} 戦闘`}
+              className="battle-screen__actor-art battle-screen__actor-art--player"
+            />
+          ))}
+        </div>
+        <div className="battle-screen__actors-side battle-screen__actors-side--enemies">
+          {state.enemies.map((enemy) => (
+            <GameImage
+              key={enemy.id}
+              src={resolveEnemyArtPath(enemy.definitionId)}
+              alt={`${enemy.name} 戦闘`}
+              className="battle-screen__actor-art battle-screen__actor-art--enemy"
+            />
+          ))}
+        </div>
       </div>
 
       <TurnOrderView
