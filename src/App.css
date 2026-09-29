@@ -1,8 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
 .app {
   max-width: 640px;
   margin: 0 auto;
   padding: 16px;
-  font-family: system-ui, sans-serif;
+  font-family: 'DotGothic16', monospace;
 }
 
 .battle-screen {
@@ -1546,4 +1548,77 @@ body:has(.battle-screen) {
     --enemy-box-width: min(15vw, 136px);
     --enemy-box-height: min(31vh, 110px);
   }
+}
+
+
+/* Base screen readability polish (presentation only). */
+@media (min-width: 768px) {
+  .app:not(:has(.battle-screen)) { max-width:1120px; box-sizing:border-box; padding:28px 32px 40px; }
+  .base-home>h1,.inventory-list-screen>h1,.equipment-list-screen>h1,.party-edit-view>h1,.record-screen>h1,.character-detail-view>h1 { margin:0 0 22px; font-size:clamp(2rem,3vw,2.6rem); line-height:1.1; }
+  .base-home__background { min-height:min(68vh,620px); border:1px solid #dbe5ee; box-shadow:0 12px 34px rgba(25,55,80,.12); }
+  .base-home .hotspot { min-width:132px; min-height:64px; padding:12px 20px; font-size:1.08rem; box-shadow:0 5px 14px rgba(25,55,80,.14); }
+
+  .inventory-list-screen,.equipment-list-screen,.party-edit-view,.record-screen,.character-detail-view { max-width:1040px; margin:0 auto; }
+  .inventory-list-screen section,.equipment-list-screen section,.record-overall-summary,.record-subject-breakdown,.record-star-breakdown,.record-history-list {
+    margin:0 0 18px; padding:20px 22px; border:1px solid #e2e6eb; border-radius:14px; background:#fff; box-shadow:0 5px 18px rgba(20,35,50,.06);
+  }
+  .inventory-list-screen section h2,.equipment-list-screen section h2,.record-screen section h2 { margin-top:0; margin-bottom:14px; }
+
+  .inventory-list-screen dl,.record-overall-summary dl { display:grid; grid-template-columns:repeat(5,minmax(100px,1fr)); gap:10px; margin:0; }
+  .inventory-list-screen dl dt,.inventory-list-screen dl dd,.record-overall-summary dl dt,.record-overall-summary dl dd { margin:0; text-align:center; }
+  .inventory-list-screen dl dt,.record-overall-summary dl dt { padding:10px 8px 2px; color:#59636e; font-size:.88rem; font-weight:700; }
+  .inventory-list-screen dl dd,.record-overall-summary dl dd { padding:0 8px 10px; font-size:1.35rem; font-weight:850; }
+
+  .record-screen__tabs { display:flex; gap:8px; margin-bottom:18px; }
+  .record-screen__tabs button[aria-pressed="true"],.equipment-list-screen__character-select button[aria-pressed="true"],.party-edit-view .base-list button[aria-pressed="true"] { background:#173b61; color:#fff; }
+  .record-subject-breakdown ul,.record-star-breakdown ul,.equipment-list-screen__character-select,.equipment-list-screen__inventory { margin:0; padding:0; list-style:none; }
+  .record-subject-breakdown li,.record-star-breakdown li { padding:9px 0; border-bottom:1px solid #edf0f3; }
+  .record-subject-breakdown li:last-child,.record-star-breakdown li:last-child { border-bottom:0; }
+  .record-history-list__filters { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px 12px; margin-bottom:16px; }
+  .record-history-list__filters label { display:flex; flex-direction:column; gap:5px; font-size:.86rem; font-weight:750; }
+  .record-history-list__filters select { min-height:42px; padding:6px 8px; font-size:.95rem; }
+  .record-history-list>ul { display:grid; gap:8px; margin:0; padding:0; list-style:none; }
+  .record-history-list>ul button { width:100%; min-height:58px; text-align:left; line-height:1.35; border:1px solid #dce2e8; border-radius:10px; background:#f7f8fa; }
+
+  .equipment-list-screen__character-select { display:flex; gap:8px; flex-wrap:wrap; }
+  .equipment-list-screen__equipped-slots { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:16px; }
+  .equipment-list-screen__equipped-slots>div { padding:12px; border-radius:10px; background:#f5f7f9; }
+  .equipment-list-screen__equipped-slots dt { color:#65707b; font-size:.84rem; font-weight:750; }
+  .equipment-list-screen__equipped-slots dd { margin:5px 0 0; }
+  .equipment-list-screen__inventory { display:grid; gap:10px; }
+  .equipment-list-screen__item { display:grid; grid-template-columns:auto minmax(220px,1fr) minmax(150px,.7fr) auto auto auto auto; align-items:center; gap:8px; padding:12px; border:1px solid #e1e5e9; border-radius:10px; background:#fafbfc; }
+
+  .party-edit-view>p { color:#59636e; margin-bottom:14px; }
+  .party-edit-view__selected { min-height:48px; margin:0 0 14px; padding:12px 18px 12px 42px; border-radius:10px; background:#f3f6f9; }
+  .party-edit-view .base-list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+  .party-edit-view .base-list button { min-height:64px; border:1px solid #dbe1e7; border-radius:10px; background:#f4f5f7; font-weight:750; }
+  .party-edit-view .base-actions { justify-content:flex-end; }
+
+  .character-detail-view__content { padding:22px; border:1px solid #e2e6eb; border-radius:16px; background:#fff; box-shadow:0 6px 20px rgba(20,35,50,.07); }
+  .character-detail-view__art-panel { align-items:center; justify-content:center; min-height:500px; border-radius:12px; background:#f5f7f9; }
+  .character-detail-view__info { align-self:center; }
+  .character-detail-view__level,.character-detail-view__stats,.character-detail-view__equipment { padding:14px 16px; border-radius:10px; background:#f7f8fa; }
+  .character-detail-view__level dt,.character-detail-view__stats dt,.character-detail-view__equipment dt { color:#65707b; font-weight:750; }
+
+  .reward-screen,.inter-zone-choice-view,.stage-result-view { color:#f7fbff; }
+  .reward-screen__eyebrow,.reward-screen__complete-eyebrow,.inter-zone-choice-view__eyebrow,.stage-result-view__eyebrow { color:#a9d7ff; opacity:1; }
+  .reward-screen__lead,.reward-screen__progress,.inter-zone-choice-view p,.stage-result-view__message,.stage-result-view__summary { color:rgba(247,251,255,.9); }
+}
+@media (min-width:768px) and (max-width:980px) {
+  .equipment-list-screen__item { grid-template-columns:auto minmax(200px,1fr) minmax(140px,.8fr); }
+  .equipment-list-screen__item button { width:100%; }
+}
+
+
+/* StudyRise global pixel font: all UI text, including controls and form fields. */
+html, body, button, input, select, textarea, option {
+  font-family: 'DotGothic16', monospace;
+}
+
+body {
+  font-synthesis: none;
+}
+
+button, input, select, textarea {
+  letter-spacing: .02em;
 }
