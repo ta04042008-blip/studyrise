@@ -60,19 +60,19 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
         </div>
       )}
 
-      <div className="battle-screen__hp battle-screen__hp--players">
+      <div className="battle-screen__hp battle-screen__hp--players" style={{ left: 16, right: 'auto' }}>
         {state.players.map((p) => (
           <HpBar key={p.id} label={p.name} current={p.currentHp} max={p.maxHp} isCurrentActor={p.id === state.currentActorId} />
         ))}
       </div>
-      <div className="battle-screen__hp battle-screen__hp--enemies">
+      <div className="battle-screen__hp battle-screen__hp--enemies" style={{ left: 'auto', right: 16 }}>
         {state.enemies.map((e) => (
           <HpBar key={e.id} label={e.name} current={e.currentHp} max={e.maxHp} />
         ))}
       </div>
 
       <div className="battle-screen__actors" aria-label="戦闘キャラクター">
-        <div className="battle-screen__actors-side battle-screen__actors-side--players">
+        <div className="battle-screen__actors-side battle-screen__actors-side--players" style={{ left: '30%', right: 'auto', bottom: '18%' }}>
           {state.players.map((player) => (
             <GameImage
               key={player.id}
@@ -82,7 +82,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
             />
           ))}
         </div>
-        <div className="battle-screen__actors-side battle-screen__actors-side--enemies">
+        <div className="battle-screen__actors-side battle-screen__actors-side--enemies" style={{ left: '70%', right: 'auto', bottom: '18%' }}>
           {state.enemies.map((enemy) => (
             <GameImage
               key={enemy.id}
