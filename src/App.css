@@ -662,17 +662,100 @@ body:has(.battle-screen) {
     touch-action: manipulation;
   }
 
-  .command-menu button:first-child {
+  .command-menu__button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .command-menu__button:focus-visible {
+    outline: 3px solid rgba(90, 175, 255, 0.95);
+    outline-offset: -5px;
     background: rgba(16, 78, 160, 0.96);
   }
 
   .command-menu button:active:not(:disabled) {
     transform: translateY(2px);
+    background: rgba(16, 78, 160, 0.96);
   }
 
   .command-menu button:disabled {
     opacity: 0.42;
   }
+
+
+  /* Question layout: prompt -> don't know -> choices -> answer. */
+  .question-view {
+    width: min(860px, calc(100vw - 64px));
+    max-height: min(52vh, 400px);
+  }
+
+  .question-view__meta {
+    font-size: 0.86rem;
+    opacity: 0.9;
+    margin-bottom: 6px;
+  }
+
+  .question-view__text {
+    font-size: clamp(1rem, 1.65vw, 1.25rem);
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .question-view__dont-know {
+    display: block;
+    width: min(420px, 72%);
+    min-height: 50px;
+    margin: 0 auto 10px;
+    border: 2px solid rgba(255,255,255,.78);
+    border-radius: 6px;
+    background: rgba(22, 35, 49, .96);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .question-view__choices {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .question-view__choices li { min-width: 0; }
+  .question-view__choices label {
+    min-height: 48px;
+    box-sizing: border-box;
+    border: 2px solid rgba(255,255,255,.65);
+    border-radius: 6px;
+    background: rgba(10,27,45,.94);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .question-view__choices input { width: 20px; height: 20px; flex: 0 0 auto; }
+  .question-view__actions { justify-content: center; margin-top: 8px; }
+  .question-view__actions button { min-width: 220px; min-height: 50px; font-weight: 750; }
+
+  .battle-screen__enemy-slot { position: relative; }
+  .battle-screen__damage-pop {
+    position: absolute;
+    left: 50%;
+    top: 4px;
+    transform: translate(-50%, -100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #fff;
+    font-weight: 900;
+    text-shadow: 0 2px 3px #000, 0 0 6px #000;
+    pointer-events: none;
+    z-index: 8;
+    animation: studyrise-damage-pop 620ms ease-out 1;
+  }
+  .battle-screen__damage-pop strong { font-size: 1.8rem; line-height: 1; }
+  .battle-screen__damage-pop--critical { font-size: .9rem; }
+  .battle-screen__damage-pop--critical strong { font-size: 2.2rem; }
 
   .enemy-action-log {
     position: absolute;
@@ -712,3 +795,5 @@ body:has(.battle-screen) {
     animation: none;
   }
 }
+
+@keyframes studyrise-damage-pop { 0%{opacity:0;transform:translate(-50%,-55%) scale(.8)} 22%{opacity:1;transform:translate(-50%,-115%) scale(1.14)} 70%{opacity:1;transform:translate(-50%,-145%) scale(1)} 100%{opacity:0;transform:translate(-50%,-175%) scale(.96)} }
