@@ -72,7 +72,7 @@ async function driveToStageStart() {
 
   fireEvent.click(screen.getByRole('button', { name: '編成を変更' }));
   fireEvent.click(screen.getByRole('button', { name: sampleParty[0].name }));
-  fireEvent.click(screen.getByRole('button', { name: '決定' }));
+  fireEvent.click(screen.getByRole('button', { name: 'パーティを保存' }));
 
   fireEvent.click(screen.getByLabelText(/数学（教科単位選択）/));
   fireEvent.click(screen.getByLabelText(/英語（教科単位選択）/));
