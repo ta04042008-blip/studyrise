@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { QuestionCommandOutcome } from '../../engine/battle/BattleEngine.types';
+import type { QuestionAnswer, QuestionDefinition } from '../../engine/question/QuestionEngine.types';
 
 interface ExplanationViewProps {
   outcome: QuestionCommandOutcome;
@@ -27,6 +28,46 @@ function getResultDetailText(outcome: QuestionCommandOutcome): string {
   }
 }
 
+function formatSubmittedAnswer(
+  question: QuestionDefinition,
+  answer: QuestionAnswer | undefined,
+  legacySelectedIndex: number | null,
+): string {
+  if (!answer) {
+    if (question.format === 'multiple_choice' && legacySelectedIndex != null) {
+      return question.choices[legacySelectedIndex] ?? 'わからない';
+    }
+    return 'わからない';
+  }
+  switch (answer.type) {
+    case 'dont_know':
+      return 'わからない';
+    case 'multiple_choice':
+      return question.format === 'multiple_choice' ? (question.choices[answer.selectedIndex] ?? '—') : '—';
+    case 'true_false':
+      return answer.value ? '正' : '誤';
+    case 'ordering':
+      return question.format === 'ordering'
+        ? answer.order.map((index) => question.items[index]).filter(Boolean).join(' ')
+        : '—';
+    case 'short_answer':
+      return answer.value;
+  }
+}
+
+function formatCorrectAnswer(question: QuestionDefinition): string {
+  switch (question.format) {
+    case 'multiple_choice':
+      return question.choices[question.correctIndex] ?? '—';
+    case 'true_false':
+      return question.correctAnswer ? '正' : '誤';
+    case 'ordering':
+      return question.correctOrder.map((index) => question.items[index]).filter(Boolean).join(' ');
+    case 'short_answer':
+      return question.acceptedAnswers[0] ?? '—';
+  }
+}
+
 /** 解説画面 (spec §12.8). */
 export function ExplanationView({ outcome, onAdvance }: ExplanationViewProps) {
   const [advanced, setAdvanced] = useState(false);
@@ -41,12 +82,9 @@ export function ExplanationView({ outcome, onAdvance }: ExplanationViewProps) {
 
   function handleAdvance() {
     if (advanced) return;
-    setAdvanced(true); // idempotency guard (CLAUDE.md §13)
+    setAdvanced(true);
     onAdvance();
   }
-
-  const choiceText = (index: number | null) =>
-    question.format === 'multiple_choice' && index != null ? question.choices[index] : 'わからない';
 
   return (
     <div className={`explanation-view explanation-view--${outcome.command}`}>
@@ -54,17 +92,22 @@ export function ExplanationView({ outcome, onAdvance }: ExplanationViewProps) {
         {question.subject} / {'★'.repeat(question.star)} / {question.field} / {question.unit}
       </div>
       <p className="explanation-view__text">{question.text}</p>
-      <p>あなたの回答: {choiceText(outcome.selectedAnswerIndex)}</p>
-      {question.format === 'multiple_choice' && <p>正答: {question.choices[question.correctIndex]}</p>}
-      <div className={`explanation-view__command-badge explanation-view__command-badge--${outcome.command}`}>{outcome.command === 'attack' ? 'ATTACK' : outcome.command === 'guard' ? 'GUARD' : outcome.command === 'charge' ? 'CHARGE' : 'SEARCH'}</div>
+      {question.format === 'multiple_choice' && (
+        <ul className="explanation-view__choices">
+          {question.choices.map((choice, index) => <li key={index}>{choice}</li>)}
+        </ul>
+      )}
+      <p>あなたの回答: {formatSubmittedAnswer(question, outcome.submittedAnswer, outcome.selectedAnswerIndex)}</p>
+      <p>正答: {formatCorrectAnswer(question)}</p>
+      <div className={`explanation-view__command-badge explanation-view__command-badge--${outcome.command}`}>
+        {outcome.command === 'attack' ? 'ATTACK' : outcome.command === 'guard' ? 'GUARD' : outcome.command === 'charge' ? 'CHARGE' : 'SEARCH'}
+      </div>
       <p className={`explanation-view__result-detail explanation-view__result-detail--${outcome.correct ? 'success' : 'miss'}`}>{getResultDetailText(outcome)}</p>
       {showVerdict && (
         <>
           <p className="explanation-view__verdict">{outcome.correct ? '正解！' : '不正解'}</p>
           <p className="explanation-view__explanation">{question.explanation}</p>
-          <button type="button" disabled={advanced} onClick={handleAdvance}>
-            次へ
-          </button>
+          <button type="button" disabled={advanced} onClick={handleAdvance}>次へ</button>
         </>
       )}
     </div>
