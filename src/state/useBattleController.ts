@@ -72,6 +72,7 @@ export interface BattleController {
   selectTarget: (targetId: string) => void;
   selectSubjectAndStar: (subject: string, star: StarLevel) => void;
   selectSpellSubject: (subject: string) => void;
+  cancelSpellSubjectSelection: () => void;
   submitAnswer: (answer: MultipleChoiceAnswer) => void;
   submitSpellAnswer: (answer: MultipleChoiceAnswer) => void;
   useSpell: (spellId: string) => void;
@@ -195,6 +196,11 @@ export function useBattleController({
     [engines, sync],
   );
 
+  const cancelSpellSubjectSelection = useCallback(() => {
+    engines.battleEngine.cancelSpellSubjectSelection();
+    sync();
+  }, [engines, sync]);
+
   const submitAnswer = useCallback(
     (answer: MultipleChoiceAnswer) => {
       // Learning-history dedup boundary (user's explicit MVP-8 instruction):
@@ -302,6 +308,7 @@ export function useBattleController({
     selectTarget,
     selectSubjectAndStar,
     selectSpellSubject,
+    cancelSpellSubjectSelection,
     submitAnswer,
     submitSpellAnswer,
     useSpell,
