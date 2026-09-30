@@ -20,11 +20,5 @@ jobs:
       - run: npm ci
       - name: Build and typecheck
         run: npm run build -- --base=/studyrise/
-      - name: Run focused stage tests
-        run: >
-          npx vitest run --testTimeout=30000
-          tests/engine/stage/StageEngine.test.ts
-          tests/engine/stage/stageValidation.test.ts
-          tests/engine/progression/reconcileStageResult.test.ts
-          tests/base/runSaveCompatibility.test.ts
-          tests/state/useBaseController.runSaveCompatibility.test.tsx
+      - name: Run full regression suite
+        run: npx vitest run --testTimeout=30000
