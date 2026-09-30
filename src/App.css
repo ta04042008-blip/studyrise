@@ -3566,3 +3566,53 @@ body {
     background: var(--sr-window-bg);
   }
 }
+
+
+/* --- Character detail art: normalize by height, never by source-image width. --- */
+.character-detail-view__art-panel {
+  align-items: flex-end;
+  justify-content: center;
+  height: clamp(340px, 58vh, 520px);
+  min-height: clamp(340px, 58vh, 520px);
+  overflow: hidden;
+}
+
+.character-detail-view__art {
+  display: block;
+  width: auto;
+  height: calc(100% - 24px);
+  max-width: 100%;
+  max-height: calc(100% - 24px);
+  object-fit: contain;
+  object-position: 50% 100%;
+  image-rendering: pixelated;
+}
+
+@media (min-width: 768px) {
+  .character-detail-view__art-panel {
+    height: 500px;
+    min-height: 500px;
+  }
+
+  .character-detail-view__art {
+    width: auto;
+    height: 470px;
+    max-width: 100%;
+    max-height: 470px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .character-detail-view__art-panel {
+    height: 250px;
+    min-height: 250px;
+  }
+
+  .character-detail-view__art {
+    width: auto;
+    height: 230px;
+    max-width: 100%;
+    max-height: 230px;
+    object-position: 50% 100%;
+  }
+}
