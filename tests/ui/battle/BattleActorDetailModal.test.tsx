@@ -41,12 +41,20 @@ describe('BattleActorDetailModal', () => {
       <BattleActorDetailModal
         actor={player}
         knownSpells={[{ spellId: 's1', level: 2, name: 'ブレイク', mpCost: 0 }]}
+        knownSkill={{
+          skillId: 'skill_test',
+          name: 'テストパッシブ',
+          trigger: 'SEARCH_SUCCESS',
+          description: 'サーチ成功時に反応する固有スキル。',
+        }}
         onClose={() => {}}
       />,
     );
     expect(screen.getByRole('dialog', { name: 'テスト主人公の詳細' })).toBeTruthy();
     expect(screen.getByText('80 / 100')).toBeTruthy();
     expect(screen.getByText('ブレイク Lv2')).toBeTruthy();
+    expect(screen.getByText('テストパッシブ')).toBeTruthy();
+    expect(screen.getByText('サーチ成功時に反応する固有スキル。')).toBeTruthy();
   });
 
   it('locks enemy stats until defeated, then reveals observed actions', () => {

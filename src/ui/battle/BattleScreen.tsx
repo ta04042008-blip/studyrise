@@ -77,6 +77,8 @@ export function BattleScreen({ controller, stageId, enemyBestiary = {} }: Battle
       : undefined;
   const detailKnownSpells =
     detailActor?.kind === 'player' ? (state.knownSpellsByPlayerId[detailActor.id] ?? []) : [];
+  const detailKnownSkill =
+    detailActor?.kind === 'player' ? (state.knownSkillByPlayerId?.[detailActor.id] ?? null) : null;
   const battleDetailOpen = detailActor !== null;
 
   useEffect(() => {
@@ -346,6 +348,7 @@ export function BattleScreen({ controller, stageId, enemyBestiary = {} }: Battle
       <BattleActorDetailModal
         actor={detailActor}
         knownSpells={detailKnownSpells}
+        knownSkill={detailKnownSkill}
         enemyObservation={detailEnemyObservation}
         onClose={() => setDetailActorId(null)}
       />

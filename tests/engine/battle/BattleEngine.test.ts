@@ -86,6 +86,8 @@ export function setup(opts?: {
   random?: RandomService;
   spellsById?: Record<string, SpellDefinition>;
   initialSpellId?: string;
+  skillId?: string;
+  skillsById?: Record<string, import('../../../src/engine/battle/skills').SkillDefinition>;
   initialItems?: ItemBattleSlot[];
   config?: BattleConfig;
   /** Overrides the default single-player roster entirely (MVP-3 party tests). */
@@ -111,6 +113,7 @@ export function setup(opts?: {
     },
     initialSpellId: opts?.initialSpellId ?? testSpell.id,
     additionalSpellPoolIds: [],
+    skillId: opts?.skillId,
   };
   const enemyDef: EnemyDefinition = {
     id: 'enemy',
@@ -131,6 +134,7 @@ export function setup(opts?: {
     config: opts?.config ?? battleConfig,
     random,
     spellsById: opts?.spellsById ?? { [testSpell.id]: testSpell },
+    skillsById: opts?.skillsById,
     initialItems: opts?.initialItems ?? [{ item: testItem, remainingUses: 2 }],
     knownSpellsByPlayerId: opts?.knownSpellsByPlayerId,
     playerCommandModifiers: opts?.playerCommandModifiers,
@@ -138,6 +142,40 @@ export function setup(opts?: {
   });
   return engine;
 }
+
+describe('BattleEngine — passive skill foundation', () => {
+  it('resolves stable skill metadata into BattleState and preserves it in snapshots', () => {
+    const skill = {
+      id: 'skill_test_passive',
+      name: 'テストパッシブ',
+      trigger: 'SEARCH_SUCCESS' as const,
+      description: 'サーチ成功を契機とするテスト用パッシブ。',
+    };
+    const engine = setup({
+      skillId: skill.id,
+      skillsById: { [skill.id]: skill },
+    });
+
+    const state = engine.getState();
+    expect(state.knownSkillByPlayerId?.player).toEqual({
+      skillId: skill.id,
+      name: skill.name,
+      trigger: skill.trigger,
+      description: skill.description,
+    });
+    expect(state.skillActivationLog).toEqual([]);
+
+    const snapshot = engine.exportSnapshot();
+    expect(snapshot.state.knownSkillByPlayerId?.player?.skillId).toBe(skill.id);
+    expect(snapshot.state.skillActivationLog).toEqual([]);
+  });
+
+  it('keeps characters without a formal skill effect neutral', () => {
+    const state = setup().getState();
+    expect(state.knownSkillByPlayerId?.player).toBeNull();
+    expect(state.skillActivationLog).toEqual([]);
+  });
+});
 
 describe('BattleEngine — player Attack flow', () => {
   it('follows COMMAND_SELECT → SUBJECT_DIFFICULTY_SELECT → QUESTION, auto-resolving the target', () => {
