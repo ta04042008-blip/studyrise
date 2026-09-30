@@ -243,6 +243,57 @@ describe('reconcileStageResult — Self Return / Defeat retention rules (decisio
   });
 });
 
+describe('reconcileStageResult — completed-lap clear credit', () => {
+  it('self-return after one completed lap grants first-clear credit and stage-clear bonus', () => {
+    const progressionSystem = makeTestProgressionSystem({
+      config: testProgressionConfig,
+      equipmentDropTablesById: testDropTablesById,
+    });
+    const permanentState = makeTestPermanentState();
+    const stage = oneZoneStage('TEST_NO_DROP');
+    const context = makeEndContext({
+      stageResult: makeStageResult({
+        outcome: 'SELF_RETURNED',
+        completedLaps: 1,
+        clearedZoneIds: ['zone_1'],
+      }),
+      stage,
+    });
+
+    const { permanentState: next, summary } = progressionSystem.reconcileStageResult(permanentState, context);
+
+    expect(summary.isFirstClear).toBe(true);
+    expect(next.clearedStageIds).toContain(stage.id);
+    expect(summary.currencyGained).toBe(
+      testProgressionConfig.zoneRewardProfiles.TEST_NO_DROP.currency + testProgressionConfig.stageClearBonus.currency,
+    );
+    expect(summary.rareUnlockResourceGained).toBe(testProgressionConfig.firstClearBonus.rareUnlockResource);
+  });
+
+  it('defeat on a later lap still preserves first-clear credit from an already completed lap', () => {
+    const progressionSystem = makeTestProgressionSystem({
+      config: testProgressionConfig,
+      equipmentDropTablesById: testDropTablesById,
+    });
+    const permanentState = makeTestPermanentState();
+    const stage = oneZoneStage('TEST_NO_DROP');
+    const context = makeEndContext({
+      stageResult: makeStageResult({
+        outcome: 'DEFEATED',
+        completedLaps: 1,
+        clearedZoneIds: ['zone_1'],
+      }),
+      stage,
+    });
+
+    const { permanentState: next, summary } = progressionSystem.reconcileStageResult(permanentState, context);
+
+    expect(summary.isFirstClear).toBe(true);
+    expect(next.clearedStageIds).toContain(stage.id);
+    expect(summary.rareUnlockResourceGained).toBe(testProgressionConfig.firstClearBonus.rareUnlockResource);
+  });
+});
+
 describe('reconcileStageResult — character/stage unlock rules (decision doc §12/§13)', () => {
   const unlockStageId = 'stage_unlocker';
   const lockedCharacterId = 'char_locked';
