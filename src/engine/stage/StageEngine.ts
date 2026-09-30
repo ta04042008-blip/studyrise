@@ -213,7 +213,8 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
       result: {
         stageId: state.stageId,
         outcome: 'DEFEATED',
-        zonesCleared: state.currentZoneIndex,
+        zonesCleared: state.clearedZoneIds.length,
+        completedLaps: state.completedLaps ?? 0,
         clearedZoneIds: state.clearedZoneIds,
       },
     };
@@ -234,16 +235,13 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
 
     const zone = currentZone(stage, state);
     if (zone.isFinalZone) {
+      // Zone 10 is a lap boundary, not an automatic Run end. Preserve the
+      // current HP / RunBuild / item stock so the player can enter a stronger
+      // next lap or voluntarily return from INTER_ZONE_CHOICE.
       return {
         ...state,
-        phase: 'STAGE_RESULT',
-        runState: runResolver.resetRunBuild(state.runState, party),
-        result: {
-          stageId: state.stageId,
-          outcome: 'CLEARED',
-          zonesCleared: state.currentZoneIndex + 1,
-          clearedZoneIds: state.clearedZoneIds,
-        },
+        completedLaps: (state.completedLaps ?? 0) + 1,
+        phase: 'INTER_ZONE_CHOICE',
       };
     }
     return { ...state, phase: 'INTER_ZONE_CHOICE' };
@@ -267,16 +265,17 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
   }
 
   function continueToNextZone(
-    _stage: StageDefinition,
+    stage: StageDefinition,
     state: StageRunState,
     party: CharacterDefinition[],
     runResolver: RunResolver,
   ): StageRunState {
     if (state.phase !== 'INTER_ZONE_CHOICE') return state; // no-op — also what makes self-return-during-battle structurally impossible elsewhere
     const revivedRunState = applyKoRevival(state.runState, party, runResolver);
+    const isLapBoundary = state.currentZoneIndex >= stage.zones.length - 1;
     return {
       ...state,
-      currentZoneIndex: state.currentZoneIndex + 1,
+      currentZoneIndex: isLapBoundary ? 0 : state.currentZoneIndex + 1,
       phase: 'ZONE_BATTLE',
       runState: { ...revivedRunState, rewardPhase: null },
     };
@@ -291,7 +290,8 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
       result: {
         stageId: state.stageId,
         outcome: 'SELF_RETURNED',
-        zonesCleared: state.currentZoneIndex + 1,
+        zonesCleared: state.clearedZoneIds.length,
+        completedLaps: state.completedLaps ?? 0,
         clearedZoneIds: state.clearedZoneIds,
       },
     };
