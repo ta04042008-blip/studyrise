@@ -330,7 +330,7 @@ describe('useBaseController — additional real-scenario coverage (MVP-9 audit i
     // part (or all) of the revealed queue.
     await waitFor(() => expect(document.querySelector('.explanation-view')).not.toBeNull(), { timeout: 1200 });
 
-    const searchPanelBefore = document.querySelector('.search-info-panel')?.textContent;
+    const searchPanelBefore = document.querySelector('.turn-order-view__search')?.textContent;
     const turnOrderBefore = document.querySelector('.turn-order-view')?.textContent;
     expect(searchPanelBefore).toBeTruthy();
 
@@ -344,7 +344,7 @@ describe('useBaseController — additional real-scenario coverage (MVP-9 audit i
     await waitFor(() => expect(document.querySelector('.zone-battle-panel')).not.toBeNull());
 
     // Player-visible: identical revealed actions and identical turn order.
-    expect(document.querySelector('.search-info-panel')?.textContent).toBe(searchPanelBefore);
+    expect(document.querySelector('.turn-order-view__search')?.textContent).toBe(searchPanelBefore);
     expect(document.querySelector('.turn-order-view')?.textContent).toBe(turnOrderBefore);
 
     // Hidden (never shown to the player): the FULL planned-action queue and
