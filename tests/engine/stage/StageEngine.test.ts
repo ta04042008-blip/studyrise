@@ -14,7 +14,7 @@ import {
   testSpellsById,
 } from '../roguelite/fixtures';
 
-const testStageConfig: StageConfig = { officialZoneCount: 10, enemyStatGrowthPerLap: 0.5, koReviveHpPercent: 0.3 };
+const testStageConfig: StageConfig = { officialZoneCount: 10, enemyStatMultiplierPerLap: 1.5, koReviveHpPercent: 0.3 };
 const stageEngine = createStageEngine({ config: testStageConfig });
 
 /** No departure items needed for these fixtures — StageEngine's item-pool threading is covered by its own dedicated test file. */
@@ -363,7 +363,7 @@ describe('StageEngine — final Zone / lap looping', () => {
     expect(state.runState.build).toEqual(buildBeforeLapBoundary);
   });
 
-  it('continuing after the final zone wraps to Zone 1 and strengthens all enemy base stats by 20% per completed lap', () => {
+  it('continuing after the final zone wraps to Zone 1 and compounds all enemy base stats by 1.5x per completed lap', () => {
     const runResolver = makeRunResolver();
     let state = stageEngine.createInitialState(oneZoneStage, testParty, 7, runResolver, NO_ITEMS);
     const firstLapEnemy = stageEngine.resolveZoneEnemies(oneZoneStage, state, enemyDefinitionsById)[0];
