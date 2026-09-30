@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useBaseController } from '../../src/state/useBaseController';
+import { sampleQuestions } from '../../src/data/questions/sampleQuestions';
 import { createInMemorySaveRepository } from '../../src/engine/save/InMemorySaveRepository';
 import { createSaveSystem, type SaveSystem } from '../../src/engine/save/SaveSystem';
 import { sampleArea } from '../../src/data/areas/sampleArea';
@@ -12,7 +13,7 @@ import { FULL_QUESTION_ANSWER_KEY } from '../fixtures/questionAnswerKey';
 afterEach(cleanup);
 
 function Harness({ saveSystem }: { saveSystem: SaveSystem }) {
-  return <>{useBaseController({ saveSystem })}</>;
+  return <>{useBaseController({ saveSystem, questionPool: sampleQuestions })}</>;
 }
 
 function StrictHarness({ saveSystem }: { saveSystem: SaveSystem }) {
