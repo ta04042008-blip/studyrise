@@ -9,7 +9,7 @@ import { validateDeparture } from '../base/departureValidation';
 import { deriveQuestionCatalog } from '../base/questionScope';
 import { resolveAreaStages } from '../base/areaResolution';
 import { sampleAreas, sampleStagesById } from '../data/areas/sampleArea';
-import { enemyDefinitionsById } from '../data/enemies/enemyDefinitionsById';
+import { allEnemyDefinitions, enemyDefinitionsById } from '../data/enemies/enemyDefinitionsById';
 import { sampleParty } from '../data/characters/sampleCharacters';
 import { sampleQuestions } from '../data/questions/sampleQuestions';
 import { officialQuestions } from '../data/questions/officialQuestions';
@@ -27,6 +27,7 @@ import { CharacterDetailView } from '../ui/base/CharacterDetailView';
 import { EquipmentListScreen } from '../ui/base/EquipmentListScreen';
 import { InventoryListScreen } from '../ui/base/InventoryListScreen';
 import { RecordScreen } from '../ui/base/RecordScreen';
+import { BestiaryScreen } from '../ui/base/BestiaryScreen';
 import { BootLoadingScreen } from '../ui/base/BootLoadingScreen';
 import { RunResumeChoiceScreen } from '../ui/base/RunResumeChoiceScreen';
 import { createEmptyPermanentCharacterState, createProgressionSystem, expRequiredForLevel } from '../engine/progression/ProgressionSystem';
@@ -46,6 +47,7 @@ import { createIndexedDbSaveRepository } from '../engine/save/IndexedDbSaveRepos
 import { createSaveSystem, type SaveSystem } from '../engine/save/SaveSystem';
 import { RUN_CHECKPOINT_TIERS, type RunCheckpointTier } from '../engine/save/SaveRepository';
 import type { RunSavePayload } from '../engine/save/RunSave';
+import { applyEnemyObservation, type EnemyObservationEvent } from '../engine/bestiary/BestiarySystem';
 
 const DEFAULT_RUN_SEED = 1;
 
@@ -126,6 +128,11 @@ export function useBaseController(options?: UseBaseControllerOptions) {
   const [partyEditReturnPhase, setPartyEditReturnPhase] = useState<AppPhase>('BASE_HOME');
   const [isConfirmingDeparture, setIsConfirmingDeparture] = useState(false);
   const [permanentState, setPermanentState] = useState<PermanentState>(createSampleInitialPermanentState);
+  // Stable ref for event-boundary persistence such as Bestiary observations.
+  // It is updated synchronously when an observation is committed so multiple
+  // battle events in one React tick never overwrite each other.
+  const permanentStateRef = useRef(permanentState);
+  permanentStateRef.current = permanentState;
   // Independent from PermanentState (user's explicit MVP-8 instruction — never
   // merged into permanentState.characters/inventory).
   const [learningHistoryState, setLearningHistoryState] = useState<LearningHistoryState>(createEmptyLearningHistoryState);
@@ -383,6 +390,20 @@ export function useBaseController(options?: UseBaseControllerOptions) {
     setPhase('BASE_HOME');
   }
 
+  function handleEnemyObservation(event: EnemyObservationEvent) {
+    const current = permanentStateRef.current;
+    const applied = applyEnemyObservation(current.enemyBestiary, event);
+    if (!applied.changed) return;
+
+    const next: PermanentState = {
+      ...current,
+      enemyBestiary: applied.state,
+    };
+    permanentStateRef.current = next;
+    setPermanentState(next);
+    void saveSystem.commit({ permanent: next });
+  }
+
   function handleQuestionResult(result: QuestionResult) {
     // Value-based (not a `setState(prev => ...)` functional updater) so the
     // ref is updated synchronously, before any subsequent onProgressChange
@@ -610,6 +631,15 @@ export function useBaseController(options?: UseBaseControllerOptions) {
     case 'RECORD_LIST':
       return <RecordScreen records={learningHistoryState.records} questionsById={questionsById} onBack={goHome} />;
 
+    case 'BESTIARY':
+      return (
+        <BestiaryScreen
+          enemies={allEnemyDefinitions}
+          bestiary={permanentState.enemyBestiary ?? {}}
+          onBack={goHome}
+        />
+      );
+
     case 'IN_STAGE':
       // launchConfig is always set together with this phase (handleConfirmDeparture/handleResumeRun); this
       // fallback exists only as a defensive guard against an unreachable state, never as a
@@ -629,6 +659,8 @@ export function useBaseController(options?: UseBaseControllerOptions) {
           config={launchConfig}
           onReturnToBase={handleReturnToBase}
           onQuestionResult={handleQuestionResult}
+          enemyBestiary={permanentState.enemyBestiary ?? {}}
+          onEnemyObservation={handleEnemyObservation}
           saveHooks={stageSaveHooks}
         />
       );
