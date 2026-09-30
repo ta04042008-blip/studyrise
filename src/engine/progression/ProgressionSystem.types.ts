@@ -137,6 +137,11 @@ export interface PermanentState {
   currency: number;
   materials: Record<string, number>;
   rareUnlockResource: number;
+  /**
+   * Saved Base party preset in battle order. Optional for PermanentSave v1
+   * compatibility: saves created before the Base-home redesign simply omit it.
+   */
+  savedPartyCharacterIds?: string[];
   inventory: PermanentInventory;
 }
 
