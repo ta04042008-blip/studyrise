@@ -132,6 +132,8 @@ export interface BattleEngine {
   selectSubjectAndStar(subject: string, star: StarLevel): void;
   /** SPELL_SUBJECT_SELECT → first spell question. ★ is selected automatically by SpellDefinition. */
   selectSpellSubject(subject: string): void;
+  /** Cancels spell preparation before the first question is confirmed. */
+  cancelSpellSubjectSelection(): void;
   /** Answers one of the spell's five consecutive questions. */
   submitSpellAnswer(answer: MultipleChoiceAnswer): void;
   /**
@@ -521,10 +523,25 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       return;
     }
     const spell = spellsById[pending.spellId];
-    const star = (spell.questionStars ?? [1, 2, 3, 4, 5])[0];
-    const question = questionEngine.pickQuestion(subject, star);
+    const requiredStars = spell.questionStars ?? [1, 2, 3, 4, 5];
+    const availableStars = new Set(questionEngine.listStars(subject));
+    if (requiredStars.some((star) => !availableStars.has(star))) {
+      warnRejected('selectSpellSubject (required star unavailable)');
+      return;
+    }
+    const question = questionEngine.pickQuestion(subject, requiredStars[0]);
     state.pendingSpellSequence = { ...pending, subject, question };
     state.phase = 'SPELL_QUESTION';
+  }
+
+  function cancelSpellSubjectSelection() {
+    if (state.phase !== 'SPELL_SUBJECT_SELECT' || !state.pendingSpellSequence) {
+      warnRejected('cancelSpellSubjectSelection');
+      return;
+    }
+    state.pendingSpellSequence = null;
+    state.pendingTargetSelection = null;
+    state.phase = 'COMMAND_SELECT';
   }
 
   function submitSpellAnswer(answer: MultipleChoiceAnswer) {
@@ -985,6 +1002,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
     selectTarget,
     selectSubjectAndStar,
     selectSpellSubject,
+    cancelSpellSubjectSelection,
     submitAnswer,
     submitSpellAnswer,
     useSpell,
