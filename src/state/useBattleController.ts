@@ -78,6 +78,7 @@ export interface BattleController {
   listSubjects: () => string[];
   listStars: (subject: string) => StarLevel[];
   listSpellSubjects: () => string[];
+  getSpellDefinition: (spellId: string) => SpellDefinition | undefined;
   selectCommand: (command: QuestionCommandKind) => void;
   selectTarget: (targetId: string) => void;
   selectSubjectAndStar: (subject: string, star: StarLevel) => void;
@@ -316,6 +317,8 @@ export function useBattleController({
 
   const listSubjects = useCallback(() => engines.questionEngine.listSubjects(), [engines]);
   const listStars = useCallback((subject: string) => engines.questionEngine.listStars(subject), [engines]);
+  const getSpellDefinition = useCallback((spellId: string) => spellsById[spellId], [spellsById]);
+
   const listSpellSubjects = useCallback(() => {
     const pending = engines.battleEngine.getState().pendingSpellSequence;
     if (!pending) return [];
@@ -333,6 +336,7 @@ export function useBattleController({
     listSubjects,
     listStars,
     listSpellSubjects,
+    getSpellDefinition,
     selectCommand,
     selectTarget,
     selectSubjectAndStar,
