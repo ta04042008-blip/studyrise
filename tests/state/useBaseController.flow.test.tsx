@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useBaseController } from '../../src/state/useBaseController';
+import { sampleQuestions } from '../../src/data/questions/sampleQuestions';
 import { sampleArea } from '../../src/data/areas/sampleArea';
 import { sampleStage } from '../../src/data/stages/sampleStage';
 import { sampleParty } from '../../src/data/characters/sampleCharacters';
@@ -9,7 +10,7 @@ import { sampleItem } from '../../src/data/items/sampleItem';
 afterEach(cleanup);
 
 function Harness() {
-  return <>{useBaseController()}</>;
+  return <>{useBaseController({ questionPool: sampleQuestions })}</>;
 }
 
 describe('useBaseController — Base → Area → Stage → 出撃準備 → 出撃確認 → Stage', () => {
