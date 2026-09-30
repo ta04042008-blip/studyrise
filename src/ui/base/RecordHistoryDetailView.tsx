@@ -4,17 +4,46 @@ import { ANSWER_RESULT_LABELS, formatAnsweredAt } from './recordDisplay';
 
 interface RecordHistoryDetailViewProps {
   record: LearningHistoryRecord;
-  /** Resolved from the canonical question registry by `questionId` — may be absent (deleted/renumbered content). */
+  /** Resolved from the canonical question registry by questionId — may be absent (deleted/renumbered content). */
   question: QuestionDefinition | undefined;
   onBack: () => void;
 }
 
+function formatRecordedAnswer(record: LearningHistoryRecord, question: QuestionDefinition): string {
+  const answer = record.recordedAnswer;
+  switch (answer.type) {
+    case 'UNKNOWN':
+      return 'わからない';
+    case 'MULTIPLE_CHOICE':
+      return question.format === 'multiple_choice' ? (question.choices[answer.selectedIndex] ?? '—') : '—';
+    case 'TRUE_FALSE':
+      return answer.value ? '正' : '誤';
+    case 'ORDERING':
+      return question.format === 'ordering'
+        ? answer.order.map((index) => question.items[index]).filter(Boolean).join(' ')
+        : '—';
+    case 'SHORT_ANSWER':
+      return answer.value;
+  }
+}
+
+function formatCorrectAnswer(question: QuestionDefinition): string {
+  switch (question.format) {
+    case 'multiple_choice':
+      return question.choices[question.correctIndex] ?? '—';
+    case 'true_false':
+      return question.correctAnswer ? '正' : '誤';
+    case 'ordering':
+      return question.correctOrder.map((index) => question.items[index]).filter(Boolean).join(' ');
+    case 'short_answer':
+      return question.acceptedAnswers[0] ?? '—';
+  }
+}
+
 /**
- * E. 履歴詳細 (spec v0.8 §13.2). Problem text/choices/correct answer/
- * explanation are resolved from `question` (canonical QuestionDefinition),
- * never duplicated onto the record itself (user's explicit MVP-8
- * instruction). No re-answer/retry affordance here (user's explicit
- * instruction — this is read-only history).
+ * E. 履歴詳細 (spec §13.10). Content is resolved from the canonical
+ * QuestionDefinition registry; the record stores only ids/taxonomy/result
+ * and the submitted answer payload.
  */
 export function RecordHistoryDetailView({ record, question, onBack }: RecordHistoryDetailViewProps) {
   return (
@@ -37,32 +66,33 @@ export function RecordHistoryDetailView({ record, question, onBack }: RecordHist
 
       {!question ? (
         <p>問題データを読み込めません。</p>
-      ) : question.format !== 'multiple_choice' ? (
-        <p>この問題形式の詳細表示はまだ未対応です。</p>
       ) : (
         <div className="record-history-detail__question">
           <p className="record-history-detail__text">{question.text}</p>
-          <ul>
-            {question.choices.map((choice, index) => {
-              const isSelected = record.recordedAnswer.type === 'MULTIPLE_CHOICE' && record.recordedAnswer.selectedIndex === index;
-              const isCorrectChoice = question.correctIndex === index;
-              return (
-                <li key={choice}>
-                  {choice}
-                  {isSelected && '（自分の回答）'}
-                  {isCorrectChoice && '（正答）'}
-                </li>
-              );
-            })}
-          </ul>
-          {record.recordedAnswer.type === 'UNKNOWN' && <p>自分の回答: わからない</p>}
+          {question.format === 'multiple_choice' && (
+            <ul>
+              {question.choices.map((choice, index) => {
+                const isSelected =
+                  record.recordedAnswer.type === 'MULTIPLE_CHOICE' &&
+                  record.recordedAnswer.selectedIndex === index;
+                const isCorrectChoice = question.correctIndex === index;
+                return (
+                  <li key={index}>
+                    {choice}
+                    {isSelected && '（自分の回答）'}
+                    {isCorrectChoice && '（正答）'}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <p>自分の回答: {formatRecordedAnswer(record, question)}</p>
+          <p>正答: {formatCorrectAnswer(question)}</p>
           <p className="record-history-detail__explanation">{question.explanation}</p>
         </div>
       )}
 
-      <button type="button" onClick={onBack}>
-        一覧へ戻る
-      </button>
+      <button type="button" onClick={onBack}>一覧へ戻る</button>
     </section>
   );
 }
