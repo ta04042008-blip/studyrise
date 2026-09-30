@@ -6,7 +6,7 @@ import { createRandomService } from '../../../src/engine/random/RandomService';
 import type { ItemBattleSlot } from '../../../src/engine/battle/BattleEngine.types';
 import { testConfig, testParty, testRewardDefinitions, testSpellsById } from '../roguelite/fixtures';
 
-const stageEngine = createStageEngine({ config: { koReviveHpPercent: 0.3 } });
+const stageEngine = createStageEngine({ config: { officialZoneCount: 10, enemyStatMultiplierPerLap: 1.5, koReviveHpPercent: 0.3 } });
 
 function makeRunResolver(seed = 0): RogueliteEngine {
   return createRogueliteEngine({ spellsById: testSpellsById, rewardDefinitions: testRewardDefinitions, config: testConfig, random: createRandomService(seed) });

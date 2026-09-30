@@ -130,6 +130,7 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
       stageId: stage.id,
       runSeed,
       currentZoneIndex: 0,
+      completedLaps: 0,
       phase: 'ZONE_BATTLE',
       runState: runResolver.createInitialRunState(party),
       clearedZoneIds: [],
@@ -143,18 +144,41 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
     state: StageRunState,
     enemyDefinitionsById: Record<string, EnemyDefinition>,
   ): EnemyBattleInstance[] {
-    return currentZone(stage, state).enemies.map((e) => ({
-      instanceId: e.instanceId,
-      definition: enemyDefinitionsById[e.enemyDefinitionId],
-    }));
+    const completedLaps = state.completedLaps ?? 0;
+    const multiplier = deps.config.enemyStatMultiplierPerLap ** completedLaps;
+
+    return currentZone(stage, state).enemies.map((e) => {
+      const definition = enemyDefinitionsById[e.enemyDefinitionId];
+      if (completedLaps === 0) return { instanceId: e.instanceId, definition };
+
+      return {
+        instanceId: e.instanceId,
+        definition: {
+          ...definition,
+          baseStats: {
+            attack: Math.ceil(definition.baseStats.attack * multiplier),
+            defense: Math.ceil(definition.baseStats.defense * multiplier),
+            speed: Math.ceil(definition.baseStats.speed * multiplier),
+            maxHp: Math.ceil(definition.baseStats.maxHp * multiplier),
+          },
+        },
+      };
+    });
+  }
+
+  function lapSeedKey(stage: StageDefinition, state: StageRunState): string {
+    const zoneId = currentZone(stage, state).id;
+    const completedLaps = state.completedLaps ?? 0;
+    // Preserve first-lap RNG exactly; later laps must not replay the same rolls.
+    return completedLaps === 0 ? zoneId : zoneId + ':lap:' + (completedLaps + 1);
   }
 
   function deriveZoneBattleSeed(stage: StageDefinition, state: StageRunState): number {
-    return deriveSeed(state.runSeed, currentZone(stage, state).id, 'battle');
+    return deriveSeed(state.runSeed, lapSeedKey(stage, state), 'battle');
   }
 
   function deriveZoneRewardSeed(stage: StageDefinition, state: StageRunState): number {
-    return deriveSeed(state.runSeed, currentZone(stage, state).id, 'reward');
+    return deriveSeed(state.runSeed, lapSeedKey(stage, state), 'reward');
   }
 
   function recordZoneWin(
@@ -189,7 +213,8 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
       result: {
         stageId: state.stageId,
         outcome: 'DEFEATED',
-        zonesCleared: state.currentZoneIndex,
+        zonesCleared: state.clearedZoneIds.length,
+        completedLaps: state.completedLaps ?? 0,
         clearedZoneIds: state.clearedZoneIds,
       },
     };
@@ -203,23 +228,20 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
   function completeZoneReward(
     stage: StageDefinition,
     state: StageRunState,
-    party: CharacterDefinition[],
-    runResolver: RunResolver,
+    _party: CharacterDefinition[],
+    _runResolver: RunResolver,
   ): StageRunState {
     if (state.phase !== 'ZONE_REWARD' || !state.runState.rewardPhase?.complete) return state; // no-op (CLAUDE.md §13)
 
     const zone = currentZone(stage, state);
     if (zone.isFinalZone) {
+      // Zone 10 is a lap boundary, not an automatic Run end. Preserve the
+      // current HP / RunBuild / item stock so the player can enter a stronger
+      // next lap or voluntarily return from INTER_ZONE_CHOICE.
       return {
         ...state,
-        phase: 'STAGE_RESULT',
-        runState: runResolver.resetRunBuild(state.runState, party),
-        result: {
-          stageId: state.stageId,
-          outcome: 'CLEARED',
-          zonesCleared: state.currentZoneIndex + 1,
-          clearedZoneIds: state.clearedZoneIds,
-        },
+        completedLaps: (state.completedLaps ?? 0) + 1,
+        phase: 'INTER_ZONE_CHOICE',
       };
     }
     return { ...state, phase: 'INTER_ZONE_CHOICE' };
@@ -243,16 +265,17 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
   }
 
   function continueToNextZone(
-    _stage: StageDefinition,
+    stage: StageDefinition,
     state: StageRunState,
     party: CharacterDefinition[],
     runResolver: RunResolver,
   ): StageRunState {
     if (state.phase !== 'INTER_ZONE_CHOICE') return state; // no-op — also what makes self-return-during-battle structurally impossible elsewhere
     const revivedRunState = applyKoRevival(state.runState, party, runResolver);
+    const isLapBoundary = state.currentZoneIndex >= stage.zones.length - 1;
     return {
       ...state,
-      currentZoneIndex: state.currentZoneIndex + 1,
+      currentZoneIndex: isLapBoundary ? 0 : state.currentZoneIndex + 1,
       phase: 'ZONE_BATTLE',
       runState: { ...revivedRunState, rewardPhase: null },
     };
@@ -260,14 +283,16 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
 
   function selfReturn(state: StageRunState, party: CharacterDefinition[], runResolver: RunResolver): StageRunState {
     if (state.phase !== 'INTER_ZONE_CHOICE') return state; // no-op: self-return is only ever possible between zones (spec §2.5)
+    const hasCompletedLap = (state.completedLaps ?? 0) > 0;
     return {
       ...state,
       phase: 'STAGE_RESULT',
       runState: runResolver.resetRunBuild(state.runState, party),
       result: {
         stageId: state.stageId,
-        outcome: 'SELF_RETURNED',
-        zonesCleared: state.currentZoneIndex + 1,
+        outcome: hasCompletedLap ? 'CLEARED' : 'SELF_RETURNED',
+        zonesCleared: state.clearedZoneIds.length,
+        completedLaps: state.completedLaps ?? 0,
         clearedZoneIds: state.clearedZoneIds,
       },
     };

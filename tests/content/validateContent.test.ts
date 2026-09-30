@@ -62,13 +62,16 @@ describe('validateGameContent — MVP-10 official content bundle', () => {
     });
   });
 
-  it('3 Stages, each with 4 Zones (12 total), matching spec §17.2/§2.1', () => {
+  it('3 Stages, each with 10 Zones (30 total), matching the current formal spec', () => {
     const stages = Object.values(sampleStagesById);
     expect(stages).toHaveLength(3);
+    expect(stages.reduce((sum, stage) => sum + stage.zones.length, 0)).toBe(30);
     for (const stage of stages) {
-      expect(stage.zones).toHaveLength(4);
+      expect(stage.zones).toHaveLength(10);
       expect(stage.zones.filter((z) => z.isFinalZone)).toHaveLength(1);
-      expect(stage.zones[stage.zones.length - 1].isFinalZone).toBe(true);
+      expect(stage.zones[9].isFinalZone).toBe(true);
+      expect(stage.zones[9].permanentRewardProfileId).toBe('BOSS_ZONE');
+      expect(stage.zones.filter((z) => z.isRareRewardEvent).map((z) => z.id)).toEqual(['zone_3', 'zone_7']);
     }
   });
 });

@@ -190,7 +190,7 @@ export function useStageController(
   const devPanel = import.meta.env.DEV && (
     <div className="dev-panel">
       <p>
-        runSeed: {stageState.runSeed} / zone: {stageState.currentZoneIndex + 1}/{stage.zones.length} ({zone.id})
+        runSeed: {stageState.runSeed} / lap: {(stageState.completedLaps ?? 0) + 1} / zone: {stageState.currentZoneIndex + 1}/{stage.zones.length} ({zone.id})
       </p>
     </div>
   );
@@ -244,7 +244,7 @@ export function useStageController(
             spellsById={spellsById}
             rewardDefinitions={sampleRewardDefinitions}
             characterNameById={characterNameById}
-            nextLabel={isFinalZone ? 'ステージクリアへ' : '次のゾーンへ'}
+            nextLabel={isFinalZone ? '周回完了へ' : '次のゾーンへ'}
             restoreSnapshot={rewardRestoreSnapshot}
             onSnapshotChange={(snapshot) => notifyProgress(stageState, { liveRewardSnapshot: snapshot })}
             onRunStateChange={(nextRunState: RunState) => {
@@ -267,6 +267,8 @@ export function useStageController(
           <h1>StudyRise — Stage攻略</h1>
           {devPanel}
           <InterZoneChoiceView
+            isLapBoundary={zone.isFinalZone}
+            nextLapNumber={(stageState.completedLaps ?? 0) + 1}
             onContinue={() => {
               const next = stageEngine.continueToNextZone(stage, stageState, party, runResolver);
               setStageState(next);

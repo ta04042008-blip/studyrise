@@ -23,6 +23,9 @@ export function StageResultView({ result, onReturnToBase, onRestart }: StageResu
       </div>
       <h2>{OUTCOME_LABEL[result.outcome]}</h2>
       <p className="stage-result-view__summary">クリア済みゾーン数: {result.zonesCleared}</p>
+      {(result.completedLaps ?? 0) > 0 && (
+        <p className="stage-result-view__summary">完全踏破: {result.completedLaps}周</p>
+      )}
       <p className="stage-result-view__message">
         {result.outcome === 'CLEARED'
           ? 'ステージ攻略完了。獲得した成果を確認して拠点へ戻ろう。'

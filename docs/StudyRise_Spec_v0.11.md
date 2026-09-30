@@ -1,6 +1,6 @@
 # StudyRise 正式仕様書 v0.11
 
-基準日: 2026-09-28  
+基準日: 2026-09-30  
 状態: 新StudyRiseの開発用正本  
 対象: MVP設計〜今後の拡張基盤
 
@@ -20,13 +20,13 @@ StudyRiseは、学習問題への回答を戦闘行動へ結び付けた、ス�
 2. エリア・ステージを選択
 3. 出題範囲を設定
 4. ステージへ出撃
-5. 複数ゾーンを連続攻略
+5. 10ゾーンを連続攻略
 6. 各ゾーンで戦闘
 7. ゾーンクリアごとにローグライト報酬を選択
-8. 最終ゾーンのボスを撃破
-9. ステージクリア報酬を獲得
-10. 拠点へ帰還して恒久成長
-11. 次のステージへ
+8. Zone 10のボスを撃破して1周踏破
+9. 「次の周回へ」ならZone 1へ戻り、敵を強化してRunを継続
+10. 「帰還」または敗北でStage Resultへ進み、恒久成長を確定
+11. 1周以上踏破済みならStage Clear実績・次Stage解放を成立させる
 
 ---
 
@@ -40,7 +40,7 @@ StudyRiseは、学習問題への回答を戦闘行動へ結び付けた、ス�
 
 - エリアは複数ステージを含む。
 - ステージは複数ゾーンを含む。
-- ゾーン数はステージごとに可変。
+- 正式ステージのゾーン数は一律10。
 - `ゾーン = 敵編成` とする。
 - ゾーン内の全敵を倒すとゾーンクリア。
 - 各ステージにはボスがちょうど1体存在する。
@@ -67,22 +67,39 @@ StudyRiseは、学習問題への回答を戦闘行動へ結び付けた、ス�
 - `name`
 - `stageIds`
 
-### 2.3 ステージクリア
+### 2.3 ステージクリア / 周回
 
-最終ゾーンの全敵を撃破し、出撃中キャラクター全員分のゾーン報酬を確定した時点でステージクリアとする。
+正式ステージは1周10ゾーンとする。
 
-処理順:
+Zone 10の全敵を撃破し、出撃中キャラクター全員分のゾーン報酬を確定した時点で「1周踏破」とする。
+1周踏破だけではRunを強制終了しない。
 
-1. 最終ゾーン戦闘勝利
-2. 最終ゾーンの通常ローグライト報酬
-3. 全キャラクターの報酬確定
-4. ステージクリア判定
-5. 恒久報酬
-6. 初回クリア処理
-7. 次ステージ等の解放
-8. 拠点へ帰還
+Zone 10報酬確定後:
 
-MVP-5では恒久報酬・初回クリア処理・解放処理はまだ実装せず、StageResultまでを対象とする。
+1. `completedLaps` を1増やす
+2. 「次の周回へ」または「帰還する」を選択
+3. 「次の周回へ」の場合、同じStageのZone 1へ戻る
+4. HP / RunBuild / 持ち込みアイテム残数を維持する
+5. 次周の敵を強化する
+6. Zone 10直後に「帰還する」場合は `CLEARED` としてStage Resultへ進む
+
+敵強化は加速型（複利）とし、全Enemy BaseStatsへ以下を適用する。
+
+`multiplier = 1.5 ^ completedLaps`
+
+- 1周目: 100%
+- 2周目: 150%
+- 3周目: 225%
+- 4周目: 337.5%
+- 5周目: 506.25%
+- 以降も前周の強さへさらに×1.5を掛ける
+- `attack / defense / speed / maxHp` をそれぞれceilで整数化
+- EnemyDefinition自体は変更せず、その戦闘用instance解決時だけ補正する
+
+1周以上踏破したRunは、その後に途中帰還または敗北してもStage Clear実績を成立させる。
+Zone 10直後の帰還はStage Result上も `CLEARED` とする。
+次周途中で自主帰還した場合は `SELF_RETURNED`、敗北した場合は `DEFEATED` の表示を維持するが、クリア実績は失わない。
+初回Stage Clear / 次Stage解放はStage Resultを拠点へ確定する時点で反映する。
 
 ### 2.4 再挑戦
 
@@ -96,16 +113,19 @@ MVP-5では恒久報酬・初回クリア処理・解放処理はまだ実装せ
 ### 2.5 自主帰還
 
 - ゾーンとゾーンの間でのみ自主帰還可能。
-- ステージは未クリア扱い。
-- 次回はZone 1から再開。
+- 0周のまま帰還した場合はステージ未クリア扱い。
+- Zone 10直後の帰還は `CLEARED` とする。
+- 次周途中で自主帰還した場合もStage Clear実績は保持する。
+- 次回の新規出撃はZone 1・1周目から開始。
 - その挑戦で得た経験値、通常通貨、素材、装備は保持。
 - ローグライト一時強化はすべて消滅。
 
 ### 2.6 敗北
 
-- 即時拠点帰還。
-- ステージ未クリア。
-- 次回はZone 1から再開。
+- 即時Stage Resultへ進む。
+- 0周のまま敗北した場合はステージ未クリア。
+- 1周以上踏破済みならStage Clear実績は保持する。
+- 次回の新規出撃はZone 1・1周目から開始。
 - 経験値は保持。
 - 取得済み装備は保持。
 - 既存の拠点資産は失わない。
@@ -120,16 +140,16 @@ MVP-5では恒久報酬・初回クリア処理・解放処理はまだ実装せ
 
 `Zone Battle → Zone Reward → Zone間選択 → 次Zone Battle`
 
-最終ゾーン:
+Zone 10:
 
-`Final Zone Battle → Zone Reward → Stage Result`
+`Boss Battle → Zone Reward → 周回間選択 → (次周Zone 1 / Stage Result)`
 
 - BattleEngineは1ゾーンの戦闘のみを担当する。
 - RogueliteEngineはゾーンクリア報酬のみを担当する。
 - StageEngineは複数ゾーン、現在ゾーン、最終ゾーン判定、ステージ終了条件を担当する。
 - 自主帰還はゾーン報酬確定後から次ゾーン開始前の間だけ選択可能。
 - 敗北時は即座にステージ攻略を終了する。
-- 再挑戦時は必ずZone 1から開始する。
+- 新規出撃・再挑戦時は必ずZone 1・1周目から開始する。
 
 ### 2.8 ステージ・ゾーンデータ
 
@@ -157,7 +177,7 @@ ZoneDefinitionは最低限以下を持つ。
 
 有効なStageDefinitionは以下を満たす。
 
-- ゾーンが1つ以上。
+- ゾーンはちょうど10個。
 - Zone IDはStage内で一意。
 - 各Zoneに敵が1体以上。
 - 各Zone内のinstanceIdは一意。
@@ -2607,7 +2627,7 @@ MVP完成版では、第1エリア《ハルカ》を新規開始からAreaクリ
 
 各Stageでは:
 
-`出題範囲設定 → 4Zone → Zone報酬 → Boss → Stage Result → 恒久報酬 → 次Stage解放`
+`出題範囲設定 → 10Zone → Zone報酬 → Zone10 Boss → 周回継続/帰還 → Stage Result → 恒久報酬 → 次Stage解放`
 
 を行う。
 
@@ -2619,7 +2639,7 @@ MVP-10完成時点:
 
 - Area: 1
 - Stage: 3
-- Zone: 12（各Stage 4Zone）
+- Zone: 30（各Stage 10Zone）
 - Boss: 3
 - プレイアブル: 3人
 - 通常敵: 8種
@@ -2647,79 +2667,61 @@ MVPではStage1→Stage2→Stage3の直線進行。
 
 ### 17.4 Stage構成
 
+全Stageは10Zone固定とする。
+Zone 10がBoss / Lap Finalであり、撃破後はRunを終了せず次周へ進める。
+既存Story資料で名称が確定しているZone 1〜3はその名称を維持し、Zone 4〜9は現時点ではゲームプレイ用中間Zoneとして扱う。
+
 #### Stage 1
 
 - ID: `stage_sample_placeholder`
 - 表示名: `閉ざされた連絡路`
 - 初期解放済み
+- Zone 1: ランナー ×2
+- Zone 2: ランナー ×1 + ウォッチャー ×1
+- Zone 3: クランプ ×1 + リレー ×1 + センチネル ×1 / Rare
+- Zone 4: ランナー ×1 + クランプ ×1 + リレー ×1
+- Zone 5: ウォッチャー ×1 + センチネル ×1
+- Zone 6: ランナー ×1 + ウォッチャー ×1 + クランプ ×1
+- Zone 7: リレー ×1 + センチネル ×1 + ウォッチャー ×1 / Rare
+- Zone 8: クランプ ×1 + センチネル ×1 + リレー ×1
+- Zone 9: センチネル ×2 + クランプ ×1
+- Zone 10 Final: 門衛機《JANUS》 ×1
 
-Zone 1 `旧接続路`
-- ランナー ×2
-
-Zone 2 `監視交差点`
-- ランナー ×1
-- ウォッチャー ×1
-
-Zone 3 `封鎖ゲート前`
-- クランプ ×1
-- リレー ×1
-- センチネル ×1
-- `isRareRewardEvent = true`
-
-Zone 4 Final
-- 門衛機《JANUS》 ×1
-
-Stage1初回クリアでStage2を解放する。
+Stage1を1周以上踏破したRunを確定するとStage2を解放する。
 
 #### Stage 2
 
 - ID: `stage_haruka_02`
 - 表示名: `沈黙した循環区`
+- Zone 1: ドレイナー ×2 + パージャー ×1
+- Zone 2: シールダー ×1 + ドレイナー ×1 + リレー ×1
+- Zone 3: センチネル ×1 + シールダー ×1 + パージャー ×1 / Rare
+- Zone 4: ドレイナー ×1 + パージャー ×1 + リレー ×1
+- Zone 5: シールダー ×2
+- Zone 6: センチネル ×1 + ドレイナー ×1 + パージャー ×1
+- Zone 7: シールダー ×1 + リレー ×1 + パージャー ×1 / Rare
+- Zone 8: センチネル ×1 + シールダー ×1 + ドレイナー ×1
+- Zone 9: シールダー ×1 + パージャー ×1 + センチネル ×1
+- Zone 10 Final: 保全核《NEREID》 ×1
 
-Zone 1 `排水路`
-- ドレイナー ×2
-- パージャー ×1
-
-Zone 2 `防災区画`
-- シールダー ×1
-- ドレイナー ×1
-- リレー ×1
-
-Zone 3 `中枢冷却路`
-- センチネル ×1
-- シールダー ×1
-- パージャー ×1
-- `isRareRewardEvent = true`
-
-Zone 4 Final
-- 保全核《NEREID》 ×1
-
-Stage2初回クリアでStage3を解放する。
+Stage2を1周以上踏破したRunを確定するとStage3を解放する。
 
 #### Stage 3
 
 - ID: `stage_haruka_03`
 - 表示名: `記録塔`
+- Zone 1: スクリブ ×2 + ウォッチャー ×1
+- Zone 2: オーディター ×1 + スクリブ ×1 + リレー ×1
+- Zone 3: オーディター ×1 + シールダー ×1 + スクリブ ×1 / Rare
+- Zone 4: スクリブ ×2 + リレー ×1
+- Zone 5: オーディター ×1 + ウォッチャー ×1 + スクリブ ×1
+- Zone 6: オーディター ×1 + シールダー ×1 + リレー ×1
+- Zone 7: オーディター ×2 + スクリブ ×1 / Rare
+- Zone 8: シールダー ×1 + オーディター ×1 + ウォッチャー ×1
+- Zone 9: オーディター ×2 + シールダー ×1
+- Zone 10 Final: 記録管理体《MNEMOS》 ×1
 
-Zone 1 `保存書庫`
-- スクリブ ×2
-- ウォッチャー ×1
-
-Zone 2 `監査回廊`
-- オーディター ×1
-- スクリブ ×1
-- リレー ×1
-
-Zone 3 `第一固定事故記録区`
-- オーディター ×1
-- シールダー ×1
-- スクリブ ×1
-- `isRareRewardEvent = true`
-
-Zone 4 Final
-- 記録管理体《MNEMOS》 ×1
-
-Stage3初回クリアで第1エリアMVP完走とする。
+Stage3を1周以上踏破したRunを確定すると第1エリアMVP完走とする。
 
 ### 17.5 Stage解放
 
@@ -2915,11 +2917,11 @@ true/false / ordering / short answerはMVP後。
 
 ### 17.13 Rare Reward Event
 
-各StageのZone3をBoss前の希少報酬イベントとする。
+10Zone化後は各StageのZone3とZone7を希少報酬イベントとする。
 
-- Stage1 Zone3
-- Stage2 Zone3
-- Stage3 Zone3
+- Stage1 Zone3 / Zone7
+- Stage2 Zone3 / Zone7
+- Stage3 Zone3 / Zone7
 
 `isRareRewardEvent = true`
 
@@ -3020,7 +3022,8 @@ MVP-10はMVP-9で成立したSave V1を可能な限り維持する。
 #### 旧3Zone Stage1 RunSave
 
 MVP-9時点のStage1は3Zone、
-MVP-10正式Stage1は4Zoneである。
+MVP-10時点では4Zone、
+2026-09-30以降の正式Stage1は10Zoneである。
 
 旧RunSaveの `currentZoneIndex = 2` は、
 旧構造ではFinal JANUS、
@@ -3051,17 +3054,17 @@ PermanentSave / LearningHistorySaveはRunSave不整合の影響で破棄しな�
 | 時点 | Lv | 累積EXP |
 |---|---:|---:|
 | Stage1開始 | 1 | 0 |
-| Stage1クリア後 | 3 | 100 |
-| Stage2開始 | 3 | 100 |
-| Stage2クリア後 | 4 | 200 |
-| Stage3開始 | 4 | 200 |
-| Stage3クリア後 | 4 | 300 |
+| Stage1 1周後 | 4 | 220 |
+| Stage2開始 | 4 | 220 |
+| Stage2 1周後 | 5 | 440 |
+| Stage3開始 | 5 | 440 |
+| Stage3 1周後 | 6 | 660 |
 
 MVP balance testでは、
 
 - Stage1をLv1
-- Stage2をLv3
-- Stage3をLv4
+- Stage2をLv4
+- Stage3をLv5
 
 の実効partyで確認する。
 
@@ -3077,7 +3080,7 @@ MVP-10正式受入時の最低条件:
 - Character 3
 - Enemy 13
 - Stage 3
-- Zone 12
+- Zone 30
 - Question 50
 - content validation issues 0
 - 全自動テストgreen

@@ -63,6 +63,7 @@ export function validateRunSavePayload(payload: unknown): payload is RunSavePayl
   if (typeof run.stageId !== 'string') return false;
   if (typeof run.runSeed !== 'number') return false;
   if (typeof run.currentZoneIndex !== 'number') return false;
+  if (run.completedLaps !== undefined && (!Number.isInteger(run.completedLaps) || run.completedLaps < 0)) return false;
   if (!run.phase || !STAGE_PHASES.includes(run.phase)) return false;
   if (typeof run.runState !== 'object' || run.runState === null) return false;
   if (!Array.isArray(run.clearedZoneIds)) return false;
