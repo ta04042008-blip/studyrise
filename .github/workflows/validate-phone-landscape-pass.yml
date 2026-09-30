@@ -1,0 +1,31 @@
+name: Validate phone landscape pass
+
+on:
+  push:
+    branches:
+      - 'feature/phone-landscape-pass'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build and typecheck
+        run: npm run build -- --base=/studyrise/
+      - name: Run phone landscape focused tests
+        run: >
+          npx vitest run
+          tests/ui/base/responsive.test.tsx
+          tests/ui/base/BaseHomeScreen.test.tsx
+          tests/ui/battle/QuestionView.formats.test.tsx
+          tests/ui/battle/QuestionView.scratchpad.test.tsx
+          tests/ui/battle/BattleScreen.spellPreparation.test.tsx
+          tests/state/useBaseController.partySave.test.tsx
