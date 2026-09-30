@@ -202,6 +202,20 @@ export function useBaseController(options?: UseBaseControllerOptions) {
     [permanentState.unlockedCharacterIds],
   );
 
+  const savedParty = useMemo(() => {
+    const unlockedById = new Map(unlockedParty.map((character) => [character.id, character]));
+    return (permanentState.savedPartyCharacterIds ?? [])
+      .map((characterId) => unlockedById.get(characterId))
+      .filter((character): character is CharacterDefinition => character !== undefined)
+      .slice(0, 3);
+  }, [permanentState.savedPartyCharacterIds, unlockedParty]);
+
+  // A fresh/legacy save may not have a stored party yet. Base still needs a
+  // visible representative, so only the home presentation falls back to the
+  // first unlocked character; departure itself remains invalid until a party
+  // is explicitly saved/selected.
+  const baseLeader = savedParty[0] ?? unlockedParty[0] ?? null;
+
   const selectedArea = draft.areaId ? (sampleAreas.find((a) => a.id === draft.areaId) ?? null) : null;
   const areaStages = useMemo(() => {
     if (!selectedArea) return [];
@@ -261,8 +275,11 @@ export function useBaseController(options?: UseBaseControllerOptions) {
     setPhase('BASE_HOME');
   }
 
-  function handleHotspotSelect(target: AppPhase) {
+  function handleBaseNavSelect(target: AppPhase) {
     if (target === 'PARTY_EDIT') setPartyEditReturnPhase('BASE_HOME');
+    if (target === 'AREA_SELECT' && savedParty.length > 0) {
+      setDraft((current) => ({ ...current, party: savedParty }));
+    }
     setPhase(target);
   }
 
@@ -282,7 +299,13 @@ export function useBaseController(options?: UseBaseControllerOptions) {
   }
 
   function handleSaveParty(party: CharacterDefinition[]) {
+    const nextPermanentState: PermanentState = {
+      ...permanentState,
+      savedPartyCharacterIds: party.map((character) => character.id),
+    };
+    setPermanentState(nextPermanentState);
     setDraft((d) => ({ ...d, party }));
+    void saveSystem.commit({ permanent: nextPermanentState });
     setPhase(partyEditReturnPhase);
   }
 
@@ -484,7 +507,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
     }
 
     case 'BASE_HOME':
-      return <BaseHomeScreen onSelect={handleHotspotSelect} />;
+      return <BaseHomeScreen leader={baseLeader} onSelect={handleBaseNavSelect} />;
 
     case 'AREA_SELECT':
       return <AreaSelectScreen areas={sampleAreas} onSelect={handleSelectArea} onBack={goHome} />;
@@ -521,7 +544,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
       return (
         <PartyEditView
           roster={unlockedParty}
-          selected={draft.party}
+          selected={partyEditReturnPhase === 'BASE_HOME' ? savedParty : (draft.party.length > 0 ? draft.party : savedParty)}
           onSave={handleSaveParty}
           onCancel={handleCancelPartyEdit}
         />
@@ -584,7 +607,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
       // launchConfig is always set together with this phase (handleConfirmDeparture/handleResumeRun); this
       // fallback exists only as a defensive guard against an unreachable state, never as a
       // silent production fallback to sample data (user's explicit MVP-6 instruction).
-      if (!launchConfig) return <BaseHomeScreen onSelect={handleHotspotSelect} />;
+      if (!launchConfig) return <BaseHomeScreen leader={baseLeader} onSelect={handleBaseNavSelect} />;
       return (
         <StageSessionScreen
           config={launchConfig}
