@@ -82,7 +82,7 @@ function incompatibleOldFinalZonePayload(): RunSavePayload {
     resolvedParty: [
       { id: 'char_hero_placeholder', name: '主人公', baseStats: { attack: 24, defense: 8, speed: 12, maxHp: 60, maxMp: 5 }, initialSpellId: 'spell_firebolt_placeholder', additionalSpellPoolIds: [] },
     ],
-    questionScope: [{ subject: '数学', field: '計算', unit: '四則演算' }],
+    questionScope: [{ subject: '数学', field: '数学I', unit: '数と式' }],
     itemSlotSelection: [null, null, null],
     stageRunState: {
       stageId: 'stage_sample_placeholder',
@@ -110,7 +110,7 @@ function validZone1StartPayload(): RunSavePayload {
     resolvedParty: [
       { id: 'char_hero_placeholder', name: '主人公', baseStats: { attack: 24, defense: 8, speed: 12, maxHp: 60, maxMp: 5 }, initialSpellId: 'spell_firebolt_placeholder', additionalSpellPoolIds: [] },
     ],
-    questionScope: [{ subject: '数学', field: '計算', unit: '四則演算' }],
+    questionScope: [{ subject: '数学', field: '数学I', unit: '数と式' }],
     itemSlotSelection: [null, null, null],
     stageRunState: {
       stageId: 'stage_sample_placeholder',
