@@ -52,5 +52,36 @@ export type QuestionDefinition =
   | OrderingQuestion
   | ShortAnswerQuestion;
 
-/** MVP-1 only submits/evaluates multiple-choice answers (or "わからない"). */
-export type MultipleChoiceAnswer = { type: 'multiple_choice'; selectedIndex: number } | { type: 'dont_know' };
+/** All answer payloads used by the attached official StudyRise question banks. */
+export type QuestionAnswer =
+  | { type: 'multiple_choice'; selectedIndex: number }
+  | { type: 'true_false'; value: boolean }
+  | { type: 'ordering'; order: number[] }
+  | { type: 'short_answer'; value: string }
+  | { type: 'dont_know' };
+
+/** Compatibility alias retained while older battle tests/imports still use the old name. */
+export type MultipleChoiceAnswer = QuestionAnswer;
+
+function normalizeShortAnswer(value: string): string {
+  return value.normalize('NFKC').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+export function isQuestionAnswerCorrect(question: QuestionDefinition, answer: QuestionAnswer): boolean {
+  if (answer.type === 'dont_know') return false;
+  switch (question.format) {
+    case 'multiple_choice':
+      return answer.type === 'multiple_choice' && answer.selectedIndex === question.correctIndex;
+    case 'true_false':
+      return answer.type === 'true_false' && answer.value === question.correctAnswer;
+    case 'ordering':
+      return answer.type === 'ordering' &&
+        answer.order.length === question.correctOrder.length &&
+        answer.order.every((value, index) => value === question.correctOrder[index]);
+    case 'short_answer': {
+      if (answer.type !== 'short_answer') return false;
+      const normalized = normalizeShortAnswer(answer.value);
+      return question.acceptedAnswers.some((candidate) => normalizeShortAnswer(candidate) === normalized);
+    }
+  }
+}
