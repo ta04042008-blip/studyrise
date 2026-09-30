@@ -3238,3 +3238,331 @@ button, input, select, textarea {
     font-size: .62rem;
   }
 }
+
+
+/* ==========================================================================
+   Unified StudyRise window theme
+   All ordinary game windows use translucent black + white text.
+   Semantic accents (selected/correct/warning) remain colored.
+   ========================================================================== */
+:root {
+  --sr-window-bg: rgba(0, 0, 0, .72);
+  --sr-window-bg-strong: rgba(0, 0, 0, .84);
+  --sr-window-bg-soft: rgba(0, 0, 0, .58);
+  --sr-window-border: rgba(255, 255, 255, .72);
+  --sr-window-border-soft: rgba(255, 255, 255, .34);
+  --sr-window-text: #fff;
+  --sr-window-text-muted: rgba(255, 255, 255, .76);
+  --sr-control-bg: rgba(0, 0, 0, .68);
+  --sr-control-bg-hover: rgba(24, 46, 66, .84);
+  --sr-control-selected: rgba(16, 78, 160, .94);
+  --sr-window-shadow: 0 8px 24px rgba(0, 0, 0, .38);
+}
+
+body {
+  background: #08111a;
+  color: var(--sr-window-text);
+}
+
+/* Non-battle screens sit on a dark neutral stage so translucent windows read
+   consistently instead of switching back to white document chrome. */
+.app:not(:has(.battle-screen)):not(:has(.base-home)) {
+  color: var(--sr-window-text);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(31, 55, 78, .42), transparent 48%),
+    #08111a;
+}
+
+/* Base home chrome. */
+.base-home__title,
+.base-home__resource,
+.base-home__leader-name,
+.base-home__nav {
+  color: var(--sr-window-text);
+  border-color: var(--sr-window-border);
+  background: var(--sr-window-bg);
+  box-shadow: var(--sr-window-shadow);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.base-home__nav-button {
+  border-color: var(--sr-window-border-soft);
+  background: var(--sr-control-bg);
+  color: var(--sr-window-text);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
+}
+
+.base-home__nav-button:active,
+.base-home__nav-button:focus-visible {
+  background: var(--sr-control-selected);
+}
+
+/* Battle windows. */
+.battle-screen__hp,
+.turn-order-view,
+.command-menu,
+.subject-star-select,
+.question-view,
+.command-animation-view,
+.explanation-view,
+.spell-question-explanation-view,
+.spell-item-result-view,
+.battle-end-view,
+.target-select-view,
+.spell-select-view,
+.enemy-action-log {
+  color: var(--sr-window-text);
+  border-color: var(--sr-window-border);
+  background: var(--sr-window-bg);
+  box-shadow: var(--sr-window-shadow);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.command-menu button,
+.target-select-view button,
+.spell-select-view button,
+.question-view__dont-know,
+.question-view__choices label,
+.question-view__choices button,
+.question-view__actions button,
+.explanation-view button,
+.spell-question-explanation-view button,
+.spell-item-result-view button,
+.battle-end-view button,
+.subject-star-select button,
+.subject-star-select select {
+  border-color: var(--sr-window-border-soft);
+  background: var(--sr-control-bg);
+  color: var(--sr-window-text);
+}
+
+.command-menu button:active:not(:disabled),
+.target-select-view button:active:not(:disabled),
+.spell-select-view button:active:not(:disabled),
+.question-view__choices button:active:not(:disabled),
+.question-view__actions button:active:not(:disabled) {
+  background: var(--sr-control-selected);
+}
+
+/* Base / preparation / collection windows. */
+.departure-prep-screen__section,
+.inventory-list-screen section,
+.equipment-list-screen section,
+.record-overall-summary,
+.record-subject-breakdown,
+.record-star-breakdown,
+.record-history-list,
+.character-detail-view__content,
+.character-detail-view__art-panel,
+.character-detail-view__level,
+.character-detail-view__stats,
+.character-detail-view__equipment,
+.party-edit-view__selected,
+.equipment-list-screen__equipped-slots > div,
+.equipment-list-screen__item,
+.reward-screen,
+.inter-zone-choice-view,
+.stage-result-view {
+  color: var(--sr-window-text);
+  border-color: var(--sr-window-border-soft);
+  background: var(--sr-window-bg);
+  box-shadow: var(--sr-window-shadow);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Nested cards should stay dark without becoming visually heavier than their
+   parent window. */
+.character-detail-view__art-panel,
+.character-detail-view__level,
+.character-detail-view__stats,
+.character-detail-view__equipment,
+.party-edit-view__selected,
+.equipment-list-screen__equipped-slots > div,
+.equipment-list-screen__item {
+  background: var(--sr-window-bg-soft);
+  box-shadow: none;
+}
+
+/* Lists and ordinary controls on Base screens. */
+.base-list button,
+.base-actions button,
+.area-select-screen > button,
+.stage-select-screen > button,
+.character-list-view > button,
+.party-edit-view > button,
+.character-detail-view > button,
+.equipment-list-screen > button,
+.inventory-list-screen > button,
+.record-screen > button,
+.record-screen__tabs button,
+.equipment-list-screen__character-select button,
+.equipment-list-screen__item button,
+.record-history-list > ul button,
+.question-scope-selector__open-units,
+.item-slot-picker select,
+.record-history-list__filters select {
+  border: 1px solid var(--sr-window-border-soft);
+  background: var(--sr-control-bg);
+  color: var(--sr-window-text);
+}
+
+.base-list button:hover,
+.base-actions button:hover,
+.record-screen__tabs button:hover,
+.equipment-list-screen__character-select button:hover,
+.equipment-list-screen__item button:hover,
+.record-history-list > ul button:hover,
+.question-scope-selector__open-units:hover {
+  background: var(--sr-control-bg-hover);
+}
+
+.record-screen__tabs button[aria-pressed="true"],
+.equipment-list-screen__character-select button[aria-pressed="true"],
+.party-edit-view .base-list button[aria-pressed="true"] {
+  border-color: rgba(145, 210, 255, .92);
+  background: var(--sr-control-selected);
+  color: #fff;
+}
+
+/* Muted text becomes translucent white instead of gray-on-white. */
+.inventory-list-screen dl dt,
+.record-overall-summary dl dt,
+.equipment-list-screen__equipped-slots dt,
+.character-detail-view__level dt,
+.character-detail-view__stats dt,
+.character-detail-view__equipment dt,
+.party-edit-view > p,
+.reward-screen__lead,
+.reward-screen__progress,
+.inter-zone-choice-view p,
+.stage-result-view__message,
+.stage-result-view__summary {
+  color: var(--sr-window-text-muted);
+}
+
+.record-subject-breakdown li,
+.record-star-breakdown li {
+  border-bottom-color: rgba(255, 255, 255, .14);
+}
+
+/* Unit-selection popup follows the same window language. */
+.question-scope-selector__modal-backdrop {
+  background: rgba(0, 0, 0, .58);
+}
+
+.question-scope-selector__modal {
+  color: var(--sr-window-text);
+  border-color: var(--sr-window-border);
+  background: var(--sr-window-bg-strong);
+  box-shadow: var(--sr-window-shadow);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.question-scope-selector__modal-subject,
+.question-scope-selector__modal-count {
+  color: var(--sr-window-text-muted);
+}
+
+.question-scope-selector__selection-count {
+  color: var(--sr-window-text);
+  background: rgba(255, 255, 255, .12);
+}
+
+.question-scope-selector__modal .question-scope-selector__units label {
+  color: var(--sr-window-text);
+  border-color: var(--sr-window-border-soft);
+  background: var(--sr-control-bg);
+}
+
+.question-scope-selector__modal button {
+  border-color: var(--sr-window-border-soft);
+  background: var(--sr-control-bg);
+  color: var(--sr-window-text);
+}
+
+/* Form fields use the same dark surface, while native checkbox/radio controls
+   retain their platform affordance. */
+.app:not(:has(.battle-screen)):not(:has(.base-home))
+  :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border: 1px solid var(--sr-window-border-soft);
+  background: var(--sr-control-bg);
+  color: var(--sr-window-text);
+}
+
+.app:not(:has(.battle-screen)):not(:has(.base-home)) option {
+  background: #0a1017;
+  color: #fff;
+}
+
+/* Stage flow cards and choices. */
+.reward-card {
+  color: var(--sr-window-text);
+  border-color: var(--sr-window-border-soft);
+  background: var(--sr-control-bg);
+}
+
+.reward-card--selected {
+  border-color: rgba(145, 210, 255, .94);
+  background: var(--sr-control-selected);
+}
+
+/* Drawing memo: window chrome follows the theme; the paper itself intentionally
+   stays white because it is a writing surface, not a game window. */
+.drawing-scratchpad__panel {
+  color: var(--sr-window-text);
+  border-color: var(--sr-window-border);
+  background: var(--sr-window-bg-strong);
+  box-shadow: var(--sr-window-shadow);
+}
+
+.drawing-scratchpad__tools button,
+.drawing-scratchpad__close {
+  border-color: var(--sr-window-border-soft);
+  background: var(--sr-control-bg);
+  color: var(--sr-window-text);
+}
+
+.drawing-scratchpad__tools button[aria-pressed="true"],
+.drawing-scratchpad__tool--active {
+  background: var(--sr-control-selected);
+}
+
+.drawing-scratchpad__header span,
+.drawing-scratchpad__note {
+  color: var(--sr-window-text-muted);
+}
+
+.drawing-scratchpad__canvas {
+  background-color: #fff;
+  color: #17212b;
+}
+
+/* Phone landscape had an explicit light Base background and sticky white fade.
+   Override both so the theme does not revert only on phones. */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .app:not(:has(.battle-screen)):not(:has(.base-home)) {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(31, 55, 78, .42), transparent 48%),
+      #08111a;
+    color: var(--sr-window-text);
+  }
+
+  .base-actions {
+    background: linear-gradient(180deg, rgba(8, 17, 26, 0), rgba(8, 17, 26, .96) 30%);
+  }
+
+  .departure-prep-screen__section,
+  .equipment-list-screen section,
+  .inventory-list-screen section,
+  .record-overall-summary,
+  .record-subject-breakdown,
+  .record-star-breakdown,
+  .record-history-list {
+    border-color: var(--sr-window-border-soft);
+    background: var(--sr-window-bg);
+  }
+}
