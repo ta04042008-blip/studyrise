@@ -1,0 +1,30 @@
+name: Validate Nagumo and Okamura detail art
+
+on:
+  push:
+    branches:
+      - 'asset/update-nagumo-okamura-detail-art'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Verify detail art files
+        run: |
+          test -s public/assets/studyrise/characters/nagumo_ayano.png
+          test -s public/assets/studyrise/characters/okamura_kakeru.png
+          test -s public/assets/studyrise/characters/nagumo_ayano_battle.png
+          test -s public/assets/studyrise/characters/okamura_kakeru_battle.png
+      - name: Build and typecheck
+        run: npm run build -- --base=/studyrise/
+      - name: Run asset resolver tests
+        run: npx vitest run tests/presentation/assets/studyRiseAssets.test.ts
