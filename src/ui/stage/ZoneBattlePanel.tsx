@@ -11,6 +11,7 @@ import type {
 import type { RunState } from '../../engine/roguelite/RogueliteEngine.types';
 import type { QuestionDefinition } from '../../engine/question/QuestionEngine.types';
 import type { QuestionResult } from '../../engine/learningHistory/LearningHistory.types';
+import type { EnemyBestiaryState, EnemyObservationEvent } from '../../engine/bestiary/BestiarySystem';
 
 interface ZoneBattlePanelProps {
   /** Presentation-only stage id used to resolve the battle background. */
@@ -27,6 +28,8 @@ interface ZoneBattlePanelProps {
   onLose: (remainingBattleItems: ItemBattleSlot[]) => void;
   /** Learning-history event boundary (spec v0.8 §13, user's explicit MVP-8 instruction) — threaded straight through to `useBattleController`. */
   onQuestionResult?: (result: QuestionResult) => void;
+  enemyBestiary?: EnemyBestiaryState;
+  onEnemyObservation?: (event: EnemyObservationEvent) => void;
   /** MVP-9: resume this Zone's battle from a previously saved snapshot instead of building fresh actors from `seed`. */
   restoreSnapshot?: BattleEngineSnapshot;
   /** MVP-9: fired after every dispatched command leaves the battle at a new stable resting phase — see useBattleController's onSnapshotChange doc. */
@@ -53,6 +56,8 @@ export function ZoneBattlePanel({
   onWin,
   onLose,
   onQuestionResult,
+  enemyBestiary = {},
+  onEnemyObservation,
   restoreSnapshot,
   onSnapshotChange,
 }: ZoneBattlePanelProps) {
@@ -70,6 +75,7 @@ export function ZoneBattlePanel({
     initialHpByPlayerId: battleInputs.initialHpByPlayerId,
     seed,
     onQuestionResult,
+    onEnemyObservation,
     restoreSnapshot,
     onSnapshotChange,
   });
@@ -78,7 +84,7 @@ export function ZoneBattlePanel({
 
   return (
     <div className="zone-battle-panel">
-      <BattleScreen controller={battleController} stageId={stageId} />
+      <BattleScreen controller={battleController} stageId={stageId} enemyBestiary={enemyBestiary} />
       {state.phase === 'BATTLE_END' && state.outcome === 'win' && (
         <button className="zone-battle-panel__end-action zone-battle-panel__end-action--win"
           type="button"
