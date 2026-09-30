@@ -46,7 +46,7 @@ export interface ZoneDefinition {
 export interface StageDefinition {
   id: string;
   name: string;
-  /** Variable length per stage (spec §2.1). The last entry must be the one isFinalZone zone — enforced by stageValidation.ts. */
+  /** Official content uses exactly 10 zones. The last entry is the lap-boundary boss zone. */
   zones: ZoneDefinition[];
 }
 
@@ -57,8 +57,10 @@ export type StageOutcome = 'CLEARED' | 'DEFEATED' | 'SELF_RETURNED';
 export interface StageResult {
   stageId: string;
   outcome: StageOutcome;
-  /** Number of zones fully cleared before this outcome (dev/debug display only — not persisted anywhere in MVP-5). */
+  /** Total zones fully cleared across all laps before this outcome. */
   zonesCleared: number;
+  /** Number of complete 10-zone laps finished during this run. Optional only for RunSave v1 backward compatibility. */
+  completedLaps?: number;
   /**
    * Zone ids whose battle was won during this Stage attempt (MVP-7 decision
    * doc: a plain game-progress fact StageResult may carry). This is what
@@ -88,6 +90,11 @@ export interface StageRunState {
    */
   runSeed: number;
   currentZoneIndex: number;
+  /**
+   * Completed full-stage laps. 0 = first 10-zone pass, 1 = second pass, etc.
+   * Optional only so existing RunSave v1 payloads resume as lap 0.
+   */
+  completedLaps?: number;
   phase: StagePhase;
   runState: RunState;
   /**
