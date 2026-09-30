@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { createPortal } from 'react-dom';
 
 type DrawingTool = 'pen' | 'eraser';
 
@@ -108,7 +109,7 @@ export function DrawingScratchpad({ open, onClose }: DrawingScratchpadProps) {
     };
   }, [open]);
 
-  function pointFromEvent(event: React.PointerEvent<HTMLCanvasElement>): Point {
+  function pointFromEvent(event: ReactPointerEvent<HTMLCanvasElement>): Point {
     const canvas = event.currentTarget;
     const { rect, width, height } = canvasMetrics(canvas);
     const rectWidth = rect.width || width;
@@ -121,7 +122,7 @@ export function DrawingScratchpad({ open, onClose }: DrawingScratchpadProps) {
     };
   }
 
-  function handlePointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
+  function handlePointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -132,7 +133,7 @@ export function DrawingScratchpad({ open, onClose }: DrawingScratchpadProps) {
     redrawCanvas();
   }
 
-  function handlePointerMove(event: React.PointerEvent<HTMLCanvasElement>) {
+  function handlePointerMove(event: ReactPointerEvent<HTMLCanvasElement>) {
     const stroke = activeStrokeRef.current;
     if (!stroke) return;
     event.preventDefault();
@@ -140,7 +141,7 @@ export function DrawingScratchpad({ open, onClose }: DrawingScratchpadProps) {
     redrawCanvas();
   }
 
-  function endStroke(event: React.PointerEvent<HTMLCanvasElement>) {
+  function endStroke(event: ReactPointerEvent<HTMLCanvasElement>) {
     if (!activeStrokeRef.current) return;
     event.preventDefault();
     activeStrokeRef.current = null;
@@ -153,7 +154,9 @@ export function DrawingScratchpad({ open, onClose }: DrawingScratchpadProps) {
     redrawCanvas();
   }
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div className="drawing-scratchpad" hidden={!open} aria-hidden={!open}>
       <section className="drawing-scratchpad__panel" role="dialog" aria-modal="true" aria-label="計算メモ">
         <header className="drawing-scratchpad__header">
@@ -200,6 +203,7 @@ export function DrawingScratchpad({ open, onClose }: DrawingScratchpadProps) {
         />
         <p className="drawing-scratchpad__note">このメモは次の問題に進むとリセットされます。</p>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }
