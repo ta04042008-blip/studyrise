@@ -25,6 +25,6 @@ export interface StageConfig {
 
 export const stageConfig: StageConfig = {
   officialZoneCount: 10,
-  enemyStatGrowthPerLap: 0.2,
+  enemyStatGrowthPerLap: 0.5,
   koReviveHpPercent: 0.3,
 };
