@@ -2353,3 +2353,804 @@ button, input, select, textarea {
     margin-top: 4px;
   }
 }
+
+
+/* --- Smartphone landscape: native responsive layout (presentation only) --- */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+    background: #08121d;
+  }
+
+  /*
+   * Stop shrinking the full 1600×900 battle surface on phones.
+   * Use the real viewport so controls retain a practical touch size.
+   */
+  .app:has(.battle-screen) {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    transform: none;
+  }
+
+  .battle-screen {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    padding:
+      max(6px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-right))
+      max(6px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .battle-screen__background,
+  .battle-screen__background-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .battle-screen__background-image {
+    object-fit: cover;
+    object-position: center center;
+  }
+
+  .battle-screen__hp {
+    top: max(6px, env(safe-area-inset-top));
+    width: min(25vw, 210px);
+    gap: 4px;
+    padding: 5px 7px;
+    border-radius: 9px;
+  }
+
+  .battle-screen__hp--players {
+    left: max(8px, env(safe-area-inset-left));
+  }
+
+  .battle-screen__hp--enemies {
+    right: max(8px, env(safe-area-inset-right));
+  }
+
+  .battle-screen__hp .hp-bar__label {
+    font-size: .68rem;
+    line-height: 1.05;
+  }
+
+  .battle-screen__hp .hp-bar__track {
+    height: 6px;
+  }
+
+  .turn-order-view {
+    top: max(6px, env(safe-area-inset-top));
+    width: min(32vw, 270px);
+    gap: 1px;
+    padding: 5px 7px;
+    border-radius: 9px;
+    font-size: .67rem;
+    line-height: 1.05;
+  }
+
+  .turn-order-view__actor-icon {
+    width: 27px;
+    height: 27px;
+    flex-basis: 27px;
+  }
+
+  .turn-order-view__actor-icon--current {
+    width: 31px;
+    height: 31px;
+    flex-basis: 31px;
+  }
+
+  .turn-order-view__label {
+    font-size: .62rem;
+  }
+
+  .battle-screen__actors-side {
+    bottom: 25%;
+    min-height: 88px;
+    gap: 2px;
+  }
+
+  .battle-screen__actors-side--players {
+    left: 29%;
+  }
+
+  .battle-screen__actors-side--enemies {
+    left: 71%;
+    max-width: 46vw;
+  }
+
+  .battle-screen__player-slot {
+    flex-basis: 90px;
+    min-height: 90px;
+  }
+
+  .battle-screen__actor-art--player {
+    width: 90px;
+    height: 90px;
+    flex-basis: 90px;
+  }
+
+  .battle-screen__enemy-slot {
+    --enemy-box-width: 124px;
+    --enemy-box-height: 92px;
+    max-width: 28vw;
+  }
+
+  .battle-screen__enemy-slot--size-small {
+    --enemy-box-width: 102px;
+    --enemy-box-height: 80px;
+  }
+
+  .battle-screen__enemy-slot--size-large {
+    --enemy-box-width: 146px;
+    --enemy-box-height: 108px;
+  }
+
+  .battle-screen__enemy-slot--size-extra-large {
+    --enemy-box-width: min(24vw, 176px);
+    --enemy-box-height: min(31vh, 126px);
+  }
+
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(2))
+    .battle-screen__enemy-slot--size-extra-large {
+    --enemy-box-width: min(20vw, 150px);
+    --enemy-box-height: min(28vh, 112px);
+  }
+
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(3)) .battle-screen__enemy-slot,
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(3))
+    .battle-screen__enemy-slot--size-large,
+  .battle-screen__actors-side--enemies:has(.battle-screen__enemy-slot:nth-child(3))
+    .battle-screen__enemy-slot--size-extra-large {
+    --enemy-box-width: min(15vw, 118px);
+    --enemy-box-height: min(23vh, 90px);
+  }
+
+  .battle-screen__player-slot::after {
+    width: 58px;
+    height: 10px;
+  }
+
+  .battle-screen__enemy-slot::after {
+    width: 78px;
+    height: 11px;
+  }
+
+  .command-menu {
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(6px, env(safe-area-inset-bottom));
+    width: auto;
+    transform: none;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 7px;
+  }
+
+  .command-menu button {
+    min-height: 48px;
+    padding: 5px 7px;
+    font-size: clamp(.76rem, 2.2vw, .96rem);
+    border-width: 1px;
+  }
+
+  .subject-star-select,
+  .question-view,
+  .command-animation-view,
+  .explanation-view,
+  .spell-question-explanation-view,
+  .spell-item-result-view,
+  .battle-end-view,
+  .target-select-view,
+  .spell-select-view {
+    bottom: max(5px, env(safe-area-inset-bottom));
+    width: min(94vw, 780px);
+    max-height: 67dvh;
+    padding: 7px 9px;
+    border-radius: 10px;
+  }
+
+  .question-view {
+    width: min(95vw, 820px);
+    max-height: 64dvh;
+    padding-block: 7px;
+  }
+
+  .question-view__meta-row {
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .question-view__meta {
+    margin-bottom: 0;
+    font-size: .66rem;
+    line-height: 1.15;
+  }
+
+  .question-view__scratchpad-open {
+    min-width: 68px;
+    min-height: 34px;
+    padding: 4px 8px;
+    font-size: .76rem;
+  }
+
+  .question-view__text {
+    margin-bottom: 6px;
+    font-size: clamp(.78rem, 2.4vw, 1rem);
+    line-height: 1.25;
+  }
+
+  .question-view__dont-know {
+    width: min(360px, 58%);
+    min-height: 36px;
+    margin-bottom: 6px;
+    font-size: .76rem;
+  }
+
+  .question-view__choices {
+    gap: 5px;
+    margin-bottom: 5px;
+  }
+
+  .question-view__choices label,
+  .question-view__choices button {
+    min-height: 36px;
+    padding: 4px 6px;
+    font-size: .76rem;
+  }
+
+  .question-view__choices input {
+    width: 17px;
+    height: 17px;
+  }
+
+  .question-view__ordering-result,
+  .question-view__short-answer {
+    min-height: 36px;
+    font-size: .8rem;
+  }
+
+  .question-view__actions {
+    margin-top: 4px;
+  }
+
+  .question-view__actions button {
+    min-width: 150px;
+    min-height: 38px;
+    padding-block: 4px;
+    font-size: .78rem;
+  }
+
+  .subject-star-select select {
+    min-height: 38px;
+    margin: 3px 6px 5px;
+    font-size: .82rem;
+  }
+
+  .target-select-view button {
+    min-width: 120px;
+    min-height: 40px;
+    font-size: .78rem;
+  }
+
+  .spell-select-view {
+    width: min(95vw, 840px);
+    max-height: 70dvh;
+  }
+
+  .spell-select-view__header {
+    margin-bottom: 6px;
+  }
+
+  .spell-select-view__header strong {
+    font-size: .92rem;
+  }
+
+  .spell-select-view__header span,
+  .spell-select-view__bonus,
+  .spell-select-view__stars {
+    font-size: .68rem;
+  }
+
+  .spell-select-view__list {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 5px;
+  }
+
+  .spell-select-view__spell {
+    min-height: 96px;
+    gap: 4px;
+    padding: 7px 8px;
+    font-size: .75rem;
+  }
+
+  .spell-select-view__spell-title {
+    font-size: .85rem;
+  }
+
+  .spell-select-view__cancel {
+    min-width: 120px;
+    min-height: 38px;
+    margin-top: 6px;
+  }
+
+  .spell-question-explanation-view,
+  .explanation-view,
+  .command-animation-view,
+  .spell-item-result-view,
+  .battle-end-view {
+    font-size: .75rem;
+    line-height: 1.25;
+  }
+
+  .spell-question-explanation-view__verdict {
+    font-size: 1rem;
+  }
+
+  .spell-question-explanation-view button,
+  .explanation-view button,
+  .command-animation-view button,
+  .spell-item-result-view button,
+  .battle-end-view button {
+    min-height: 38px;
+    padding-block: 4px;
+  }
+
+  .enemy-action-log {
+    bottom: max(60px, calc(env(safe-area-inset-bottom) + 60px));
+    width: min(62vw, 520px);
+    padding: 4px 8px;
+    font-size: .7rem;
+  }
+
+  /* Base home uses the real phone viewport and keeps all six nav items visible. */
+  .base-home__title {
+    top: max(7px, env(safe-area-inset-top));
+    left: max(9px, env(safe-area-inset-left));
+    padding: 4px 9px;
+    font-size: .85rem;
+  }
+
+  .base-home__leader {
+    bottom: max(60px, calc(env(safe-area-inset-bottom) + 60px));
+    width: min(31vw, 220px);
+    height: min(62dvh, 270px);
+    padding-bottom: 22px;
+  }
+
+  .base-home__leader-art {
+    height: calc(100% - 22px);
+  }
+
+  .base-home__leader::after {
+    bottom: 22px;
+    width: min(52%, 130px);
+    height: 14px;
+  }
+
+  .base-home__leader-name {
+    padding: 2px 7px;
+    font-size: .64rem;
+  }
+
+  .base-home__nav {
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(5px, env(safe-area-inset-bottom));
+    gap: 4px;
+    padding: 4px;
+    border-radius: 8px;
+  }
+
+  .base-home__nav-button {
+    min-height: 46px;
+    padding: 5px 6px;
+    font-size: .72rem;
+  }
+
+  /*
+   * Base/submenu screens remain native-size and scroll inside the viewport.
+   * This avoids the tiny controls produced by scaling desktop layouts.
+   */
+  .app:not(:has(.battle-screen)):not(:has(.base-home)) {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    min-height: 0;
+    margin: 0;
+    padding:
+      max(8px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+    box-sizing: border-box;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    background: #f4f6f8;
+  }
+
+  .area-select-screen,
+  .stage-select-screen,
+  .departure-prep-screen,
+  .departure-confirm-screen,
+  .character-list-view,
+  .party-edit-view,
+  .character-detail-view,
+  .equipment-list-screen,
+  .inventory-list-screen,
+  .record-screen {
+    max-width: none;
+    margin: 0;
+    font-size: .78rem;
+  }
+
+  .area-select-screen h1,
+  .stage-select-screen h1,
+  .departure-prep-screen h1,
+  .departure-confirm-screen h1,
+  .character-list-view h1,
+  .party-edit-view h1,
+  .character-detail-view h1,
+  .equipment-list-screen h1,
+  .inventory-list-screen h1,
+  .record-screen h1 {
+    margin: 0 0 8px;
+    font-size: 1.28rem;
+    line-height: 1.1;
+  }
+
+  .base-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .base-list button {
+    min-height: 42px;
+    padding: 6px 8px;
+    font-size: .76rem;
+  }
+
+  .base-actions {
+    position: sticky;
+    bottom: -1px;
+    z-index: 5;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 0 2px;
+    background: linear-gradient(180deg, rgba(244,246,248,0), #f4f6f8 28%);
+  }
+
+  .base-actions button,
+  .area-select-screen > button,
+  .stage-select-screen > button,
+  .character-list-view > button,
+  .party-edit-view > button,
+  .character-detail-view > button,
+  .equipment-list-screen > button,
+  .inventory-list-screen > button,
+  .record-screen > button {
+    min-height: 40px;
+    padding: 5px 9px;
+    font-size: .76rem;
+  }
+
+  .departure-prep-screen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+  }
+
+  .departure-prep-screen__section {
+    margin-bottom: 0;
+    padding: 8px 10px;
+    border: 1px solid #dfe5eb;
+    border-radius: 9px;
+    background: #fff;
+  }
+
+  .departure-prep-screen__section h2,
+  .equipment-list-screen section h2,
+  .inventory-list-screen section h2,
+  .record-screen section h2 {
+    margin: 0 0 6px;
+    font-size: .96rem;
+  }
+
+  .departure-prep-screen__section p,
+  .departure-prep-screen__section ul,
+  .departure-prep-screen__section ol {
+    margin-block: 5px;
+  }
+
+  .item-slot-picker {
+    gap: 5px;
+  }
+
+  .item-slot-picker__slot {
+    gap: 2px;
+  }
+
+  .item-slot-picker select {
+    min-height: 36px;
+    font-size: .75rem;
+  }
+
+  .question-scope-selector__subject {
+    margin-bottom: 6px;
+  }
+
+  .question-scope-selector__field {
+    margin-left: 8px;
+    margin-bottom: 5px;
+  }
+
+  .question-scope-selector__open-units {
+    min-height: 34px;
+    padding: 4px 7px;
+    font-size: .72rem;
+  }
+
+  .question-scope-selector__modal-backdrop {
+    padding:
+      max(6px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-right))
+      max(6px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+  }
+
+  .question-scope-selector__modal {
+    width: min(760px, calc(100vw - 24px));
+    max-height: calc(100dvh - 16px);
+    padding: 10px;
+    font-size: .76rem;
+  }
+
+  .question-scope-selector__modal .question-scope-selector__units {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    margin: 8px 0 10px;
+  }
+
+  .question-scope-selector__modal .question-scope-selector__units label {
+    min-height: 36px;
+    padding: 4px 6px;
+  }
+
+  .party-edit-view__selected {
+    min-height: 38px;
+    margin-bottom: 7px;
+    padding: 7px 12px 7px 28px;
+  }
+
+  .party-edit-view .base-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .party-edit-view .base-list button {
+    min-height: 44px;
+  }
+
+  .character-detail-view__content {
+    display: grid;
+    grid-template-columns: minmax(150px, .72fr) minmax(0, 1.28fr);
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .character-detail-view__art-panel {
+    min-height: 250px;
+  }
+
+  .character-detail-view__art {
+    width: min(100%, 240px);
+    max-height: 250px;
+    object-fit: contain;
+  }
+
+  .character-detail-view__level,
+  .character-detail-view__stats,
+  .character-detail-view__equipment {
+    padding: 7px 9px;
+    margin-block: 5px;
+  }
+
+  .equipment-list-screen section,
+  .inventory-list-screen section,
+  .record-overall-summary,
+  .record-subject-breakdown,
+  .record-star-breakdown,
+  .record-history-list {
+    margin-bottom: 8px;
+    padding: 9px 10px;
+    border-radius: 9px;
+  }
+
+  .equipment-list-screen__character-select {
+    gap: 5px;
+  }
+
+  .equipment-list-screen__character-select button {
+    min-height: 38px;
+    padding: 4px 8px;
+  }
+
+  .equipment-list-screen__equipped-slots {
+    gap: 6px;
+    margin-top: 7px;
+  }
+
+  .equipment-list-screen__equipped-slots > div {
+    padding: 7px;
+  }
+
+  .equipment-list-screen__inventory {
+    gap: 6px;
+  }
+
+  .equipment-list-screen__item {
+    display: grid;
+    grid-template-columns: auto minmax(180px, 1fr) minmax(110px, .6fr) repeat(4, auto);
+    gap: 5px;
+    padding: 7px;
+    font-size: .7rem;
+  }
+
+  .equipment-list-screen__item button {
+    min-height: 36px;
+    padding: 4px 7px;
+    font-size: .7rem;
+  }
+
+  .inventory-list-screen dl,
+  .record-overall-summary dl {
+    grid-template-columns: repeat(5, minmax(72px, 1fr));
+    gap: 5px;
+  }
+
+  .inventory-list-screen dl dt,
+  .record-overall-summary dl dt {
+    padding: 5px 4px 1px;
+    font-size: .68rem;
+  }
+
+  .inventory-list-screen dl dd,
+  .record-overall-summary dl dd {
+    padding: 0 4px 5px;
+    font-size: 1rem;
+  }
+
+  .record-screen__tabs {
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+
+  .record-screen__tabs button {
+    min-height: 38px;
+    padding: 4px 8px;
+  }
+
+  .record-history-list__filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .record-history-list__filters select {
+    min-height: 34px;
+    font-size: .72rem;
+  }
+
+  .record-history-list > ul {
+    gap: 5px;
+  }
+
+  .record-history-list > ul button {
+    min-height: 44px;
+    font-size: .72rem;
+  }
+
+  .reward-screen,
+  .inter-zone-choice-view,
+  .stage-result-view {
+    width: min(94vw, 760px);
+    max-height: calc(100dvh - 18px);
+    margin: 8px auto;
+    padding: 10px;
+    overflow: auto;
+  }
+
+  .reward-screen__cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin: 8px 0;
+  }
+
+  .reward-card {
+    min-height: 86px;
+    padding: 8px;
+  }
+
+  .reward-screen__actions button,
+  .reward-screen__complete button,
+  .inter-zone-choice-view__actions button,
+  .stage-result-view__actions button {
+    min-width: 130px;
+    min-height: 40px;
+    padding: 6px 10px;
+  }
+
+  /* Drawing memo fills the short viewport without hiding its tool controls. */
+  .drawing-scratchpad {
+    padding:
+      max(5px, env(safe-area-inset-top))
+      max(7px, env(safe-area-inset-right))
+      max(5px, env(safe-area-inset-bottom))
+      max(7px, env(safe-area-inset-left));
+  }
+
+  .drawing-scratchpad__panel {
+    width: 100%;
+    height: 100%;
+    padding: 6px;
+    border-radius: 9px;
+  }
+
+  .drawing-scratchpad__header {
+    margin-bottom: 4px;
+  }
+
+  .drawing-scratchpad__header strong {
+    font-size: .92rem;
+  }
+
+  .drawing-scratchpad__header span {
+    font-size: .66rem;
+  }
+
+  .drawing-scratchpad__close,
+  .drawing-scratchpad__tools button {
+    min-width: 88px;
+    min-height: 36px;
+    padding: 4px 8px;
+    font-size: .74rem;
+  }
+
+  .drawing-scratchpad__tools {
+    gap: 5px;
+    margin-bottom: 4px;
+  }
+
+  .drawing-scratchpad__canvas {
+    min-height: 0;
+    border-width: 1px;
+    background-size: 18px 18px;
+  }
+
+  .drawing-scratchpad__note {
+    margin-top: 3px;
+    font-size: .62rem;
+  }
+}
