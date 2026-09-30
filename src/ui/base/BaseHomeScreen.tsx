@@ -4,6 +4,8 @@ import { GameImage } from '../../presentation/assets/GameImage';
 import {
   resolveBaseHomeBackgroundPath,
   resolveCharacterDetailArtPath,
+  resolveCoinIconPath,
+  resolveSagesStoneIconPath,
 } from '../../presentation/assets/studyRiseAssets';
 
 export interface HomeNavItemDefinition {
@@ -28,6 +30,8 @@ export const HOME_NAV_ITEMS: HomeNavItemDefinition[] = [
 
 interface BaseHomeScreenProps {
   leader?: CharacterDefinition | null;
+  currency?: number;
+  sagesStone?: number;
   onSelect: (target: AppPhase) => void;
 }
 
@@ -36,7 +40,14 @@ interface BaseHomeScreenProps {
  * Presentation only (CLAUDE.md §9): the screen never mutates party/save data
  * itself and delegates every navigation request to useBaseController.
  */
-export function BaseHomeScreen({ leader, onSelect }: BaseHomeScreenProps) {
+const NUMBER_FORMAT = new Intl.NumberFormat('ja-JP');
+
+export function BaseHomeScreen({
+  leader,
+  currency = 0,
+  sagesStone = 0,
+  onSelect,
+}: BaseHomeScreenProps) {
   const leaderArtPath = resolveCharacterDetailArtPath(leader?.id);
 
   return (
@@ -51,6 +62,25 @@ export function BaseHomeScreen({ leader, onSelect }: BaseHomeScreenProps) {
       <div className="base-home__title" aria-label="拠点">
         拠点
       </div>
+
+      <aside className="base-home__resources" aria-label="所持資源">
+        <div className="base-home__resource" aria-label={`コイン ${NUMBER_FORMAT.format(currency)}`}>
+          <GameImage
+            src={resolveCoinIconPath()}
+            alt=""
+            className="base-home__resource-icon"
+          />
+          <span className="base-home__resource-value">{NUMBER_FORMAT.format(currency)}</span>
+        </div>
+        <div className="base-home__resource" aria-label={`賢者の石 ${NUMBER_FORMAT.format(sagesStone)}`}>
+          <GameImage
+            src={resolveSagesStoneIconPath()}
+            alt=""
+            className="base-home__resource-icon"
+          />
+          <span className="base-home__resource-value">{NUMBER_FORMAT.format(sagesStone)}</span>
+        </div>
+      </aside>
 
       {leader && leaderArtPath && (
         <div className="base-home__leader" data-character-id={leader.id}>
