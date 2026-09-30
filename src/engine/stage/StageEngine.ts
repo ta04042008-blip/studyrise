@@ -228,8 +228,8 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
   function completeZoneReward(
     stage: StageDefinition,
     state: StageRunState,
-    party: CharacterDefinition[],
-    runResolver: RunResolver,
+    _party: CharacterDefinition[],
+    _runResolver: RunResolver,
   ): StageRunState {
     if (state.phase !== 'ZONE_REWARD' || !state.runState.rewardPhase?.complete) return state; // no-op (CLAUDE.md §13)
 
