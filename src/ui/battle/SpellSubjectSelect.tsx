@@ -3,9 +3,10 @@ import { useState } from 'react';
 interface SpellSubjectSelectProps {
   subjects: string[];
   onConfirm: (subject: string) => void;
+  onCancel: () => void;
 }
 
-export function SpellSubjectSelect({ subjects, onConfirm }: SpellSubjectSelectProps) {
+export function SpellSubjectSelect({ subjects, onConfirm, onCancel }: SpellSubjectSelectProps) {
   const [subject, setSubject] = useState(subjects[0] ?? '');
   const [submitted, setSubmitted] = useState(false);
 
@@ -13,6 +14,15 @@ export function SpellSubjectSelect({ subjects, onConfirm }: SpellSubjectSelectPr
     if (submitted || !subject) return;
     setSubmitted(true);
     onConfirm(subject);
+  }
+
+  if (subjects.length === 0) {
+    return (
+      <div className="subject-star-select">
+        <p>現在の出題範囲には、このスペルの5問構成に必要な★がそろう教科がありません。</p>
+        <button type="button" onClick={onCancel}>戻る</button>
+      </div>
+    );
   }
 
   return (
@@ -25,6 +35,7 @@ export function SpellSubjectSelect({ subjects, onConfirm }: SpellSubjectSelectPr
         </select>
       </div>
       <button type="button" disabled={submitted || !subject} onClick={handleConfirm}>決定</button>
+      <button type="button" disabled={submitted} onClick={onCancel}>戻る</button>
     </div>
   );
 }
