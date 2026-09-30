@@ -158,7 +158,14 @@ export function DrawingScratchpad({ open, onClose }: DrawingScratchpadProps) {
 
   return createPortal(
     <div className="drawing-scratchpad" hidden={!open} aria-hidden={!open}>
-      <section className="drawing-scratchpad__panel" role="dialog" aria-modal="true" aria-label="計算メモ">
+      <section
+        className="drawing-scratchpad__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="計算メモ"
+        onContextMenu={(event) => event.preventDefault()}
+        onDragStart={(event) => event.preventDefault()}
+      >
         <header className="drawing-scratchpad__header">
           <div>
             <strong>計算メモ</strong>
