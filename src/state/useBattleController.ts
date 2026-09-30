@@ -246,7 +246,11 @@ export function useBattleController({
             ? { type: 'UNKNOWN' }
             : answer.type === 'multiple_choice'
               ? { type: 'MULTIPLE_CHOICE', selectedIndex: answer.selectedIndex }
-              : { type: 'UNKNOWN' },
+              : answer.type === 'true_false'
+                ? { type: 'TRUE_FALSE', value: answer.value }
+                : answer.type === 'ordering'
+                  ? { type: 'ORDERING', order: answer.order }
+                  : { type: 'SHORT_ANSWER', value: answer.value },
         });
       }
       sync();
