@@ -534,10 +534,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       return;
     }
     const question = pending.question;
-    const correct =
-      answer.type === 'multiple_choice' &&
-      question.format === 'multiple_choice' &&
-      answer.selectedIndex === question.correctIndex;
+    const correct = isQuestionAnswerCorrect(question, answer);
     const correctCount = pending.correctCount + (correct ? 1 : 0);
     const nextIndex = pending.questionIndex + 1;
 
@@ -575,10 +572,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
     const sourceActor = actorById(pending.sourceActorId);
     const targetActor = actorById(pending.targetId);
     const selectedIndex = answer.type === 'multiple_choice' ? answer.selectedIndex : null;
-    const correct =
-      answer.type === 'multiple_choice' &&
-      question.format === 'multiple_choice' &&
-      answer.selectedIndex === question.correctIndex;
+    const correct = isQuestionAnswerCorrect(question, answer);
 
     const base = {
       sourceActorId: pending.sourceActorId,
