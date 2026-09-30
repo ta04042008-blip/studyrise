@@ -1,0 +1,83 @@
+name: Split official English question bank
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/split-official-english.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  split-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Split English bank into compiler-safe chunks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const dir = path.join('src', 'data', 'questions');
+          const sourcePath = path.join(dir, 'officialQuestionsEnglish.ts');
+          const source = fs.readFileSync(sourcePath, 'utf8');
+          const match = source.match(/=\s*(\[[\s\S]*\]);\s*$/);
+          if (!match) throw new Error('Could not locate English question array');
+
+          const questions = JSON.parse(match[1]);
+          if (questions.length !== 6750) throw new Error(`Expected 6750 English questions, got ${questions.length}`);
+
+          for (const file of fs.readdirSync(dir)) {
+            if (/^officialQuestionsEnglishPart\d+\.ts$/.test(file)) {
+              fs.unlinkSync(path.join(dir, file));
+            }
+          }
+
+          const chunkSize = 250;
+          const imports = [];
+          const spreads = [];
+          for (let start = 0, part = 1; start < questions.length; start += chunkSize, part += 1) {
+            const chunk = questions.slice(start, start + chunkSize);
+            const name = `officialQuestionsEnglishPart${String(part).padStart(2, '0')}`;
+            const filePath = path.join(dir, `${name}.ts`);
+            const body =
+              "import type { QuestionDefinition } from '../../engine/question/QuestionEngine.types';\n\n" +
+              `export const ${name}: QuestionDefinition[] = ` +
+              JSON.stringify(chunk) +
+              ';\n';
+            fs.writeFileSync(filePath, body);
+            imports.push(`import { ${name} } from './${name}';`);
+            spreads.push(`  ...${name},`);
+          }
+
+          const aggregator =
+            "import type { QuestionDefinition } from '../../engine/question/QuestionEngine.types';\n" +
+            imports.join('\n') +
+            "\n\nexport const officialQuestionsEnglish: QuestionDefinition[] = [\n" +
+            spreads.join('\n') +
+            "\n];\n";
+          fs.writeFileSync(sourcePath, aggregator);
+          NODE
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build -- --base=/studyrise/
+      - name: Commit compiler-safe split
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/questions/officialQuestionsEnglish*.ts
+          git commit -m "Split official English bank into compiler-safe chunks"
+          git push
