@@ -1791,25 +1791,42 @@ button, input, select, textarea {
 }
 
 
-/* --- Spell preparation feedback: correct pulse + cumulative caster zoom --- */
+/* --- Spell preparation feedback: correct pulse + cumulative camera zoom --- */
 @media (orientation: landscape) {
-  .battle-screen__player-slot--spell-preparing {
-    --spell-prep-scale: 1;
-    z-index: 5;
-    scale: var(--spell-prep-scale);
-    transform-origin: 50% 100%;
-    transition: scale 260ms cubic-bezier(.2,.8,.2,1);
+  .battle-screen {
+    --spell-camera-scale: 1;
+    --spell-camera-x: 31%;
+    --spell-camera-y: 64%;
   }
 
-  .battle-screen__player-slot--spell-preparing[data-spell-prep-zoom="1"] { --spell-prep-scale: 1.04; }
-  .battle-screen__player-slot--spell-preparing[data-spell-prep-zoom="2"] { --spell-prep-scale: 1.08; }
-  .battle-screen__player-slot--spell-preparing[data-spell-prep-zoom="3"] { --spell-prep-scale: 1.12; }
-  .battle-screen__player-slot--spell-preparing[data-spell-prep-zoom="4"] { --spell-prep-scale: 1.16; }
-  .battle-screen__player-slot--spell-preparing[data-spell-prep-zoom="5"] { --spell-prep-scale: 1.20; }
+  /*
+   * Camera zoom is applied to the visual battle world, not to HUD/question UI.
+   * Background and actor layer share the same transform origin so the view
+   * visibly moves toward the caster instead of merely enlarging one sprite.
+   */
+  .battle-screen__background,
+  .battle-screen__actors {
+    transform-origin: var(--spell-camera-x) var(--spell-camera-y);
+    transform: scale(var(--spell-camera-scale));
+    transition:
+      transform 320ms cubic-bezier(.2,.8,.2,1),
+      transform-origin 320ms cubic-bezier(.2,.8,.2,1);
+    will-change: transform;
+  }
+
+  .battle-screen[data-spell-camera-zoom="1"] { --spell-camera-scale: 1.08; }
+  .battle-screen[data-spell-camera-zoom="2"] { --spell-camera-scale: 1.16; }
+  .battle-screen[data-spell-camera-zoom="3"] { --spell-camera-scale: 1.24; }
+  .battle-screen[data-spell-camera-zoom="4"] { --spell-camera-scale: 1.32; }
+  .battle-screen[data-spell-camera-zoom="5"] { --spell-camera-scale: 1.40; }
+
+  .battle-screen__player-slot--spell-preparing {
+    z-index: 5;
+  }
 
   .battle-screen__player-slot--spell-preparing .battle-screen__actor-art--player {
     animation: none !important;
-    filter: brightness(1.06) drop-shadow(0 0 9px rgba(122, 202, 255, .62));
+    filter: brightness(1.08) drop-shadow(0 0 11px rgba(122, 202, 255, .72));
     transition: filter 260ms ease;
   }
 
@@ -1868,8 +1885,9 @@ button, input, select, textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .battle-screen__player-slot--spell-preparing {
-    transition: none;
+  .battle-screen__background,
+  .battle-screen__actors {
+    transition: none !important;
   }
 
   .battle-screen__spell-correct-effect,

@@ -110,6 +110,10 @@ describe('BattleScreen spell preparation presentation', () => {
     const { container } = render(<BattleScreen controller={controllerFor(stateFor(3), feedback)} />);
 
     expect(screen.getByText('正解！')).toBeTruthy();
+    const battleScreen = container.querySelector('.battle-screen');
+    expect(battleScreen?.getAttribute('data-spell-camera-zoom')).toBe('3');
+    expect((battleScreen as HTMLElement | null)?.style.getPropertyValue('--spell-camera-x')).toBe('31%');
+
     const caster = container.querySelector('[data-actor-id="p1"]');
     expect(caster?.getAttribute('data-spell-prep-zoom')).toBe('3');
     expect(caster?.className).toContain('battle-screen__player-slot--spell-preparing');
@@ -127,6 +131,7 @@ describe('BattleScreen spell preparation presentation', () => {
     const { container } = render(<BattleScreen controller={controllerFor(stateFor(0, 'ENEMY_ACTION'), feedback)} />);
 
     await waitFor(() => {
+      expect(container.querySelector('.battle-screen')?.getAttribute('data-spell-camera-zoom')).toBe('5');
       expect(container.querySelector('[data-actor-id="p1"]')?.getAttribute('data-spell-prep-zoom')).toBe('5');
     });
     expect(screen.getByText('正解！')).toBeTruthy();
