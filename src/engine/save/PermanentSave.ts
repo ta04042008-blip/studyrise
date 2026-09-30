@@ -23,6 +23,10 @@ export function validatePermanentPayload(payload: unknown): payload is Permanent
   if (typeof p.currency !== 'number') return false;
   if (typeof p.materials !== 'object' || p.materials === null) return false;
   if (typeof p.rareUnlockResource !== 'number') return false;
+  if (
+    p.savedPartyCharacterIds !== undefined &&
+    (!Array.isArray(p.savedPartyCharacterIds) || p.savedPartyCharacterIds.some((id) => typeof id !== 'string'))
+  ) return false;
   if (typeof p.inventory !== 'object' || p.inventory === null) return false;
   if (!Array.isArray(p.inventory.equipment)) return false;
   if (typeof p.inventory.consumables !== 'object' || p.inventory.consumables === null) return false;
