@@ -83,14 +83,16 @@ Zone 10報酬確定後:
 5. 次周の敵を強化する
 6. Zone 10直後に「帰還する」場合は `CLEARED` としてStage Resultへ進む
 
-敵強化は線形とし、全Enemy BaseStatsへ以下を適用する。
+敵強化は加速型（複利）とし、全Enemy BaseStatsへ以下を適用する。
 
-`multiplier = 1 + completedLaps × 0.20`
+`multiplier = 1.5 ^ completedLaps`
 
 - 1周目: 100%
-- 2周目: 120%
-- 3周目: 140%
-- 以降も1周ごとに+20%
+- 2周目: 150%
+- 3周目: 225%
+- 4周目: 337.5%
+- 5周目: 506.25%
+- 以降も前周の強さへさらに×1.5を掛ける
 - `attack / defense / speed / maxHp` をそれぞれceilで整数化
 - EnemyDefinition自体は変更せず、その戦闘用instance解決時だけ補正する
 
