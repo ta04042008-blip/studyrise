@@ -64,7 +64,7 @@ function completeSingleCharacterRewardAndProceed() {
 }
 
 describe('StageSessionScreen — run endings return to Base via onReturnToBase', () => {
-  it('completed lap → 自主帰還 → 拠点へ戻る', async () => {
+  it('completed lap → Stage Clear → 拠点へ戻る', async () => {
     const config: StageLaunchConfig = {
       party: [powerfulCharacter],
       stage: oneZoneFinalStage('stage_test_clear'),
@@ -80,8 +80,8 @@ describe('StageSessionScreen — run endings return to Base via onReturnToBase',
     completeSingleCharacterRewardAndProceed();
 
     expect(screen.getByRole('heading', { name: '1周目を踏破' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: '帰還する（自主帰還）' }));
-    expect(screen.getByRole('heading', { name: '自主帰還しました' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'クリアして拠点へ帰還' }));
+    expect(screen.getByRole('heading', { name: 'ステージクリア！' })).toBeTruthy();
     expect(screen.getByText('完全踏破: 1周')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: '拠点へ戻る' }));
     expect(onReturnToBase).toHaveBeenCalledTimes(1);
