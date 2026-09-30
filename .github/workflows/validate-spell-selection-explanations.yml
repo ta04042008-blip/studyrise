@@ -1,0 +1,24 @@
+name: Validate spell selection and explanations
+
+on:
+  push:
+    branches:
+      - 'feature/spell-selection-effects-and-explanations'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build and typecheck
+        run: npm run build -- --base=/studyrise/
+      - name: Run focused spell tests
+        run: npx vitest run tests/engine/battle/BattleEngine.spellExplanation.test.ts tests/state/useBattleController.spellPresentation.test.tsx tests/ui/battle/BattleScreen.spellSelect.test.tsx tests/ui/battle/BattleScreen.spellExplanation.test.tsx tests/ui/battle/BattleScreen.spellPreparation.test.tsx
