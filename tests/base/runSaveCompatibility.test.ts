@@ -5,6 +5,7 @@ import { enemyDefinitionsById } from '../../src/data/enemies/enemyDefinitionsByI
 import { sampleStage } from '../../src/data/stages/sampleStage';
 import type { RunSavePayload } from '../../src/engine/save/RunSave';
 import type { BattleActor, BattleEngineSnapshot } from '../../src/engine/battle/BattleEngine.types';
+import { officialQuestions } from '../../src/data/questions/officialQuestions';
 
 /**
  * MVP-10 acceptance audit item 1: MVP-9 shipped Stage1 as a 3-Zone Stage
@@ -141,6 +142,20 @@ describe('isRunSaveCompatibleWithCurrentContent — MVP-9 3-Zone Stage1 RunSave 
     // liveBattleSnapshot is present for STAGE_RESULT, so the enemy check
     // does not apply here.
     expect(isRunSaveCompatibleWithCurrentContent(payload, sampleStagesById, enemyDefinitionsById)).toBe(true);
+  });
+
+  it('rejects a pre-replacement run whose saved question scope no longer exists in the official bank', () => {
+    const payload = mvp9RunPayload({});
+    expect(isRunSaveCompatibleWithCurrentContent(payload, sampleStagesById, enemyDefinitionsById, officialQuestions)).toBe(false);
+  });
+
+  it('accepts a run whose saved question scope still exists in the official bank', () => {
+    const payload = mvp9RunPayload({});
+    payload.questionScope = [
+      { subject: '数学', field: '数学I', unit: '数と式' },
+      { subject: '英語', field: '語彙', unit: '基本語彙' },
+    ];
+    expect(isRunSaveCompatibleWithCurrentContent(payload, sampleStagesById, enemyDefinitionsById, officialQuestions)).toBe(true);
   });
 
   it('rejects a payload whose stageId no longer exists', () => {
