@@ -3,7 +3,6 @@ import type { ItemBattleSlot, KnownSpell, QuestionCommandKind } from '../../engi
 interface CommandMenuProps {
   enabled: boolean;
   knownSpells: KnownSpell[];
-  playerMp: number;
   items: ItemBattleSlot[];
   onSelectCommand: (command: QuestionCommandKind) => void;
   onUseSpell: (spellId: string) => void;
@@ -12,7 +11,7 @@ interface CommandMenuProps {
 }
 
 /**
- * The 6 official commands (spec §5.1), all usable from COMMAND_SELECT. With
+ * The 5 official commands (spec §5.1), all usable from COMMAND_SELECT. With
  * exactly one known spell (MVP-1〜3's only case) the Spell button uses it
  * directly, same as before; with more than one (spec §4.5, up to 3 via
  * roguelite NEW_SPELL rewards) it instead opens SpellSelectView — this is a
@@ -22,7 +21,6 @@ interface CommandMenuProps {
 export function CommandMenu({
   enabled,
   knownSpells,
-  playerMp,
   items,
   onSelectCommand,
   onUseSpell,
@@ -39,9 +37,6 @@ export function CommandMenu({
       <button className="command-menu__button" type="button" disabled={!enabled} onClick={() => onSelectCommand('guard')}>
         ガード
       </button>
-      <button className="command-menu__button" type="button" disabled={!enabled} onClick={() => onSelectCommand('charge')}>
-        チャージ
-      </button>
       <button className="command-menu__button" type="button" disabled={!enabled} onClick={() => onSelectCommand('search')}>
         サーチ
       </button>
@@ -49,10 +44,10 @@ export function CommandMenu({
         <button
           className="command-menu__button"
           type="button"
-          disabled={!enabled || playerMp < onlySpell.mpCost}
+          disabled={!enabled}
           onClick={() => onUseSpell(onlySpell.spellId)}
         >
-          スペル（MP{onlySpell.mpCost}）
+          スペル
         </button>
       ) : (
         <button className="command-menu__button" type="button" disabled={!enabled || knownSpells.length === 0} onClick={onOpenSpellSelect}>
