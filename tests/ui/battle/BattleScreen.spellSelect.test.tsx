@@ -11,25 +11,39 @@ const SPELL_A: SpellDefinition = {
   id: 'spell_a',
   name: 'スペルA',
   targetType: 'enemy',
+  effectDescription: '敵1体にダメージ。正答数が多いほど威力上昇。',
+  questionStars: [1, 1, 1, 1, 1],
+  powerByCorrect: [0, 5, 10, 15, 20, 25],
   maxLevel: 1,
-  levels: [{ mpCost: 0, effects: [{ type: 'DAMAGE', amount: 10 }] }],
+  levelBonuses: [{ type: 'NONE' }],
+  levels: [{ mpCost: 0, effects: [] }],
 };
+
 const SPELL_B: SpellDefinition = {
   id: 'spell_b',
   name: 'スペルB',
   targetType: 'self',
+  effectDescription: '自身のHPを回復する。',
+  questionStars: [1, 1, 1, 1, 1],
+  powerByCorrect: [0, 4, 8, 12, 16, 20],
   maxLevel: 1,
-  levels: [{ mpCost: 0, effects: [{ type: 'HEAL', amount: 5 }] }],
+  levelBonuses: [{ type: 'NONE' }],
+  levels: [{ mpCost: 0, effects: [] }],
 };
 
 const PLAYER: CharacterDefinition = {
   id: 'player',
   name: 'Hero',
-  baseStats: { attack: 30, defense: 5, speed: 20, maxHp: 100, maxMp: 5 },
+  baseStats: { attack: 30, defense: 5, speed: 20, maxHp: 100, maxMp: 0 },
   initialSpellId: SPELL_A.id,
-  additionalSpellPoolIds: [],
+  additionalSpellPoolIds: [SPELL_B.id],
 };
-const ENEMY: EnemyDefinition = { id: 'enemy', name: 'Slime', baseStats: { attack: 5, defense: 2, speed: 5, maxHp: 100 } };
+
+const ENEMY: EnemyDefinition = {
+  id: 'enemy',
+  name: 'Slime',
+  baseStats: { attack: 5, defense: 2, speed: 5, maxHp: 100 },
+};
 
 function question(): MultipleChoiceQuestion {
   return {
@@ -46,58 +60,63 @@ function question(): MultipleChoiceQuestion {
   };
 }
 
-function Harness() {
+function Harness({ spellIds }: { spellIds: string[] }) {
   const controller = useBattleController({
     players: [PLAYER],
     enemies: [ENEMY],
     questions: [question()],
     spellsById: { [SPELL_A.id]: SPELL_A, [SPELL_B.id]: SPELL_B },
     initialItems: [],
-    knownSpellsByPlayerId: { [PLAYER.id]: [{ spellId: SPELL_A.id, level: 1 }, { spellId: SPELL_B.id, level: 1 }] },
+    knownSpellsByPlayerId: {
+      [PLAYER.id]: spellIds.map((spellId) => ({ spellId, level: 1 })),
+    },
     seed: 1,
   });
   return <BattleScreen controller={controller} />;
 }
 
-describe('BattleScreen — SpellSelectView (spec §4.5: shown only when >1 spell is known)', () => {
-  it('clicking スペル opens a picker listing both known spells instead of casting immediately', () => {
-    render(<Harness />);
-    expect(screen.queryByText(/スペル（MP/)).toBeNull(); // no single-spell auto button
+describe('BattleScreen — SpellSelectView', () => {
+  it('opens the spell picker even when the actor knows exactly one spell', () => {
+    render(<Harness spellIds={[SPELL_A.id]} />);
+
     fireEvent.click(screen.getByRole('button', { name: 'スペル' }));
 
     expect(document.querySelector('.spell-select-view')).not.toBeNull();
     expect(screen.getByRole('button', { name: /スペルA/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /スペルB/ })).toBeTruthy();
+    expect(screen.getByText('敵1体にダメージ。正答数が多いほど威力上昇。')).toBeTruthy();
+    expect(screen.getByText(/5問構成:/)).toBeTruthy();
   });
 
-  it('picking one spell from the picker resolves it immediately (self-target skips TARGET_SELECT)', () => {
-    render(<Harness />);
-    fireEvent.click(screen.getByRole('button', { name: 'スペル' }));
-    fireEvent.click(screen.getByRole('button', { name: /スペルB/ })); // self-targeted HEAL
+  it('selecting the only spell starts preparation only after the player confirms that spell', () => {
+    render(<Harness spellIds={[SPELL_A.id]} />);
 
-    expect(document.querySelector('.spell-select-view')).toBeNull(); // picker closed
-    const result = document.querySelector('.spell-item-result-view');
-    expect(result).not.toBeNull();
-    expect(result!.textContent).toContain('呪文を唱えた');
-  });
-
-  it('picking the enemy-targeted spell damages the enemy, not the caster', () => {
-    render(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'スペル' }));
+    expect(screen.getByText('敵1体にダメージ。正答数が多いほど威力上昇。')).toBeTruthy();
+
     fireEvent.click(screen.getByRole('button', { name: /スペルA/ }));
 
-    const result = document.querySelector('.spell-item-result-view');
-    expect(result).not.toBeNull();
-    expect(result!.textContent).toContain('10 ダメージを与えた');
+    expect(document.querySelector('.spell-select-view')).toBeNull();
+    expect(screen.getByText('スペルに使う教科を選んでください')).toBeTruthy();
   });
 
-  it('the picker can be cancelled without casting anything, returning to the command menu', () => {
-    render(<Harness />);
+  it('lists every known spell with its effect and current level', () => {
+    render(<Harness spellIds={[SPELL_A.id, SPELL_B.id]} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'スペル' }));
+
+    expect(screen.getByRole('button', { name: /スペルA/ }).textContent).toContain('Lv1');
+    expect(screen.getByRole('button', { name: /スペルB/ }).textContent).toContain('Lv1');
+    expect(screen.getByText('敵1体にダメージ。正答数が多いほど威力上昇。')).toBeTruthy();
+    expect(screen.getByText('自身のHPを回復する。')).toBeTruthy();
+  });
+
+  it('can cancel the picker and return to the command menu without starting preparation', () => {
+    render(<Harness spellIds={[SPELL_A.id]} />);
+
     fireEvent.click(screen.getByRole('button', { name: 'スペル' }));
     fireEvent.click(screen.getByRole('button', { name: '戻る' }));
 
     expect(document.querySelector('.spell-select-view')).toBeNull();
     expect(screen.getByRole('button', { name: 'アタック' })).toBeTruthy();
-    expect(document.querySelector('.spell-item-result-view')).toBeNull();
   });
 });
