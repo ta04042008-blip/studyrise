@@ -1837,43 +1837,6 @@ button, input, select, textarea {
 
 
 
-/* Phone landscape: verified 1600x900 tablet composition.
-   Pin the reference surface to the viewport center with viewport-fixed
-   positioning, then scale the whole surface uniformly by viewport height. */
-@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
-  html, body { margin:0; width:100%; height:100%; overflow:hidden; background:#08121d; }
-
-  .app:has(.battle-screen) {
-    position:fixed;
-    top:0;
-    left:50%;
-    width:1600px;
-    max-width:none;
-    height:900px;
-    min-height:900px;
-    margin:0;
-    padding:0;
-    overflow:hidden;
-    transform:translateX(-50%) scale(calc(100dvh / 900));
-    transform-origin:50% 0;
-  }
-
-  .battle-screen {
-    position:relative;
-    display:block;
-    width:1600px;
-    height:900px;
-    min-height:900px;
-    padding:16px;
-    box-sizing:border-box;
-    overflow:hidden;
-  }
-
-  .battle-screen__background { position:absolute; inset:0; width:100%; height:100%; }
-  .battle-screen__background-image { width:100%; height:100%; object-fit:cover; object-position:center center; }
-}
-
-
 /* StudyRise phone policy: gameplay UI is landscape-only.
    Portrait phones show a rotation gate instead of the application screens. */
 @media (orientation: portrait) and (max-width: 767px) {
@@ -2374,21 +2337,31 @@ button, input, select, textarea {
    */
   .app:has(.battle-screen) {
     position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     inset: 0;
-    width: 100%;
+    width: 100vw;
     max-width: none;
     height: 100dvh;
     min-height: 0;
+    transform: none !important;
+    transform-origin: 50% 50% !important;
     margin: 0;
     padding: 0;
     overflow: hidden;
-    transform: none;
   }
 
   .battle-screen {
     position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
     display: block;
-    width: 100%;
+    width: 100vw;
+    max-width: none;
     height: 100dvh;
     min-height: 100dvh;
     padding:
@@ -2400,12 +2373,27 @@ button, input, select, textarea {
     overflow: hidden;
   }
 
-  .battle-screen__background,
-  .battle-screen__background-image {
+  .battle-screen__background {
     position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     inset: 0;
     width: 100%;
     height: 100%;
+    overflow: hidden;
+  }
+
+  .battle-screen__background-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
   }
 
   .battle-screen__background-image {
