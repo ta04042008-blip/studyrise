@@ -6,6 +6,7 @@ import { TargetSelectView } from './TargetSelectView';
 import { CommandMenu } from './CommandMenu';
 import { SpellSelectView } from './SpellSelectView';
 import { SubjectStarSelect } from './SubjectStarSelect';
+import { SpellSubjectSelect } from './SpellSubjectSelect';
 import { QuestionView } from './QuestionView';
 import { CommandAnimationView } from './CommandAnimationView';
 import { ExplanationView } from './ExplanationView';
@@ -179,7 +180,6 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
           {isSpellSelectOpen ? (
             <SpellSelectView
               knownSpells={currentKnownSpells}
-              playerMp={currentActor?.currentMp ?? 0}
               onSelect={(spellId) => {
                 setSpellSelectOpen(false);
                 controller.useSpell(spellId);
@@ -190,7 +190,6 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
             <CommandMenu
               enabled
               knownSpells={currentKnownSpells}
-              playerMp={currentActor?.currentMp ?? 0}
               items={state.battleItems}
               onSelectCommand={controller.selectCommand}
               onUseSpell={controller.useSpell}
@@ -220,6 +219,18 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
 
       {state.phase === 'QUESTION' && state.pendingCommand?.question && (
         <QuestionView question={state.pendingCommand.question} onSubmit={controller.submitAnswer} />
+      )}
+
+      {state.phase === 'SPELL_SUBJECT_SELECT' && (
+        <SpellSubjectSelect subjects={controller.listSubjects()} onConfirm={controller.selectSpellSubject} />
+      )}
+
+      {state.phase === 'SPELL_QUESTION' && state.pendingSpellSequence?.question && (
+        <QuestionView
+          key={state.pendingSpellSequence.question.id}
+          question={state.pendingSpellSequence.question}
+          onSubmit={controller.submitSpellAnswer}
+        />
       )}
 
       {state.phase === 'COMMAND_ANIMATION' && state.pendingOutcome && (
