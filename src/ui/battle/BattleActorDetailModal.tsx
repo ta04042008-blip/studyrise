@@ -1,11 +1,13 @@
 import { createPortal } from 'react-dom';
 import type { BattleActor, KnownSpell } from '../../engine/battle/BattleEngine.types';
 import type { EnemyBestiaryEntry } from '../../engine/bestiary/BestiarySystem';
+import type { KnownSkill } from '../../engine/battle/skills';
 import { describeObservedEnemyAction, isEnemyDetailUnlocked } from '../../engine/bestiary/BestiarySystem';
 
 interface BattleActorDetailModalProps {
   actor: BattleActor | null;
   knownSpells?: KnownSpell[];
+  knownSkill?: KnownSkill | null;
   enemyObservation?: EnemyBestiaryEntry;
   onClose: () => void;
 }
@@ -22,6 +24,7 @@ function statRows(actor: BattleActor) {
 export function BattleActorDetailModal({
   actor,
   knownSpells = [],
+  knownSkill = null,
   enemyObservation,
   onClose,
 }: BattleActorDetailModalProps) {
@@ -68,7 +71,14 @@ export function BattleActorDetailModal({
               <>
                 <section className="battle-detail-modal__section">
                   <h3>固有スキル</h3>
-                  <p>—</p>
+                  {knownSkill ? (
+                    <div className="battle-detail-modal__skill">
+                      <strong>{knownSkill.name}</strong>
+                      <p>{knownSkill.description}</p>
+                    </div>
+                  ) : (
+                    <p>未設定</p>
+                  )}
                 </section>
                 <section className="battle-detail-modal__section">
                   <h3>スペル</h3>
