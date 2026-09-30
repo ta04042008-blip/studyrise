@@ -14,7 +14,7 @@ interface PartyEditViewProps {
  * home's standalone 編成 hotspot and 出撃準備's 編成 section (user's explicit
  * instruction — one component, two entry points). Tap order IS battle order
  * (CLAUDE.md §9: no combat logic here — just collecting an ordered
- * selection for the caller to store).
+ * selection for the caller to persist).
  */
 export function PartyEditView({ roster, selected, onSave, onCancel }: PartyEditViewProps) {
   const [party, setParty] = useState<CharacterDefinition[]>(selected);
@@ -58,7 +58,7 @@ export function PartyEditView({ roster, selected, onSave, onCancel }: PartyEditV
           キャンセル
         </button>
         <button type="button" disabled={!validation.valid} onClick={() => onSave(party)}>
-          決定
+          パーティを保存
         </button>
       </div>
     </div>
