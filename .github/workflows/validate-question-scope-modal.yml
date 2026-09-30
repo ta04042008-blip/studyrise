@@ -1,0 +1,24 @@
+name: Validate question scope unit modal
+
+on:
+  push:
+    branches:
+      - 'ui/question-scope-unit-modal'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build and typecheck
+        run: npm run build -- --base=/studyrise/
+      - name: Run question scope tests
+        run: npx vitest run tests/ui/base/QuestionScopeSelector.test.tsx tests/base/questionScope.test.ts
