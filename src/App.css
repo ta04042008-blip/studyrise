@@ -2233,6 +2233,9 @@ button, input, select, textarea {
 }
 
 .drawing-scratchpad__panel {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   display: flex;
   flex-direction: column;
   width: min(1080px, 94vw);
@@ -2277,6 +2280,14 @@ button, input, select, textarea {
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.drawing-scratchpad__tools button,
+.drawing-scratchpad__close {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
 }
 
 .drawing-scratchpad__tools button {
