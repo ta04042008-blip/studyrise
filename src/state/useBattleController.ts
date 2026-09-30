@@ -67,10 +67,12 @@ export interface BattleController {
   state: BattleState;
   listSubjects: () => string[];
   listStars: (subject: string) => StarLevel[];
+  listSpellSubjects: () => string[];
   selectCommand: (command: QuestionCommandKind) => void;
   selectTarget: (targetId: string) => void;
   selectSubjectAndStar: (subject: string, star: StarLevel) => void;
   selectSpellSubject: (subject: string) => void;
+  cancelSpellSubjectSelection: () => void;
   submitAnswer: (answer: MultipleChoiceAnswer) => void;
   submitSpellAnswer: (answer: MultipleChoiceAnswer) => void;
   useSpell: (spellId: string) => void;
@@ -194,6 +196,11 @@ export function useBattleController({
     [engines, sync],
   );
 
+  const cancelSpellSubjectSelection = useCallback(() => {
+    engines.battleEngine.cancelSpellSubjectSelection();
+    sync();
+  }, [engines, sync]);
+
   const submitAnswer = useCallback(
     (answer: MultipleChoiceAnswer) => {
       // Learning-history dedup boundary (user's explicit MVP-8 instruction):
@@ -281,15 +288,30 @@ export function useBattleController({
 
   const listSubjects = useCallback(() => engines.questionEngine.listSubjects(), [engines]);
   const listStars = useCallback((subject: string) => engines.questionEngine.listStars(subject), [engines]);
+  const listSpellSubjects = useCallback(() => {
+    const pending = engines.battleEngine.getState().pendingSpellSequence;
+    if (!pending) return [];
+    const spell = spellsById[pending.spellId];
+    if (!spell) return [];
+    const requiredStars = Array.from(new Set(spell.questionStars ?? [1, 2, 3, 4, 5]));
+    return engines.questionEngine
+      .listSubjects()
+      .filter((subject) => {
+        const available = new Set(engines.questionEngine.listStars(subject));
+        return requiredStars.every((star) => available.has(star));
+      });
+  }, [engines, spellsById]);
 
   return {
     state,
     listSubjects,
     listStars,
+    listSpellSubjects,
     selectCommand,
     selectTarget,
     selectSubjectAndStar,
     selectSpellSubject,
+    cancelSpellSubjectSelection,
     submitAnswer,
     submitSpellAnswer,
     useSpell,
