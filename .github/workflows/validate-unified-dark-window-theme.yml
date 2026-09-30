@@ -1,0 +1,32 @@
+name: Validate unified dark window theme
+
+on:
+  push:
+    branches:
+      - 'style/unified-dark-window-theme'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build and typecheck
+        run: npm run build -- --base=/studyrise/
+      - name: Run focused UI regression tests
+        run: >
+          npx vitest run
+          tests/ui/base/BaseHomeScreen.test.tsx
+          tests/ui/base/responsive.test.tsx
+          tests/ui/battle/QuestionView.formats.test.tsx
+          tests/ui/battle/QuestionView.scratchpad.test.tsx
+          tests/ui/battle/BattleScreen.spellPreparation.test.tsx
+          tests/state/useBaseController.resourceHud.test.tsx
+          tests/state/useBaseController.partySave.test.tsx
