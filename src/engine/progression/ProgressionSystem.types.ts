@@ -1,6 +1,7 @@
 import type { StatKey } from '../../types/stats';
 import type { Rarity } from '../../types/rarity';
 import type { StageDefinition, StageResult } from '../stage/StageEngine.types';
+import type { EnemyBestiaryState } from '../bestiary/BestiarySystem';
 
 // ---------------------------------------------------------------------------
 // Level / growth (spec v0.7 §10.1/§10.2, user's MVP-7 decision doc §1/§2)
@@ -142,6 +143,8 @@ export interface PermanentState {
    * compatibility: saves created before the Base-home redesign simply omit it.
    */
   savedPartyCharacterIds?: string[];
+  /** Enemy encounter/defeat/action observation data used by battle details and Bestiary. Optional for PermanentSave v1 compatibility. */
+  enemyBestiary?: EnemyBestiaryState;
   inventory: PermanentInventory;
 }
 
