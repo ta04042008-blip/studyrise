@@ -26,6 +26,7 @@ export const HOME_NAV_ITEMS: HomeNavItemDefinition[] = [
   { id: 'equipment', label: '装備', target: 'EQUIPMENT_LIST' },
   { id: 'inventory', label: '持ち物', target: 'INVENTORY_LIST' },
   { id: 'record', label: '記録', target: 'RECORD_LIST' },
+  { id: 'bestiary', label: '図鑑', target: 'BESTIARY' },
 ];
 
 interface BaseHomeScreenProps {
