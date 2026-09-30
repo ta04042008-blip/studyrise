@@ -234,7 +234,6 @@ export function useBattleController({
       const question = before.pendingSpellSequence?.question;
       engines.battleEngine.submitSpellAnswer(answer);
       if (before.phase === 'SPELL_QUESTION' && question && onQuestionResult) {
-        const selectedIndex = answer.type === 'multiple_choice' ? answer.selectedIndex : null;
         const correct = answer.type === 'multiple_choice' && question.format === 'multiple_choice' && answer.selectedIndex === question.correctIndex;
         onQuestionResult({
           questionId: question.id,
@@ -242,9 +241,10 @@ export function useBattleController({
           field: question.field,
           unit: question.unit,
           star: question.star,
-          format: question.format,
-          correct,
-          selectedAnswerIndex: selectedIndex,
+          answerResult: answer.type === 'dont_know' ? 'UNKNOWN' : correct ? 'CORRECT' : 'INCORRECT',
+          recordedAnswer: answer.type === 'dont_know'
+            ? { type: 'UNKNOWN' }
+            : { type: 'MULTIPLE_CHOICE', selectedIndex: answer.selectedIndex },
         });
       }
       sync();
