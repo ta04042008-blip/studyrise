@@ -1814,11 +1814,11 @@ button, input, select, textarea {
     will-change: transform;
   }
 
-  .battle-screen[data-spell-camera-zoom="1"] { --spell-camera-scale: 1.08; }
-  .battle-screen[data-spell-camera-zoom="2"] { --spell-camera-scale: 1.16; }
-  .battle-screen[data-spell-camera-zoom="3"] { --spell-camera-scale: 1.24; }
-  .battle-screen[data-spell-camera-zoom="4"] { --spell-camera-scale: 1.32; }
-  .battle-screen[data-spell-camera-zoom="5"] { --spell-camera-scale: 1.40; }
+  .battle-screen[data-spell-camera-zoom="1"] { --spell-camera-scale: 1.15; }
+  .battle-screen[data-spell-camera-zoom="2"] { --spell-camera-scale: 1.30; }
+  .battle-screen[data-spell-camera-zoom="3"] { --spell-camera-scale: 1.45; }
+  .battle-screen[data-spell-camera-zoom="4"] { --spell-camera-scale: 1.60; }
+  .battle-screen[data-spell-camera-zoom="5"] { --spell-camera-scale: 1.80; }
 
   .battle-screen__player-slot--spell-preparing {
     z-index: 5;
