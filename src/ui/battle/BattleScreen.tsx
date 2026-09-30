@@ -88,9 +88,23 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
     ? { sourceActorId: state.pendingSpellSequence.sourceActorId, level: state.pendingSpellSequence.correctCount }
     : null;
   const spellZoom = pendingSpellZoom ?? finalSpellZoom;
+  const spellZoomLevel = spellZoom ? Math.max(0, Math.min(5, spellZoom.level)) : 0;
+  const spellCasterIndex = spellZoom
+    ? state.players.findIndex((player) => player.id === spellZoom.sourceActorId)
+    : -1;
+  const spellCameraX = spellCasterIndex >= 0
+    ? 31 + (spellCasterIndex - (state.players.length - 1) / 2) * 8
+    : 31;
+  const spellCameraStyle = spellZoomLevel > 0
+    ? ({ '--spell-camera-x': `${spellCameraX}%` } as CSSProperties)
+    : undefined;
 
   return (
-    <div className="battle-screen">
+    <div
+      className="battle-screen"
+      data-spell-camera-zoom={spellZoomLevel > 0 ? spellZoomLevel : undefined}
+      style={spellCameraStyle}
+    >
       {stageBackgroundPath && (
         <div className="battle-screen__background" aria-hidden="true">
           <GameImage
@@ -116,7 +130,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
       <div className="battle-screen__actors" aria-label="戦闘キャラクター">
         <div className="battle-screen__actors-side battle-screen__actors-side--players" style={{ left: '31%', right: 'auto' }}>
           {state.players.map((player, index) => {
-            const spellZoomLevel = spellZoom?.sourceActorId === player.id ? Math.max(0, Math.min(5, spellZoom.level)) : 0;
+            const playerSpellZoomLevel = spellZoom?.sourceActorId === player.id ? spellZoomLevel : 0;
             const showSpellCorrectEffect =
               controller.spellAnswerFeedback?.correct === true &&
               controller.spellAnswerFeedback.sourceActorId === player.id &&
@@ -132,11 +146,11 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
                   commandAnimationOutcome?.sourceActorId === player.id ? `battle-screen__player-slot--command-${commandAnimationOutcome.command}` : '',
                   nonQuestionOutcome?.sourceActorId === player.id ? `battle-screen__player-slot--command-${nonQuestionOutcome.command}` : '',
                   attackAnimationOutcome?.sourceActorId === player.id ? 'battle-screen__player-slot--attack-source' : '',
-                  spellZoomLevel > 0 ? 'battle-screen__player-slot--spell-preparing' : '',
+                  playerSpellZoomLevel > 0 ? 'battle-screen__player-slot--spell-preparing' : '',
                 ].filter(Boolean).join(' ')}
                 data-party-index={index}
                 data-actor-id={player.id}
-                data-spell-prep-zoom={spellZoomLevel > 0 ? spellZoomLevel : undefined}
+                data-spell-prep-zoom={playerSpellZoomLevel > 0 ? playerSpellZoomLevel : undefined}
               >
                 <GameImage
                   src={resolveCharacterBattleArtPath(player.definitionId)}
