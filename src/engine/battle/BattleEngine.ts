@@ -521,7 +521,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       return;
     }
     const spell = spellsById[pending.spellId];
-    const star = spell.questionStars[0];
+    const star = (spell.questionStars ?? [1, 2, 3, 4, 5])[0];
     const question = questionEngine.pickQuestion(subject, star);
     state.pendingSpellSequence = { ...pending, subject, question };
     state.phase = 'SPELL_QUESTION';
@@ -543,7 +543,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
 
     if (nextIndex < 5) {
       const spell = spellsById[pending.spellId];
-      const nextQuestion = questionEngine.pickQuestion(pending.subject, spell.questionStars[nextIndex]);
+      const nextQuestion = questionEngine.pickQuestion(pending.subject, (spell.questionStars ?? [1, 2, 3, 4, 5])[nextIndex]);
       state.pendingSpellSequence = {
         ...pending,
         questionIndex: nextIndex,
@@ -553,7 +553,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       return;
     }
 
-    state.preparedSpellsByPlayerId[pending.sourceActorId] = {
+    state.preparedSpellsByPlayerId![pending.sourceActorId] = {
       spellId: pending.spellId,
       sourceActorId: pending.sourceActorId,
       targetId: pending.targetId,
@@ -726,12 +726,12 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
   }
 
   function resolvePreparedSpell(sourceActorId: string) {
-    const prepared = state.preparedSpellsByPlayerId[sourceActorId];
+    const prepared = state.preparedSpellsByPlayerId?.[sourceActorId];
     if (!prepared) return false;
     const spell = spellsById[prepared.spellId];
     const known = knownSpellsByPlayerId[sourceActorId]?.find((k) => k.spellId === prepared.spellId);
     if (!spell || !known) {
-      delete state.preparedSpellsByPlayerId[sourceActorId];
+      if (state.preparedSpellsByPlayerId) delete state.preparedSpellsByPlayerId[sourceActorId];
       return false;
     }
 
@@ -740,8 +740,8 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
     const searchedEnemyIds: string[] = [];
 
     if (correctCount > 0) {
-      const power = spell.powerByCorrect[correctCount];
-      const levelBonus = spell.levelBonuses[Math.min(known.level, spell.maxLevel) - 1] ?? { type: 'NONE' as const };
+      const power = spell.powerByCorrect?.[correctCount] ?? 0;
+      const levelBonus = spell.levelBonuses?.[Math.min(known.level, spell.maxLevel) - 1] ?? { type: 'NONE' as const };
 
       if (spell.id === 'spell_firebolt_placeholder') {
         const target = actorById(prepared.targetId);
@@ -780,7 +780,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       }
     }
 
-    delete state.preparedSpellsByPlayerId[sourceActorId];
+    if (state.preparedSpellsByPlayerId) delete state.preparedSpellsByPlayerId[sourceActorId];
     state.lastNonQuestionOutcome = {
       command: 'spell',
       sourceActorId,
@@ -861,7 +861,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       const actor = actorById(result.actorId);
       if (actor.kind === 'player') {
         state.currentActorId = actor.id;
-        if (state.preparedSpellsByPlayerId[actor.id]) {
+        if (state.preparedSpellsByPlayerId?.[actor.id]) {
           resolvePreparedSpell(actor.id);
         } else {
           state.phase = 'COMMAND_SELECT';
