@@ -12,7 +12,7 @@ import type {
   SpellDefinition,
 } from '../engine/battle/BattleEngine.types';
 import { createQuestionEngine } from '../engine/question/QuestionEngine';
-import type { MultipleChoiceAnswer, QuestionDefinition } from '../engine/question/QuestionEngine.types';
+import { isQuestionAnswerCorrect, type MultipleChoiceAnswer, type QuestionDefinition } from '../engine/question/QuestionEngine.types';
 import { createRandomService, createRandomServiceFromState } from '../engine/random/RandomService';
 import { battleConfig } from '../config/battleConfig';
 import type { StarLevel } from '../types/stats';
@@ -234,7 +234,7 @@ export function useBattleController({
       const question = before.pendingSpellSequence?.question;
       engines.battleEngine.submitSpellAnswer(answer);
       if (before.phase === 'SPELL_QUESTION' && question && onQuestionResult) {
-        const correct = answer.type === 'multiple_choice' && question.format === 'multiple_choice' && answer.selectedIndex === question.correctIndex;
+        const correct = isQuestionAnswerCorrect(question, answer);
         onQuestionResult({
           questionId: question.id,
           subject: question.subject,
@@ -244,7 +244,9 @@ export function useBattleController({
           answerResult: answer.type === 'dont_know' ? 'UNKNOWN' : correct ? 'CORRECT' : 'INCORRECT',
           recordedAnswer: answer.type === 'dont_know'
             ? { type: 'UNKNOWN' }
-            : { type: 'MULTIPLE_CHOICE', selectedIndex: answer.selectedIndex },
+            : answer.type === 'multiple_choice'
+              ? { type: 'MULTIPLE_CHOICE', selectedIndex: answer.selectedIndex }
+              : { type: 'UNKNOWN' },
         });
       }
       sync();
