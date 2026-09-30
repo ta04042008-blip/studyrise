@@ -177,7 +177,7 @@ button {
   bottom: max(10px, env(safe-area-inset-bottom));
   z-index: 4;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 7px;
   width: auto;
   min-width: 0;
