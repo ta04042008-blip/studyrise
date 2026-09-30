@@ -281,6 +281,7 @@ export function createProgressionSystem(deps: ProgressionDeps): ProgressionSyste
     const equipmentDropped: StageRewardSummary['equipmentDropped'] = [];
     const newEquipmentInstances: EquipmentInstance[] = [];
 
+    const zoneClearOccurrences = new Map<string, number>();
     for (const zoneId of stageResult.clearedZoneIds) {
       const zone = zonesById.get(zoneId);
       if (!zone) continue; // defensive: should never happen for this stage's own clearedZoneIds
@@ -301,7 +302,11 @@ export function createProgressionSystem(deps: ProgressionDeps): ProgressionSyste
       // Equipment-drop RNG is fully independent of Battle/Roguelite RNG
       // (decision doc §11) — derived straight from runSeed + zoneId, never
       // touching the battle/reward RandomService instances.
-      const dropRandom = createRandomService(deriveSeed(runSeed, zoneId, 'permanent-drop'));
+      const priorOccurrenceCount = zoneClearOccurrences.get(zoneId) ?? 0;
+      zoneClearOccurrences.set(zoneId, priorOccurrenceCount + 1);
+      const permanentDropSeedKey =
+        priorOccurrenceCount === 0 ? zoneId : zoneId + ':repeat:' + (priorOccurrenceCount + 1);
+      const dropRandom = createRandomService(deriveSeed(runSeed, permanentDropSeedKey, 'permanent-drop'));
       if (dropRandom.chance(profile.equipmentDropChance)) {
         const table = deps.equipmentDropTablesById[profile.equipmentDropTableId];
         if (table && table.entries.length > 0) {
@@ -317,7 +322,10 @@ export function createProgressionSystem(deps: ProgressionDeps): ProgressionSyste
       }
     }
 
-    const isCleared = stageResult.outcome === 'CLEARED';
+    // Completing at least one full 10-zone lap permanently counts as clearing
+    // the Stage even when the player later self-returns or is defeated in a
+    // stronger lap. The visible outcome still reports how this run ended.
+    const isCleared = stageResult.outcome === 'CLEARED' || (stageResult.completedLaps ?? 0) > 0;
     const isDefeated = stageResult.outcome === 'DEFEATED';
 
     let finalCurrencyGained = runCurrencyGained;
