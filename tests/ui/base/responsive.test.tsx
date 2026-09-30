@@ -12,17 +12,17 @@ function setViewport(width: number, height: number) {
 }
 
 describe('BaseHomeScreen across viewports', () => {
-  it('renders the leader and all 6 nav items at a smartphone-portrait viewport', () => {
+  it('renders the leader and all 7 nav items at a smartphone-portrait viewport', () => {
     setViewport(390, 844);
     render(<BaseHomeScreen leader={sampleParty[0]} onSelect={() => {}} />);
     expect(screen.getByRole('img', { name: `${sampleParty[0].name} パーティ先頭` })).toBeTruthy();
-    expect(screen.getAllByRole('button')).toHaveLength(6);
+    expect(screen.getAllByRole('button')).toHaveLength(7);
   });
 
-  it('renders the leader and all 6 nav items at an iPad-landscape viewport', () => {
+  it('renders the leader and all 7 nav items at an iPad-landscape viewport', () => {
     setViewport(1194, 834);
     render(<BaseHomeScreen leader={sampleParty[0]} onSelect={() => {}} />);
     expect(screen.getByRole('img', { name: `${sampleParty[0].name} パーティ先頭` })).toBeTruthy();
-    expect(screen.getAllByRole('button')).toHaveLength(6);
+    expect(screen.getAllByRole('button')).toHaveLength(7);
   });
 });
