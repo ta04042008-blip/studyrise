@@ -7,10 +7,19 @@ afterEach(cleanup);
 
 describe('BaseHomeScreen — leader + bottom navigation', () => {
   it('renders the party leader over the Base background and exactly the 6 navigation buttons', () => {
-    render(<BaseHomeScreen leader={sampleParty[0]} onSelect={() => {}} />);
+    render(
+      <BaseHomeScreen
+        leader={sampleParty[0]}
+        currency={12345}
+        sagesStone={87}
+        onSelect={() => {}}
+      />,
+    );
 
     expect(screen.getByRole('img', { name: `${sampleParty[0].name} パーティ先頭` })).toBeTruthy();
     expect(screen.getByRole('navigation', { name: '拠点メニュー' })).toBeTruthy();
+    expect(screen.getByLabelText('コイン 12,345')).toBeTruthy();
+    expect(screen.getByLabelText('賢者の石 87')).toBeTruthy();
 
     for (const item of HOME_NAV_ITEMS) {
       expect(screen.getByRole('button', { name: item.label })).toBeTruthy();
