@@ -142,6 +142,8 @@ export interface PermanentState {
    * compatibility: saves created before the Base-home redesign simply omit it.
    */
   savedPartyCharacterIds?: string[];
+  /** Free-form Base memo. Optional for PermanentSave v1 compatibility. */
+  baseMemo?: string;
   inventory: PermanentInventory;
 }
 
