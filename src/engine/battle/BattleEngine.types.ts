@@ -1,5 +1,5 @@
 import type { BaseStats, PlayerBaseStats, StarLevel } from '../../types/stats';
-import type { QuestionDefinition } from '../question/QuestionEngine.types';
+import type { QuestionAnswer, QuestionDefinition } from '../question/QuestionEngine.types';
 import type { TimelineState } from './actionTimeline';
 import type { Effect } from './effects';
 import type { RandomState } from '../random/RandomService';
@@ -253,6 +253,8 @@ interface QuestionCommandOutcomeBase {
   correct: boolean;
   question: QuestionDefinition;
   selectedAnswerIndex: number | null;
+  /** Exact submitted payload for all supported formats. Optional only for legacy Save snapshots. */
+  submittedAnswer?: QuestionAnswer;
 }
 
 export interface AttackOutcome extends QuestionCommandOutcomeBase {
