@@ -1,18 +1,16 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useBaseController } from '../../src/state/useBaseController';
 import { sampleArea } from '../../src/data/areas/sampleArea';
 import { sampleStage } from '../../src/data/stages/sampleStage';
 import { sampleParty } from '../../src/data/characters/sampleCharacters';
-import { FULL_QUESTION_ANSWER_KEY } from '../fixtures/questionAnswerKey';
+import { answerCurrentOfficialQuestionCorrectly, answerCurrentOfficialQuestionIncorrectly } from '../fixtures/officialQuestionDriver';
 
 afterEach(cleanup);
 
 function Harness() {
   return <>{useBaseController()}</>;
 }
-
-const CORRECT_INDEX_BY_TEXT = FULL_QUESTION_ANSWER_KEY;
 
 function clickIfPresent(selector: string): boolean {
   const el = document.querySelector<HTMLButtonElement>(selector);
@@ -29,9 +27,9 @@ function clickIfPresent(selector: string): boolean {
  * UNKNOWN (「わからない」), then back to Base, and checks the 記録 screen's
  * derived summary/history reflect exactly those three answers.
  */
-function driveZone1AnsweringPlan(maxSteps = 1500) {
-  // 0-indexed: attempt 0 -> deliberately wrong choice (INCORRECT), attempt 1
-  // -> 「わからない」(UNKNOWN), attempt 2+ -> correct (to eventually win).
+async function driveZone1AnsweringPlan(maxSteps = 1500) {
+  // 0-indexed: attempt 0 -> deliberately wrong, attempt 1 -> わからない,
+  // attempt 2+ -> correct (to eventually win).
   let attempt = 0;
   for (let i = 0; i < maxSteps; i++) {
     if (screen.queryByRole('button', { name: 'ゾーンクリア → 報酬へ' })) return 'won';
@@ -39,31 +37,36 @@ function driveZone1AnsweringPlan(maxSteps = 1500) {
     if (clickIfPresent('.command-menu button')) continue;
     if (clickIfPresent('.target-select-view button')) continue;
     if (clickIfPresent('.subject-star-select button')) continue;
-    const questionText = document.querySelector('.question-view__text');
-    if (questionText) {
+
+    if (document.querySelector('.question-view')) {
       const currentAttempt = attempt;
       attempt += 1;
 
       if (currentAttempt === 1) {
         fireEvent.click(screen.getByRole('button', { name: 'わからない' }));
-        continue;
+      } else if (currentAttempt === 0) {
+        answerCurrentOfficialQuestionIncorrectly();
+      } else {
+        answerCurrentOfficialQuestionCorrectly();
       }
-
-      const text = questionText.textContent?.trim() ?? '';
-      const correctIndex = CORRECT_INDEX_BY_TEXT[text] ?? 0;
-      const radios = document.querySelectorAll<HTMLInputElement>('.question-view input[type=radio]');
-      // Attempt 0: deliberately wrong (any other choice); attempt 2+: correct.
-      const chosenIndex = currentAttempt === 0 ? (correctIndex + 1) % radios.length : correctIndex;
-
-      fireEvent.click(radios[chosenIndex]);
-      fireEvent.click(screen.getByRole('button', { name: '回答する' }));
       continue;
     }
-    const nextBtn = screen.queryByRole('button', { name: '次へ' });
-    if (nextBtn) {
-      fireEvent.click(nextBtn);
+
+    if (document.querySelector('.command-animation-view')) {
+      await waitFor(
+        () => {
+          if (document.querySelector('.command-animation-view')) throw new Error('command animation still running');
+        },
+        { timeout: 1200, interval: 20 },
+      );
       continue;
     }
+
+    if (document.querySelector('.explanation-view')) {
+      fireEvent.click(await screen.findByRole('button', { name: '次へ' }, { timeout: 800 }));
+      continue;
+    }
+
     return 'stuck';
   }
   return 'timeout';
@@ -103,7 +106,7 @@ describe('useBaseController — 記録 screen after a battle with CORRECT/INCORR
     render(<Harness />);
     await driveToStageStart();
 
-    const outcome = driveZone1AnsweringPlan();
+    const outcome = await driveZone1AnsweringPlan();
     expect(outcome).toBe('won');
 
     // Zone 1 reward → self-return between zones → back to Base (mirrors the
