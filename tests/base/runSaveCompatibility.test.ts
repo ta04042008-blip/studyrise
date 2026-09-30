@@ -158,6 +158,26 @@ describe('isRunSaveCompatibleWithCurrentContent — MVP-9 3-Zone Stage1 RunSave 
     expect(isRunSaveCompatibleWithCurrentContent(payload, sampleStagesById, enemyDefinitionsById, officialQuestions)).toBe(true);
   });
 
+  it('accepts a second-lap Zone 1 checkpoint with completedLaps preserved', () => {
+    const payload = mvp9RunPayload({
+      currentZoneIndex: 0,
+      completedLaps: 1,
+      clearedZoneIds: [
+        'zone_1',
+        'zone_2',
+        'zone_3',
+        'zone_4',
+        'zone_5',
+        'zone_6',
+        'zone_7',
+        'zone_8',
+        'zone_9',
+        'zone_3_final',
+      ],
+    });
+    expect(isRunSaveCompatibleWithCurrentContent(payload, sampleStagesById, enemyDefinitionsById)).toBe(true);
+  });
+
   it('rejects a payload whose stageId no longer exists', () => {
     const payload = mvp9RunPayload({});
     payload.stageId = 'stage_that_was_removed';
