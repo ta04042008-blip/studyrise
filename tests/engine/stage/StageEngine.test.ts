@@ -388,7 +388,7 @@ describe('StageEngine — final Zone / lap looping', () => {
     expect(stageEngine.deriveZoneBattleSeed(oneZoneStage, state)).not.toBe(firstLapBattleSeed);
   });
 
-  it('self-return after a completed lap records the lap and total cleared-zone count', () => {
+  it('return after a completed lap records a CLEARED result with the lap and total cleared-zone count', () => {
     const runResolver = makeRunResolver();
     let state = stageEngine.createInitialState(oneZoneStage, testParty, 1, runResolver, NO_ITEMS);
     state = stageEngine.recordZoneWin(oneZoneStage, state, { [testCharacterA.id]: 100, charB: 100 }, NO_ITEMS);
@@ -399,7 +399,7 @@ describe('StageEngine — final Zone / lap looping', () => {
 
     expect(state.result).toEqual({
       stageId: oneZoneStage.id,
-      outcome: 'SELF_RETURNED',
+      outcome: 'CLEARED',
       zonesCleared: 1,
       completedLaps: 1,
       clearedZoneIds: ['zone_1_final'],
