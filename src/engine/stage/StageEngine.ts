@@ -145,7 +145,7 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
     enemyDefinitionsById: Record<string, EnemyDefinition>,
   ): EnemyBattleInstance[] {
     const completedLaps = state.completedLaps ?? 0;
-    const multiplier = 1 + completedLaps * deps.config.enemyStatGrowthPerLap;
+    const multiplier = deps.config.enemyStatMultiplierPerLap ** completedLaps;
 
     return currentZone(stage, state).enemies.map((e) => {
       const definition = enemyDefinitionsById[e.enemyDefinitionId];
