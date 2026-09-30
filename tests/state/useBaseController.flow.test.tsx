@@ -21,7 +21,7 @@ describe('useBaseController — Base → Area → Stage → 出撃準備 → 出
     await screen.findByRole('button', { name: '出撃' });
 
     // Base Home: exactly the 6 official hotspots (user's explicit MVP-6 instruction).
-    for (const label of ['出撃', '編成', 'キャラクター', '装備', '持ち物', '記録']) {
+    for (const label of ['出撃', '仲間', '編成', '装備', '持ち物', '記録']) {
       expect(screen.getByRole('button', { name: label })).toBeTruthy();
     }
 
@@ -43,7 +43,7 @@ describe('useBaseController — Base → Area → Stage → 出撃準備 → 出
     fireEvent.click(screen.getByRole('button', { name: '編成を変更' }));
     expect(screen.getByRole('heading', { name: '編成' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: sampleParty[0].name }));
-    fireEvent.click(screen.getByRole('button', { name: '決定' }));
+    fireEvent.click(screen.getByRole('button', { name: 'パーティを保存' }));
 
     // Back on 出撃準備, party now shows.
     expect(screen.getByRole('heading', { name: '出撃準備' })).toBeTruthy();
