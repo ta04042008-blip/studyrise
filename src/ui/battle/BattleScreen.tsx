@@ -38,7 +38,6 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
   const allActors = [...state.players, ...state.enemies];
   const actorNameById = Object.fromEntries(allActors.map((a) => [a.id, a.name]));
   const actorHpById = Object.fromEntries(allActors.map((a) => [a.id, { current: a.currentHp, max: a.maxHp }]));
-  const currentActor = allActors.find((a) => a.id === state.currentActorId);
   const turnOrderActor = (actorId: string) => {
     const actor = allActors.find((candidate) => candidate.id === actorId);
     if (!actor) return { id: actorId, name: actorNameById[actorId] ?? actorId };
