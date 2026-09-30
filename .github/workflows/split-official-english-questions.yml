@@ -1,0 +1,72 @@
+name: Split official English question module
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/split-official-english-questions.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Split English bank into TypeScript-safe chunks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          root = Path('src/data/questions')
+          source = root / 'officialQuestionsEnglish.ts'
+          text = source.read_text(encoding='utf-8')
+          match = re.search(r'=\s*(\[.*\]);\s*$', text, re.S)
+          if not match:
+              raise SystemExit('Could not locate English question array')
+          questions = json.loads(match.group(1))
+          if len(questions) != 6750:
+              raise SystemExit(f'Expected 6750 English questions, got {len(questions)}')
+
+          for old in root.glob('officialQuestionsEnglishChunk*.ts'):
+              old.unlink()
+
+          chunk_size = 500
+          imports = []
+          spreads = []
+          for index, start in enumerate(range(0, len(questions), chunk_size), start=1):
+              name = f'officialQuestionsEnglishChunk{index:02d}'
+              path = root / f'{name}.ts'
+              payload = json.dumps(questions[start:start+chunk_size], ensure_ascii=False, separators=(',', ':'))
+              path.write_text(
+                  "import type { QuestionDefinition } from '../../engine/question/QuestionEngine.types';\n\n"
+                  f"export const {name}: QuestionDefinition[] = {payload};\n",
+                  encoding='utf-8',
+              )
+              imports.append(f"import {{ {name} }} from './{name}';")
+              spreads.append(f'  ...{name},')
+
+          source.write_text(
+              "import type { QuestionDefinition } from '../../engine/question/QuestionEngine.types';\n"
+              + "\n".join(imports)
+              + "\n\nexport const officialQuestionsEnglish: QuestionDefinition[] = [\n"
+              + "\n".join(spreads)
+              + "\n];\n",
+              encoding='utf-8',
+          )
+          print(f'Split {len(questions)} questions into {len(imports)} chunks')
+          PY
+      - name: Commit split modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/questions/officialQuestionsEnglish*.ts
+          git commit -m "Split official English question bank for TypeScript"
+          git push
