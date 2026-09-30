@@ -1,0 +1,32 @@
+name: Validate passive skill foundation
+
+on:
+  push:
+    branches:
+      - 'feature/passive-skill-foundation'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build and typecheck
+        run: npm run build -- --base=/studyrise/
+      - name: Run passive-skill and battle regressions
+        run: >
+          npx vitest run --testTimeout=30000
+          tests/engine/battle/skills.test.ts
+          tests/engine/battle/BattleEngine.test.ts
+          tests/ui/battle/BattleActorDetailModal.test.tsx
+          tests/ui/battle/BattleScreen.spellPreparation.test.tsx
+          tests/state/useBattleController.bestiary.test.tsx
+          tests/state/useBaseController.bestiary.test.tsx
+          tests/base/runSaveCompatibility.test.ts
