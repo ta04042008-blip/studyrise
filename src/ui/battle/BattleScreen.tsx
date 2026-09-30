@@ -64,9 +64,30 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
   // Reset whenever the acting player changes, so a stale open picker never
   // survives into someone else's turn.
   const [isSpellSelectOpen, setSpellSelectOpen] = useState(false);
+  const [finalSpellZoom, setFinalSpellZoom] = useState<{ sourceActorId: string; level: number } | null>(null);
+
   useEffect(() => {
     setSpellSelectOpen(false);
   }, [state.currentActorId]);
+
+  useEffect(() => {
+    const feedback = controller.spellAnswerFeedback;
+    if (!feedback || feedback.answeredCount !== 5) return;
+
+    if (!feedback.correct) {
+      setFinalSpellZoom(null);
+      return;
+    }
+
+    setFinalSpellZoom({ sourceActorId: feedback.sourceActorId, level: feedback.correctCount });
+    const timer = window.setTimeout(() => setFinalSpellZoom(null), 700);
+    return () => window.clearTimeout(timer);
+  }, [controller.spellAnswerFeedback]);
+
+  const pendingSpellZoom = state.pendingSpellSequence
+    ? { sourceActorId: state.pendingSpellSequence.sourceActorId, level: state.pendingSpellSequence.correctCount }
+    : null;
+  const spellZoom = pendingSpellZoom ?? finalSpellZoom;
 
   return (
     <div className="battle-screen">
@@ -94,32 +115,54 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
 
       <div className="battle-screen__actors" aria-label="戦闘キャラクター">
         <div className="battle-screen__actors-side battle-screen__actors-side--players" style={{ left: '31%', right: 'auto' }}>
-          {state.players.map((player, index) => (
-            <div
-              key={player.id}
-              className={[
-                'battle-screen__player-slot',
-                latestEnemyAction?.targetId === player.id ? 'battle-screen__player-slot--enemy-hit' : '',
-                player.currentHp <= 0 ? 'battle-screen__player-slot--ko' : '',
-                commandAnimationOutcome?.sourceActorId === player.id ? `battle-screen__player-slot--command-${commandAnimationOutcome.command}` : '',
-                nonQuestionOutcome?.sourceActorId === player.id ? `battle-screen__player-slot--command-${nonQuestionOutcome.command}` : '',
-                attackAnimationOutcome?.sourceActorId === player.id ? 'battle-screen__player-slot--attack-source' : '',
-              ].filter(Boolean).join(' ')}
-              data-party-index={index}
-            >
-              <GameImage
-                src={resolveCharacterBattleArtPath(player.definitionId)}
-                alt={`${player.name} 戦闘`}
-                className="battle-screen__actor-art battle-screen__actor-art--player"
-              />
-              {latestEnemyAction?.targetId === player.id && (
-                <div className={`battle-screen__damage-pop battle-screen__damage-pop--player-hit${latestEnemyAction.isCritical ? ' battle-screen__damage-pop--critical' : ''}`}>
-                  {latestEnemyAction.isCritical && <span>CRITICAL!</span>}
-                  <strong>-{latestEnemyAction.damage}</strong>
-                </div>
-              )}
-            </div>
-          ))}
+          {state.players.map((player, index) => {
+            const spellZoomLevel = spellZoom?.sourceActorId === player.id ? Math.max(0, Math.min(5, spellZoom.level)) : 0;
+            const showSpellCorrectEffect =
+              controller.spellAnswerFeedback?.correct === true &&
+              controller.spellAnswerFeedback.sourceActorId === player.id &&
+              (state.phase === 'SPELL_QUESTION' || finalSpellZoom?.sourceActorId === player.id);
+
+            return (
+              <div
+                key={player.id}
+                className={[
+                  'battle-screen__player-slot',
+                  latestEnemyAction?.targetId === player.id ? 'battle-screen__player-slot--enemy-hit' : '',
+                  player.currentHp <= 0 ? 'battle-screen__player-slot--ko' : '',
+                  commandAnimationOutcome?.sourceActorId === player.id ? `battle-screen__player-slot--command-${commandAnimationOutcome.command}` : '',
+                  nonQuestionOutcome?.sourceActorId === player.id ? `battle-screen__player-slot--command-${nonQuestionOutcome.command}` : '',
+                  attackAnimationOutcome?.sourceActorId === player.id ? 'battle-screen__player-slot--attack-source' : '',
+                  spellZoomLevel > 0 ? 'battle-screen__player-slot--spell-preparing' : '',
+                ].filter(Boolean).join(' ')}
+                data-party-index={index}
+                data-actor-id={player.id}
+                data-spell-prep-zoom={spellZoomLevel > 0 ? spellZoomLevel : undefined}
+              >
+                <GameImage
+                  src={resolveCharacterBattleArtPath(player.definitionId)}
+                  alt={`${player.name} 戦闘`}
+                  className="battle-screen__actor-art battle-screen__actor-art--player"
+                />
+                {showSpellCorrectEffect && controller.spellAnswerFeedback && (
+                  <div
+                    key={controller.spellAnswerFeedback.sequence}
+                    className="battle-screen__spell-correct-effect"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
+                    <span className="battle-screen__spell-correct-ring" aria-hidden="true" />
+                    <strong>正解！</strong>
+                  </div>
+                )}
+                {latestEnemyAction?.targetId === player.id && (
+                  <div className={`battle-screen__damage-pop battle-screen__damage-pop--player-hit${latestEnemyAction.isCritical ? ' battle-screen__damage-pop--critical' : ''}`}>
+                    {latestEnemyAction.isCritical && <span>CRITICAL!</span>}
+                    <strong>-{latestEnemyAction.damage}</strong>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
         <div className="battle-screen__actors-side battle-screen__actors-side--enemies" style={{ left: '69%', right: 'auto' }}>
           {state.enemies.map((enemy) => {
