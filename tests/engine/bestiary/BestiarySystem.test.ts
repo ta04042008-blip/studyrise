@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { applyEnemyObservation, describeObservedEnemyAction } from '../../../src/engine/bestiary/BestiarySystem';
+import { applyEnemyObservation, describeObservedEnemyAction, type EnemyBestiaryState } from '../../../src/engine/bestiary/BestiarySystem';
 import { createSampleInitialPermanentState } from '../../../src/data/progression/createInitialPermanentState';
 import { validatePermanentPayload } from '../../../src/engine/save/PermanentSave';
 
 describe('BestiarySystem', () => {
   it('records encounter, observed actions and defeat idempotently', () => {
-    let state = {};
+    let state: EnemyBestiaryState = {};
 
     let result = applyEnemyObservation(state, { type: 'ENCOUNTERED', enemyDefinitionId: 'enemy_a' });
     expect(result.changed).toBe(true);
