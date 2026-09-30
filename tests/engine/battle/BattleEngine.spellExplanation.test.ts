@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { setup, mc } from './BattleEngine.test';
+import { restoreBattleEngine } from '../../../src/engine/battle/BattleEngine';
 import type { SpellDefinition } from '../../../src/engine/battle/BattleEngine.types';
+import { createQuestionEngine } from '../../../src/engine/question/QuestionEngine';
+import { createRandomServiceFromState } from '../../../src/engine/random/RandomService';
+import { battleConfig } from '../../../src/config/battleConfig';
 
 const spell: SpellDefinition = {
   id: 'spell_explanation_test',
@@ -48,6 +52,43 @@ describe('BattleEngine — spell preparation explanations', () => {
     expect(nextQuestion.pendingSpellSequence?.questionIndex).toBe(1);
     expect(nextQuestion.pendingSpellSequence?.correctCount).toBe(1);
     expect(nextQuestion.pendingSpellQuestionOutcome).toBeNull();
+  });
+
+
+
+  it('restores a saved SPELL_EXPLANATION screen without skipping the explanation', () => {
+    const questions = [mc({ id: 'spell-q1', star: 1 })];
+    const engine = setup({
+      spellsById: { [spell.id]: spell },
+      initialSpellId: spell.id,
+      questions,
+      enemyMaxHp: 9999,
+    });
+
+    engine.useSpell(spell.id);
+    engine.selectSpellSubject('数学');
+    engine.submitSpellAnswer({ type: 'multiple_choice', selectedIndex: 1 });
+    expect(engine.getState().phase).toBe('SPELL_EXPLANATION');
+
+    const snapshot = engine.exportSnapshot();
+    const random = createRandomServiceFromState(snapshot.randomState);
+    const questionEngine = createQuestionEngine(questions, random, snapshot.questionEngineSnapshot);
+    const restored = restoreBattleEngine(snapshot, {
+      questionEngine,
+      config: battleConfig,
+      random,
+      spellsById: { [spell.id]: spell },
+      playerCommandModifiers: {},
+    });
+
+    expect(restored.getState().phase).toBe('SPELL_EXPLANATION');
+    expect(restored.getState().pendingSpellQuestionOutcome).toEqual(
+      engine.getState().pendingSpellQuestionOutcome,
+    );
+
+    restored.advance();
+    expect(restored.getState().phase).toBe('SPELL_QUESTION');
+    expect(restored.getState().pendingSpellSequence?.questionIndex).toBe(1);
   });
 
   it('keeps the fifth answer on its explanation screen until the player confirms it', () => {
