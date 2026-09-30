@@ -1,6 +1,7 @@
 import type { RunSavePayload } from '../engine/save/RunSave';
 import type { StageDefinition } from '../engine/stage/StageEngine.types';
 import type { EnemyDefinition } from '../engine/battle/BattleEngine.types';
+import type { QuestionDefinition } from '../engine/question/QuestionEngine.types';
 
 /**
  * Bug fix (MVP-10 acceptance audit item 1): `RunSavePayload.stageRunState.
@@ -28,9 +29,28 @@ export function isRunSaveCompatibleWithCurrentContent(
   payload: RunSavePayload,
   stagesById: Record<string, StageDefinition>,
   enemyDefinitionsById: Record<string, EnemyDefinition>,
+  questionPool?: readonly QuestionDefinition[],
 ): boolean {
   const stage = stagesById[payload.stageId];
   if (!stage) return false;
+
+  // Post-MVP question-catalog migrations may intentionally remove old
+  // field/unit combinations. A saved Run must never silently resume with a
+  // partially different question range. When the current canonical pool is
+  // supplied, every saved scope entry must still exist exactly.
+  if (questionPool) {
+    const currentUnits = new Set(
+      questionPool.map((q) => `${q.subject}\u0000${q.field}\u0000${q.unit}`),
+    );
+    if (
+      payload.questionScope.length === 0 ||
+      payload.questionScope.some(
+        (ref) => !currentUnits.has(`${ref.subject}\u0000${ref.field}\u0000${ref.unit}`),
+      )
+    ) {
+      return false;
+    }
+  }
 
   const { currentZoneIndex, clearedZoneIds } = payload.stageRunState;
   if (currentZoneIndex < 0 || currentZoneIndex >= stage.zones.length) return false;
