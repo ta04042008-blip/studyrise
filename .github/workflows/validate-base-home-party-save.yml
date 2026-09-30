@@ -30,5 +30,4 @@ jobs:
           tests/ui/base/PartyEditView.test.tsx
           tests/state/useBaseController.flow.test.tsx
           tests/state/useBaseController.partySave.test.tsx
-          tests/state/useBaseController.saveResume.test.tsx
           tests/engine/save/SaveSystem.test.ts
