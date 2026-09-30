@@ -7,7 +7,7 @@ import { sampleEquipmentDefinitions } from '../../src/data/equipment/sampleEquip
 import { sampleEquipmentDropTables } from '../../src/data/equipment/sampleDropTables';
 import { sampleItem } from '../../src/data/items/sampleItem';
 import { sampleAreas, sampleStagesById } from '../../src/data/areas/sampleArea';
-import { sampleQuestions } from '../../src/data/questions/sampleQuestions';
+import { officialQuestions } from '../../src/data/questions/officialQuestions';
 import { sampleRewardDefinitions } from '../../src/data/roguelite/sampleRewardDefinitions';
 import { sampleStageUnlockRules, sampleCharacterUnlockRules } from '../../src/data/progression/unlockRules';
 
@@ -21,7 +21,7 @@ function realBundle(): GameContentBundle {
     items: [sampleItem],
     areas: sampleAreas,
     stages: Object.values(sampleStagesById),
-    questions: sampleQuestions,
+    questions: officialQuestions,
     rewards: sampleRewardDefinitions,
     stageUnlockRules: sampleStageUnlockRules,
     characterUnlockRules: sampleCharacterUnlockRules,
@@ -45,14 +45,21 @@ describe('validateGameContent — MVP-10 official content bundle', () => {
     expect(sampleParty.map((c) => c.name)).toEqual(['葉山智也', '南雲彩乃', '岡村駆']);
   });
 
-  it('50 official questions (25 数学 + 25 英語, 5 per ★)', () => {
-    expect(sampleQuestions).toHaveLength(50);
-    for (const subject of ['数学', '英語']) {
-      expect(sampleQuestions.filter((q) => q.subject === subject)).toHaveLength(25);
-      for (const star of [1, 2, 3, 4, 5] as const) {
-        expect(sampleQuestions.filter((q) => q.subject === subject && q.star === star)).toHaveLength(5);
-      }
-    }
+  it('9,573 official questions from the revised 2026-09-30 banks', () => {
+    expect(officialQuestions).toHaveLength(9573);
+    expect(officialQuestions.filter((q) => q.subject === '数学')).toHaveLength(2823);
+    expect(officialQuestions.filter((q) => q.subject === '英語')).toHaveLength(6750);
+
+    const formatCounts = officialQuestions.reduce<Record<string, number>>((counts, q) => {
+      counts[q.format] = (counts[q.format] ?? 0) + 1;
+      return counts;
+    }, {});
+    expect(formatCounts).toEqual({
+      multiple_choice: 8617,
+      short_answer: 446,
+      true_false: 335,
+      ordering: 175,
+    });
   });
 
   it('3 Stages, each with 4 Zones (12 total), matching spec §17.2/§2.1', () => {

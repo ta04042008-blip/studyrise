@@ -1,14 +1,9 @@
 import type { MultipleChoiceQuestion } from '../../engine/question/QuestionEngine.types';
 
 /**
- * MVP-10 official content — the original MVP-1 5-question core, audited
- * against StudyRise｜ゲーム用問題集制作ルール v0.2 and kept unchanged (same
- * ids/text/choices — user's explicit instruction: LearningHistory Save
- * compatibility, do not silently replace an existing questionId's content).
- * Exported separately so `createSampleStageLaunchConfig` (test/dev factory,
- * used by many MVP-1〜9 regression tests whose driving logic hardcodes
- * answers by question text) can keep depending on exactly these 5 and stay
- * unaffected by the larger official bank below.
+ * Legacy regression/history fixture. These stable IDs are intentionally
+ * retained for old tests and LearningHistory display compatibility, but
+ * they are not part of the current production QuestionPool.
  */
 export const sampleQuestionsCoreFive: MultipleChoiceQuestion[] = [
   {

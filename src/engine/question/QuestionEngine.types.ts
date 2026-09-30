@@ -1,11 +1,6 @@
 import type { StarLevel } from '../../types/stats';
 
-/**
- * Four question formats per spec §12.6. MVP-1 only ever *serves*
- * `multiple_choice` questions (CommandMenu/QuestionView only render that
- * one), but the type is defined for all four from the start so later MVPs
- * (content expansion, MVP-10) don't need a breaking type change.
- */
+/** Four production question formats supported by the revised 2026-09-30 official bank. */
 export type QuestionFormat = 'multiple_choice' | 'true_false' | 'ordering' | 'short_answer';
 
 interface QuestionBase {
@@ -27,20 +22,17 @@ export interface MultipleChoiceQuestion extends QuestionBase {
   correctIndex: number;
 }
 
-/** Typed for future MVPs; not implemented/served in MVP-1. */
 export interface TrueFalseQuestion extends QuestionBase {
   format: 'true_false';
   correctAnswer: boolean;
 }
 
-/** Typed for future MVPs; not implemented/served in MVP-1. */
 export interface OrderingQuestion extends QuestionBase {
   format: 'ordering';
   items: string[];
   correctOrder: number[];
 }
 
-/** Typed for future MVPs; not implemented/served in MVP-1. */
 export interface ShortAnswerQuestion extends QuestionBase {
   format: 'short_answer';
   acceptedAnswers: string[];

@@ -12,6 +12,7 @@ import { sampleAreas, sampleStagesById } from '../data/areas/sampleArea';
 import { enemyDefinitionsById } from '../data/enemies/enemyDefinitionsById';
 import { sampleParty } from '../data/characters/sampleCharacters';
 import { sampleQuestions } from '../data/questions/sampleQuestions';
+import { officialQuestions } from '../data/questions/officialQuestions';
 import { sampleDepartureItemCatalog, sampleDepartureItemCatalogById } from '../data/items/sampleDepartureItemCatalog';
 import { StageSessionScreen } from './StageSessionScreen';
 import type { RunProgressUpdate, UseStageControllerSaveHooks } from './useStageController';
@@ -166,7 +167,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
   useEffect(() => {
     let cancelled = false;
     saveSystem
-      .loadBoot((payload) => isRunSaveCompatibleWithCurrentContent(payload, sampleStagesById, enemyDefinitionsById))
+      .loadBoot((payload) => isRunSaveCompatibleWithCurrentContent(payload, sampleStagesById, enemyDefinitionsById, officialQuestions))
       .then((boot) => {
         if (cancelled) return;
         if (boot.permanent) setPermanentState(boot.permanent);
@@ -184,13 +185,13 @@ export function useBaseController(options?: UseBaseControllerOptions) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const questionCatalog = useMemo(() => deriveQuestionCatalog(sampleQuestions), []);
+  const questionCatalog = useMemo(() => deriveQuestionCatalog(officialQuestions), []);
   // Canonical registry for resolving a LearningHistoryRecord.questionId back
   // to its QuestionDefinition (user's explicit MVP-8 instruction: the record
   // screen resolves against the FULL question catalog, not whatever subset a
   // past Stage's departure range happened to scope battles to — a record may
   // reference a question from a different Stage/range than the current one).
-  const questionsById = useMemo(() => Object.fromEntries(sampleQuestions.map((q) => [q.id, q])), []);
+  const questionsById = useMemo(() => Object.fromEntries([...sampleQuestions, ...officialQuestions].map((q) => [q.id, q])), []);
 
   // Unlock-gated rosters (spec §10.7/§13, decision doc §12/§13). All three
   // existing MVP-1〜6 sample characters/the one sample stage are unlocked
@@ -208,7 +209,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
   }, [selectedArea, permanentState.unlockedStageIds]);
   const selectedStage = draft.stageId ? (sampleStagesById[draft.stageId] ?? null) : null;
 
-  const departureValidation = validateDeparture(draft, sampleQuestions, permanentState.inventory.consumables);
+  const departureValidation = validateDeparture(draft, officialQuestions, permanentState.inventory.consumables);
 
   // ---------------------------------------------------------------------
   // MVP-9 save-event handlers — the only place useBaseController talks to
@@ -316,7 +317,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
     const config = buildStageLaunchConfig(
       { ...draft, party: resolvedParty },
       selectedStage,
-      sampleQuestions,
+      officialQuestions,
       sampleDepartureItemCatalogById,
       nextRunSeed,
     );
@@ -428,7 +429,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
       void handleDiscardRun();
       return;
     }
-    const config = buildResumedStageLaunchConfig(payload, stage, sampleQuestions, sampleDepartureItemCatalogById);
+    const config = buildResumedStageLaunchConfig(payload, stage, officialQuestions, sampleDepartureItemCatalogById);
     runStaticPartsRef.current = {
       areaId: payload.areaId,
       stageId: payload.stageId,
@@ -508,7 +509,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
         <DepartureConfirmScreen
           draft={draft}
           stage={selectedStage}
-          questionPool={sampleQuestions}
+          questionPool={officialQuestions}
           itemCatalogById={sampleDepartureItemCatalogById}
           confirming={isConfirmingDeparture}
           onConfirm={handleConfirmDeparture}

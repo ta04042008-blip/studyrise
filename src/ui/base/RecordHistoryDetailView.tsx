@@ -9,12 +9,38 @@ interface RecordHistoryDetailViewProps {
   onBack: () => void;
 }
 
+function submittedAnswerText(record: LearningHistoryRecord, question: QuestionDefinition): string {
+  const answer = record.recordedAnswer;
+  if (answer.type === 'UNKNOWN') return 'わからない';
+  if (answer.type === 'MULTIPLE_CHOICE') {
+    return question.format === 'multiple_choice'
+      ? (question.choices[answer.selectedIndex] ?? `選択肢${answer.selectedIndex + 1}`)
+      : `選択肢${answer.selectedIndex + 1}`;
+  }
+  if (answer.type === 'TRUE_FALSE') return answer.value ? '正' : '誤';
+  if (answer.type === 'ORDERING') {
+    if (question.format !== 'ordering') return answer.order.join(',');
+    return answer.order.map((index) => question.items[index] ?? '').join(' ');
+  }
+  return answer.value;
+}
+
+function correctAnswerText(question: QuestionDefinition): string {
+  switch (question.format) {
+    case 'multiple_choice':
+      return question.choices[question.correctIndex] ?? '';
+    case 'true_false':
+      return question.correctAnswer ? '正' : '誤';
+    case 'ordering':
+      return question.correctOrder.map((index) => question.items[index] ?? '').join(' ');
+    case 'short_answer':
+      return question.acceptedAnswers.join(' / ');
+  }
+}
+
 /**
- * E. 履歴詳細 (spec v0.8 §13.2). Problem text/choices/correct answer/
- * explanation are resolved from `question` (canonical QuestionDefinition),
- * never duplicated onto the record itself (user's explicit MVP-8
- * instruction). No re-answer/retry affordance here (user's explicit
- * instruction — this is read-only history).
+ * Read-only learning-history detail. Question content is always resolved
+ * from the canonical registry rather than duplicated in the save record.
  */
 export function RecordHistoryDetailView({ record, question, onBack }: RecordHistoryDetailViewProps) {
   return (
@@ -37,25 +63,29 @@ export function RecordHistoryDetailView({ record, question, onBack }: RecordHist
 
       {!question ? (
         <p>問題データを読み込めません。</p>
-      ) : question.format !== 'multiple_choice' ? (
-        <p>この問題形式の詳細表示はまだ未対応です。</p>
       ) : (
         <div className="record-history-detail__question">
           <p className="record-history-detail__text">{question.text}</p>
-          <ul>
-            {question.choices.map((choice, index) => {
-              const isSelected = record.recordedAnswer.type === 'MULTIPLE_CHOICE' && record.recordedAnswer.selectedIndex === index;
-              const isCorrectChoice = question.correctIndex === index;
-              return (
-                <li key={choice}>
-                  {choice}
-                  {isSelected && '（自分の回答）'}
-                  {isCorrectChoice && '（正答）'}
-                </li>
-              );
-            })}
-          </ul>
-          {record.recordedAnswer.type === 'UNKNOWN' && <p>自分の回答: わからない</p>}
+          {question.format === 'multiple_choice' && (
+            <ul>
+              {question.choices.map((choice, index) => {
+                const isSelected = record.recordedAnswer.type === 'MULTIPLE_CHOICE' && record.recordedAnswer.selectedIndex === index;
+                const isCorrectChoice = question.correctIndex === index;
+                return (
+                  <li key={index}>
+                    {choice}
+                    {isSelected && '（自分の回答）'}
+                    {isCorrectChoice && '（正答）'}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {question.format === 'ordering' && (
+            <p>語句: {question.items.join(' / ')}</p>
+          )}
+          <p>自分の回答: {submittedAnswerText(record, question)}</p>
+          <p>正答: {correctAnswerText(question)}</p>
           <p className="record-history-detail__explanation">{question.explanation}</p>
         </div>
       )}

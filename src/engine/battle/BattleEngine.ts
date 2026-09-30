@@ -521,7 +521,13 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       return;
     }
     const spell = spellsById[pending.spellId];
-    const star = (spell.questionStars ?? [1, 2, 3, 4, 5])[0];
+    const requiredStars = spell.questionStars ?? [1, 2, 3, 4, 5];
+    const availableStars = new Set(questionEngine.listStars(subject));
+    if (requiredStars.some((star) => !availableStars.has(star))) {
+      warnRejected('selectSpellSubject');
+      return;
+    }
+    const star = requiredStars[0];
     const question = questionEngine.pickQuestion(subject, star);
     state.pendingSpellSequence = { ...pending, subject, question };
     state.phase = 'SPELL_QUESTION';

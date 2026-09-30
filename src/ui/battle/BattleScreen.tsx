@@ -221,7 +221,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
       )}
 
       {state.phase === 'SPELL_SUBJECT_SELECT' && (
-        <SpellSubjectSelect subjects={controller.listSubjects()} onConfirm={controller.selectSpellSubject} />
+        <SpellSubjectSelect subjects={controller.listSpellSubjects()} onConfirm={controller.selectSpellSubject} />
       )}
 
       {state.phase === 'SPELL_QUESTION' && state.pendingSpellSequence?.question && (
