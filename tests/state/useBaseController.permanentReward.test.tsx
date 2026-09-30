@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useBaseController } from '../../src/state/useBaseController';
+import { sampleQuestions } from '../../src/data/questions/sampleQuestions';
 import { sampleArea } from '../../src/data/areas/sampleArea';
 import { sampleStage } from '../../src/data/stages/sampleStage';
 import { sampleParty } from '../../src/data/characters/sampleCharacters';
@@ -9,7 +10,7 @@ import { sampleParty } from '../../src/data/characters/sampleCharacters';
 afterEach(cleanup);
 
 function Harness() {
-  return <>{useBaseController()}</>;
+  return <>{useBaseController({ questionPool: sampleQuestions })}</>;
 }
 
 function StrictHarness() {
