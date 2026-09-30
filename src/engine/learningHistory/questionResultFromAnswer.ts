@@ -27,9 +27,11 @@ export function questionResultFromAnswer(answer: MultipleChoiceAnswer, outcome: 
     return { ...base, answerResult: 'UNKNOWN', recordedAnswer: { type: 'UNKNOWN' } };
   }
 
-  return {
-    ...base,
-    answerResult: outcome.correct ? 'CORRECT' : 'INCORRECT',
-    recordedAnswer: { type: 'MULTIPLE_CHOICE', selectedIndex: answer.selectedIndex },
-  };
+  const recordedAnswer =
+    answer.type === 'multiple_choice' ? { type: 'MULTIPLE_CHOICE' as const, selectedIndex: answer.selectedIndex } :
+    answer.type === 'true_false' ? { type: 'TRUE_FALSE' as const, value: answer.value } :
+    answer.type === 'ordering' ? { type: 'ORDERING' as const, order: answer.order } :
+    { type: 'SHORT_ANSWER' as const, value: answer.value };
+
+  return { ...base, answerResult: outcome.correct ? 'CORRECT' : 'INCORRECT', recordedAnswer };
 }

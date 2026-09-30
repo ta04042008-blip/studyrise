@@ -1,69 +1,114 @@
 import { useState } from 'react';
-import type { MultipleChoiceAnswer, QuestionDefinition } from '../../engine/question/QuestionEngine.types';
+import type { QuestionAnswer, QuestionDefinition } from '../../engine/question/QuestionEngine.types';
 
 interface QuestionViewProps {
   question: QuestionDefinition;
-  onSubmit: (answer: MultipleChoiceAnswer) => void;
+  onSubmit: (answer: QuestionAnswer) => void;
 }
 
-/**
- * MVP-1 only serves multiple_choice questions (see QuestionEngine.types.ts
- * for why the other 3 formats are typed but not implemented yet).
- * Spec §12.7: selecting a choice does not confirm it — only「回答する」
- * does. 「わからない」confirms immediately, no dialog.
- */
+/** Renders every format present in the attached official StudyRise banks. */
 export function QuestionView({ question, onSubmit }: QuestionViewProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [ordering, setOrdering] = useState<number[]>([]);
+  const [shortAnswer, setShortAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  if (question.format !== 'multiple_choice') {
-    // Content validation should prevent this from ever being reached in
-    // MVP-1's question pool; this is a defensive fallback, not new gameplay.
-    return <p>この問題形式はMVP-1では未対応です。</p>;
-  }
-
-  function handleAnswer() {
-    if (submitted || selectedIndex == null) return;
-    setSubmitted(true); // idempotency guard (CLAUDE.md §13)
-    onSubmit({ type: 'multiple_choice', selectedIndex });
+  function confirm(answer: QuestionAnswer) {
+    if (submitted) return;
+    setSubmitted(true);
+    onSubmit(answer);
   }
 
   function handleDontKnow() {
-    if (submitted) return;
-    setSubmitted(true);
-    onSubmit({ type: 'dont_know' });
+    confirm({ type: 'dont_know' });
+  }
+
+  function appendOrdering(index: number) {
+    if (submitted || ordering.includes(index)) return;
+    setOrdering([...ordering, index]);
   }
 
   return (
     <div className="question-view">
       <div className="question-view__meta">
-        {question.subject} / {'★'.repeat(question.star)}
+        {question.subject} / {question.field} / {question.unit} / {'★'.repeat(question.star)}
       </div>
       <p className="question-view__text">{question.text}</p>
       <button className="question-view__dont-know" type="button" disabled={submitted} onClick={handleDontKnow}>
         わからない
       </button>
-      <ul className="question-view__choices">
-        {question.choices.map((choice, index) => (
-          <li key={choice} className={selectedIndex === index ? 'question-view__choice--selected' : ''}>
-            <label>
-              <input
-                type="radio"
-                name="answer"
-                checked={selectedIndex === index}
-                disabled={submitted}
-                onChange={() => setSelectedIndex(index)}
-              />
-              {choice}
-            </label>
-          </li>
-        ))}
-      </ul>
-      <div className="question-view__actions">
-        <button type="button" disabled={submitted || selectedIndex == null} onClick={handleAnswer}>
-          回答する
-        </button>
-      </div>
+
+      {question.format === 'multiple_choice' && (
+        <>
+          <ul className="question-view__choices">
+            {question.choices.map((choice, index) => (
+              <li key={index} className={selectedIndex === index ? 'question-view__choice--selected' : ''}>
+                <label>
+                  <input
+                    type="radio"
+                    name="answer"
+                    checked={selectedIndex === index}
+                    disabled={submitted}
+                    onChange={() => setSelectedIndex(index)}
+                  />
+                  {choice}
+                </label>
+              </li>
+            ))}
+          </ul>
+          <div className="question-view__actions">
+            <button type="button" disabled={submitted || selectedIndex == null} onClick={() => confirm({ type: 'multiple_choice', selectedIndex: selectedIndex! })}>
+              回答する
+            </button>
+          </div>
+        </>
+      )}
+
+      {question.format === 'true_false' && (
+        <div className="question-view__actions">
+          <button type="button" disabled={submitted} onClick={() => confirm({ type: 'true_false', value: true })}>正</button>
+          <button type="button" disabled={submitted} onClick={() => confirm({ type: 'true_false', value: false })}>誤</button>
+        </div>
+      )}
+
+      {question.format === 'ordering' && (
+        <>
+          <div className="question-view__ordering-result">
+            {ordering.map((index) => question.items[index]).join(' ')}
+          </div>
+          <div className="question-view__choices">
+            {question.items.map((item, index) => (
+              <button type="button" key={index} disabled={submitted || ordering.includes(index)} onClick={() => appendOrdering(index)}>
+                {item}
+              </button>
+            ))}
+          </div>
+          <div className="question-view__actions">
+            <button type="button" disabled={submitted || ordering.length === 0} onClick={() => setOrdering([])}>やり直す</button>
+            <button type="button" disabled={submitted || ordering.length !== question.items.length} onClick={() => confirm({ type: 'ordering', order: ordering })}>
+              回答する
+            </button>
+          </div>
+        </>
+      )}
+
+      {question.format === 'short_answer' && (
+        <>
+          <input
+            className="question-view__short-answer"
+            type="text"
+            value={shortAnswer}
+            disabled={submitted}
+            autoComplete="off"
+            onChange={(event) => setShortAnswer(event.target.value)}
+          />
+          <div className="question-view__actions">
+            <button type="button" disabled={submitted || shortAnswer.trim() === ''} onClick={() => confirm({ type: 'short_answer', value: shortAnswer })}>
+              回答する
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
