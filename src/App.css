@@ -177,7 +177,7 @@ button {
   bottom: max(10px, env(safe-area-inset-bottom));
   z-index: 4;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 7px;
   width: auto;
   min-width: 0;
@@ -2185,118 +2185,160 @@ button, input, select, textarea {
 }
 
 
-/* --- Persistent Base memo --- */
-.memo-screen {
-  max-width: 920px;
-  margin: 0 auto;
-  padding: 24px;
-  box-sizing: border-box;
+/* --- In-question drawing scratchpad --- */
+.question-view__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
-.memo-screen__header {
+.question-view__meta-row .question-view__meta {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.question-view__scratchpad-open {
+  flex: 0 0 auto;
+  min-width: 86px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: 7px;
+  background: rgba(18, 62, 96, .94);
+  color: #fff;
+  font-weight: 850;
+}
+
+.drawing-scratchpad[hidden] {
+  display: none !important;
+}
+
+.drawing-scratchpad {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  place-items: center;
+  padding:
+    max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  box-sizing: border-box;
+  background: rgba(4, 12, 20, .70);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.drawing-scratchpad__panel {
+  display: flex;
+  flex-direction: column;
+  width: min(1080px, 94vw);
+  height: min(760px, 88dvh);
+  padding: 12px;
+  box-sizing: border-box;
+  border: 2px solid rgba(255,255,255,.88);
+  border-radius: 14px;
+  background: rgba(12, 27, 41, .98);
+  color: #fff;
+  box-shadow: 0 16px 48px rgba(0,0,0,.52);
+}
+
+.drawing-scratchpad__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
-.memo-screen__header h1 {
-  margin: 0;
-}
-
-.memo-screen__eyebrow {
-  margin: 0 0 4px;
-  color: #65707b;
-  font-size: .78rem;
-  font-weight: 900;
-  letter-spacing: .14em;
-}
-
-.memo-screen__lead {
-  margin: 0 0 16px;
-  color: #59636e;
-}
-
-.memo-screen__editor {
-  display: block;
-}
-
-.memo-screen__label {
-  display: block;
-  margin-bottom: 7px;
-  font-weight: 800;
-}
-
-.memo-screen__editor textarea {
-  width: 100%;
-  min-height: min(52vh, 460px);
-  resize: vertical;
-  box-sizing: border-box;
-  padding: 16px;
-  border: 1px solid #cfd7df;
-  border-radius: 12px;
-  background: #fff;
-  color: #17212b;
-  font-size: 1rem;
-  line-height: 1.65;
-  box-shadow: inset 0 1px 3px rgba(10, 25, 40, .06);
-}
-
-.memo-screen__editor textarea:focus {
-  outline: 3px solid rgba(65, 145, 215, .26);
-  border-color: #4b91ca;
-}
-
-.memo-screen__footer {
+.drawing-scratchpad__header > div {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  align-items: baseline;
   gap: 12px;
-  margin-top: 12px;
 }
 
-.memo-screen__count {
-  margin-right: auto;
-  color: #65707b;
-  font-size: .86rem;
+.drawing-scratchpad__header strong {
+  font-size: 1.15rem;
 }
 
-.memo-screen__saved {
-  color: #236f3c;
+.drawing-scratchpad__header span {
+  color: rgba(235,246,255,.72);
+  font-size: .82rem;
+}
+
+.drawing-scratchpad__close {
+  min-width: 104px;
+}
+
+.drawing-scratchpad__tools {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.drawing-scratchpad__tools button {
+  min-width: 112px;
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: 7px;
+  background: rgba(27, 51, 72, .96);
+  color: #fff;
   font-weight: 800;
 }
 
-.memo-screen__save {
-  min-width: 170px;
-  min-height: 46px;
-  font-weight: 850;
+.drawing-scratchpad__tools button[aria-pressed="true"],
+.drawing-scratchpad__tool--active {
+  background: #2e79b8;
+  box-shadow: inset 0 0 0 2px rgba(180,226,255,.28);
 }
 
-@media (max-width: 620px) {
-  .memo-screen {
-    padding: 16px;
+.drawing-scratchpad__canvas {
+  flex: 1 1 auto;
+  display: block;
+  width: 100%;
+  min-height: 260px;
+  border: 2px solid #9eabb6;
+  border-radius: 9px;
+  background-color: #fff;
+  background-image:
+    linear-gradient(rgba(75, 115, 150, .10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(75, 115, 150, .10) 1px, transparent 1px);
+  background-size: 24px 24px;
+  cursor: crosshair;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.drawing-scratchpad__note {
+  margin: 7px 0 0;
+  color: rgba(235,246,255,.72);
+  font-size: .78rem;
+  text-align: center;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .drawing-scratchpad {
+    padding: 8px;
   }
 
-  .memo-screen__header {
-    align-items: stretch;
-    flex-direction: column;
+  .drawing-scratchpad__panel {
+    width: min(1180px, 96vw);
+    height: calc(100dvh - 16px);
+    padding: 8px;
   }
 
-  .memo-screen__editor textarea {
-    min-height: 44vh;
+  .drawing-scratchpad__header,
+  .drawing-scratchpad__tools {
+    margin-bottom: 5px;
   }
 
-  .memo-screen__footer {
-    align-items: stretch;
-    flex-direction: column;
+  .drawing-scratchpad__canvas {
+    min-height: 180px;
   }
 
-  .memo-screen__count {
-    margin-right: 0;
-  }
-
-  .memo-screen__save {
-    width: 100%;
+  .drawing-scratchpad__note {
+    margin-top: 4px;
   }
 }

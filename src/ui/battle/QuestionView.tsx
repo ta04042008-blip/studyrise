@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { QuestionAnswer, QuestionDefinition } from '../../engine/question/QuestionEngine.types';
+import { DrawingScratchpad } from './DrawingScratchpad';
 
 interface QuestionViewProps {
   question: QuestionDefinition;
@@ -13,6 +14,7 @@ export function QuestionView({ question, onSubmit }: QuestionViewProps) {
   const [ordering, setOrdering] = useState<number[]>([]);
   const [shortAnswer, setShortAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [scratchpadOpen, setScratchpadOpen] = useState(false);
 
   function confirm(answer: QuestionAnswer) {
     if (submitted) return;
@@ -31,10 +33,21 @@ export function QuestionView({ question, onSubmit }: QuestionViewProps) {
 
   return (
     <div className="question-view">
-      <div className="question-view__meta">
-        {question.subject} / {question.field} / {question.unit} / {'★'.repeat(question.star)}
+      <div className="question-view__meta-row">
+        <div className="question-view__meta">
+          {question.subject} / {question.field} / {question.unit} / {'★'.repeat(question.star)}
+        </div>
+        <button
+          className="question-view__scratchpad-open"
+          type="button"
+          disabled={submitted}
+          onClick={() => setScratchpadOpen(true)}
+        >
+          メモ
+        </button>
       </div>
       <p className="question-view__text">{question.text}</p>
+      <DrawingScratchpad open={scratchpadOpen} onClose={() => setScratchpadOpen(false)} />
       <button className="question-view__dont-know" type="button" disabled={submitted} onClick={handleDontKnow}>
         わからない
       </button>
