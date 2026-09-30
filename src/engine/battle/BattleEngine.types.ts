@@ -332,6 +332,8 @@ export interface ItemOutcome {
 export interface EnemyActionResult {
   sourceActorId: string;
   targetId: string;
+  /** Display action name that actually executed. Optional only for legacy snapshots. */
+  actionName?: string;
   damage: number;
   isCritical: boolean;
 }
