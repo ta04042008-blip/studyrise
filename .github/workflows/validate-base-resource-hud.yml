@@ -1,0 +1,30 @@
+name: Validate Base resource HUD
+
+on:
+  push:
+    branches:
+      - 'feature/base-resource-hud'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build and typecheck
+        run: npm run build -- --base=/studyrise/
+      - name: Run focused Base resource tests
+        run: >
+          npx vitest run
+          tests/presentation/assets/studyRiseAssets.test.ts
+          tests/ui/base/BaseHomeScreen.test.tsx
+          tests/ui/base/responsive.test.tsx
+          tests/state/useBaseController.resourceHud.test.tsx
+          tests/state/useBaseController.partySave.test.tsx
