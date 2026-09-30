@@ -2055,30 +2055,52 @@ button, input, select, textarea {
 @media (orientation: landscape) {
   .battle-screen {
     --spell-camera-scale: 1;
+    --spell-camera-roll: 0deg;
     --spell-camera-x: 31%;
     --spell-camera-y: 64%;
   }
 
   /*
-   * Camera zoom is applied to the visual battle world, not to HUD/question UI.
+   * Camera zoom/roll is applied to the visual battle world, not to HUD/question UI.
    * Background and actor layer share the same transform origin so the view
-   * visibly moves toward the caster instead of merely enlarging one sprite.
+   * visibly moves toward the caster and gains a cinematic diagonal camera angle.
    */
   .battle-screen__background,
   .battle-screen__actors {
     transform-origin: var(--spell-camera-x) var(--spell-camera-y);
-    transform: scale(var(--spell-camera-scale));
+    transform:
+      scale(var(--spell-camera-scale))
+      rotate(var(--spell-camera-roll));
     transition:
-      transform 320ms cubic-bezier(.2,.8,.2,1),
-      transform-origin 320ms cubic-bezier(.2,.8,.2,1);
+      transform 360ms cubic-bezier(.18,.82,.2,1),
+      transform-origin 360ms cubic-bezier(.18,.82,.2,1);
     will-change: transform;
   }
 
-  .battle-screen[data-spell-camera-zoom="1"] { --spell-camera-scale: 1.15; }
-  .battle-screen[data-spell-camera-zoom="2"] { --spell-camera-scale: 1.30; }
-  .battle-screen[data-spell-camera-zoom="3"] { --spell-camera-scale: 1.45; }
-  .battle-screen[data-spell-camera-zoom="4"] { --spell-camera-scale: 1.60; }
-  .battle-screen[data-spell-camera-zoom="5"] { --spell-camera-scale: 1.80; }
+  .battle-screen[data-spell-camera-zoom="1"] {
+    --spell-camera-scale: 1.25;
+    --spell-camera-roll: -2deg;
+  }
+
+  .battle-screen[data-spell-camera-zoom="2"] {
+    --spell-camera-scale: 1.50;
+    --spell-camera-roll: -3.5deg;
+  }
+
+  .battle-screen[data-spell-camera-zoom="3"] {
+    --spell-camera-scale: 1.75;
+    --spell-camera-roll: -5deg;
+  }
+
+  .battle-screen[data-spell-camera-zoom="4"] {
+    --spell-camera-scale: 2.05;
+    --spell-camera-roll: -6.5deg;
+  }
+
+  .battle-screen[data-spell-camera-zoom="5"] {
+    --spell-camera-scale: 2.35;
+    --spell-camera-roll: -8.5deg;
+  }
 
   .battle-screen__player-slot--spell-preparing {
     z-index: 5;
