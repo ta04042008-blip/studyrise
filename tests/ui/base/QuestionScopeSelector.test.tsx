@@ -67,7 +67,7 @@ describe('QuestionScopeSelector unit modal', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '数学Iの単元を選択' }));
     const dialog = screen.getByRole('dialog', { name: '数学Iの単元' });
-    expect(within(dialog).getByRole('checkbox', { name: '数と式' })).toBeChecked();
-    expect(within(dialog).getByRole('checkbox', { name: '集合・命題' })).toBeChecked();
+    expect((within(dialog).getByRole('checkbox', { name: '数と式' }) as HTMLInputElement).checked).toBe(true);
+    expect((within(dialog).getByRole('checkbox', { name: '集合・命題' }) as HTMLInputElement).checked).toBe(true);
   });
 });
