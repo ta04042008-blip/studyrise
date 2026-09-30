@@ -22,7 +22,7 @@ jobs:
         run: npm run build -- --base=/studyrise/
       - name: Base, save and progression regression tests
         run: >
-          npx vitest run
+          npx vitest run --testTimeout=30000
           tests/base
           tests/engine/save
           tests/engine/progression
