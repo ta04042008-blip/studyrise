@@ -26,7 +26,7 @@ export function InterZoneChoiceView({
       <h2>{isLapBoundary ? `${nextLapNumber - 1}周目を踏破` : '次の行動を選択'}</h2>
       <p>
         {isLapBoundary
-          ? `次は${nextLapNumber}周目です。Zone 1へ戻りますが、敵はさらに強化されます。続けますか？`
+          ? `次は${nextLapNumber}周目です。Zone 1へ戻り、敵は周回ごとに加速して強化されます。続けますか？`
           : '次のゾーンへ進みますか？ それともここで帰還しますか？'}
       </p>
       <div className="inter-zone-choice-view__actions">
