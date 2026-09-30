@@ -25,4 +25,11 @@ describe('BaseHomeScreen across viewports', () => {
     expect(screen.getByRole('img', { name: `${sampleParty[0].name} パーティ先頭` })).toBeTruthy();
     expect(screen.getAllByRole('button')).toHaveLength(6);
   });
+
+  it('renders the leader and all nav items at a smartphone-landscape viewport', () => {
+    setViewport(844, 390);
+    render(<BaseHomeScreen leader={sampleParty[0]} onSelect={() => {}} />);
+    expect(screen.getByRole('img', { name: `${sampleParty[0].name} パーティ先頭` })).toBeTruthy();
+    expect(screen.getAllByRole('button')).toHaveLength(6);
+  });
 });
