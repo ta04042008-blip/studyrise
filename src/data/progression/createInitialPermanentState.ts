@@ -24,7 +24,6 @@ export function createSampleInitialPermanentState(): PermanentState {
     materials: { [UPGRADE_MATERIAL_ID]: 10 },
     rareUnlockResource: 0,
     savedPartyCharacterIds: [],
-    baseMemo: '',
     inventory: {
       equipment: [],
       consumables: { [sampleItem.id]: 3 },
