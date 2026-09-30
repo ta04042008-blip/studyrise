@@ -34,6 +34,7 @@ export type AppPhase =
   | 'EQUIPMENT_LIST'
   | 'INVENTORY_LIST'
   | 'RECORD_LIST'
+  | 'MEMO'
   | 'IN_STAGE';
 
 /** One 教科＋分野＋単元 combination (spec §12.2/§12.3). */
