@@ -146,17 +146,12 @@ export interface BattleEngine {
    */
   submitAnswer(answer: MultipleChoiceAnswer): void;
   /**
-   * Spell's short flow (spec §5.3): コマンド → 対象/選択 → 条件確認 →
-   * 即時処理. `spellId` must be one the current actor currently knows
-   * (spec §4.5 — 1〜3 known spells; the UI only ever needs to show a
-   * spell-picker step when there is more than one, per §5.3's 対象選択
-   * ルール precedent, but the engine always takes the id explicitly, the
-   * same way useItem(itemId) already does). When the resolved spell's
-   * targetType is 'enemy' and more than one enemy is alive, this instead
-   * enters TARGET_SELECT; otherwise (self-target, or exactly one alive
-   * enemy) it validates MP cost at the spell's current level, deducts it,
-   * and applies that level's effects immediately, landing on the
-   * RESULT_APPLY resting phase (no question → no 正誤 → no EXPLANATION).
+   * Starts the active spell's five-question preparation sequence. `spellId`
+   * must be one the current actor currently knows. Enemy-targeted spells use
+   * TARGET_SELECT only when more than one enemy is alive; otherwise the target
+   * is auto-resolved and the flow continues to SPELL_SUBJECT_SELECT.
+   * The UI always lets the player inspect/select the spell first, even when
+   * only one spell is known; that presentation choice stays outside the engine.
    */
   useSpell(spellId: string): void;
   /** Same flow as useSpell(), consuming one use of the named item from the party-shared pool. */
