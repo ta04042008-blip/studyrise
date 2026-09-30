@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { useBaseController } from '../../src/state/useBaseController';
+import { sampleQuestions } from '../../src/data/questions/sampleQuestions';
 import { createSaveSystem, type SaveSystem } from '../../src/engine/save/SaveSystem';
 import type { RunCheckpointTier, SaveBatch, SaveRepository } from '../../src/engine/save/SaveRepository';
 import { RUN_SAVE_SCHEMA_VERSION, type RunSaveEnvelope, type RunSavePayload } from '../../src/engine/save/RunSave';
@@ -9,7 +10,7 @@ import type { BattleActor, BattleEngineSnapshot } from '../../src/engine/battle/
 afterEach(cleanup);
 
 function Harness({ saveSystem }: { saveSystem: SaveSystem }) {
-  return <>{useBaseController({ saveSystem })}</>;
+  return <>{useBaseController({ saveSystem, questionPool: sampleQuestions })}</>;
 }
 
 /** Seeded repository: pre-populates specific run checkpoint tiers with raw envelopes, nothing else. */
