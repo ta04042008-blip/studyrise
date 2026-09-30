@@ -45,6 +45,7 @@ import { createIndexedDbSaveRepository } from '../engine/save/IndexedDbSaveRepos
 import { createSaveSystem, type SaveSystem } from '../engine/save/SaveSystem';
 import { RUN_CHECKPOINT_TIERS, type RunCheckpointTier } from '../engine/save/SaveRepository';
 import type { RunSavePayload } from '../engine/save/RunSave';
+import type { QuestionDefinition } from '../engine/question/QuestionEngine.types';
 
 const DEFAULT_RUN_SEED = 1;
 
@@ -103,6 +104,8 @@ const ALL_RUN_TIERS: RunCheckpointTier[] = [...RUN_CHECKPOINT_TIERS];
 export interface UseBaseControllerOptions {
   /** Test-only injection point (MVP-9) — production always uses the IndexedDB-backed default. */
   saveSystem?: SaveSystem;
+  /** Test/dev-only question fixture override. Production uses the official 9,573-question catalog. */
+  questionPool?: readonly QuestionDefinition[];
 }
 
 /**
@@ -116,6 +119,7 @@ export interface UseBaseControllerOptions {
  */
 export function useBaseController(options?: UseBaseControllerOptions) {
   const saveSystem = options?.saveSystem ?? defaultSaveSystem;
+  const questionPool = options?.questionPool ?? officialQuestions;
 
   const [phase, setPhase] = useState<AppPhase>('BOOT_LOADING');
   const [draft, setDraft] = useState(createEmptyDepartureDraft());
@@ -166,7 +170,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
   useEffect(() => {
     let cancelled = false;
     saveSystem
-      .loadBoot((payload) => isRunSaveCompatibleWithCurrentContent(payload, sampleStagesById, enemyDefinitionsById, officialQuestions))
+      .loadBoot((payload) => isRunSaveCompatibleWithCurrentContent(payload, sampleStagesById, enemyDefinitionsById, questionPool))
       .then((boot) => {
         if (cancelled) return;
         if (boot.permanent) setPermanentState(boot.permanent);
@@ -184,13 +188,13 @@ export function useBaseController(options?: UseBaseControllerOptions) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const questionCatalog = useMemo(() => deriveQuestionCatalog(officialQuestions), []);
+  const questionCatalog = useMemo(() => deriveQuestionCatalog(questionPool), [questionPool]);
   // Canonical registry for resolving a LearningHistoryRecord.questionId back
   // to its QuestionDefinition (user's explicit MVP-8 instruction: the record
   // screen resolves against the FULL question catalog, not whatever subset a
   // past Stage's departure range happened to scope battles to — a record may
   // reference a question from a different Stage/range than the current one).
-  const questionsById = useMemo(() => Object.fromEntries(officialQuestions.map((q) => [q.id, q])), []);
+  const questionsById = useMemo(() => Object.fromEntries(questionPool.map((q) => [q.id, q])), [questionPool]);
 
   // Unlock-gated rosters (spec §10.7/§13, decision doc §12/§13). All three
   // existing MVP-1〜6 sample characters/the one sample stage are unlocked
@@ -208,7 +212,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
   }, [selectedArea, permanentState.unlockedStageIds]);
   const selectedStage = draft.stageId ? (sampleStagesById[draft.stageId] ?? null) : null;
 
-  const departureValidation = validateDeparture(draft, officialQuestions, permanentState.inventory.consumables);
+  const departureValidation = validateDeparture(draft, questionPool, permanentState.inventory.consumables);
 
   // ---------------------------------------------------------------------
   // MVP-9 save-event handlers — the only place useBaseController talks to
@@ -316,7 +320,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
     const config = buildStageLaunchConfig(
       { ...draft, party: resolvedParty },
       selectedStage,
-      officialQuestions,
+      questionPool,
       sampleDepartureItemCatalogById,
       nextRunSeed,
     );
@@ -428,7 +432,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
       void handleDiscardRun();
       return;
     }
-    const config = buildResumedStageLaunchConfig(payload, stage, officialQuestions, sampleDepartureItemCatalogById);
+    const config = buildResumedStageLaunchConfig(payload, stage, questionPool, sampleDepartureItemCatalogById);
     runStaticPartsRef.current = {
       areaId: payload.areaId,
       stageId: payload.stageId,
@@ -508,7 +512,7 @@ export function useBaseController(options?: UseBaseControllerOptions) {
         <DepartureConfirmScreen
           draft={draft}
           stage={selectedStage}
-          questionPool={officialQuestions}
+          questionPool={questionPool}
           itemCatalogById={sampleDepartureItemCatalogById}
           confirming={isConfirmingDeparture}
           onConfirm={handleConfirmDeparture}
