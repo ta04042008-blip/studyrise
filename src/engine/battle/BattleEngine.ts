@@ -134,7 +134,7 @@ export interface BattleEngine {
   selectSpellSubject(subject: string): void;
   /** Cancels spell preparation before its first question is confirmed. */
   cancelSpellSubjectSelection(): void;
-  /** Answers one of the spell's five consecutive questions. */
+  /** Answers one of the spell's five consecutive questions, then rests on SPELL_EXPLANATION. */
   submitSpellAnswer(answer: MultipleChoiceAnswer): void;
   /**
    * QUESTION → COMMAND_ANIMATION. Correctness/effect are computed here, but
@@ -146,17 +146,12 @@ export interface BattleEngine {
    */
   submitAnswer(answer: MultipleChoiceAnswer): void;
   /**
-   * Spell's short flow (spec §5.3): コマンド → 対象/選択 → 条件確認 →
-   * 即時処理. `spellId` must be one the current actor currently knows
-   * (spec §4.5 — 1〜3 known spells; the UI only ever needs to show a
-   * spell-picker step when there is more than one, per §5.3's 対象選択
-   * ルール precedent, but the engine always takes the id explicitly, the
-   * same way useItem(itemId) already does). When the resolved spell's
-   * targetType is 'enemy' and more than one enemy is alive, this instead
-   * enters TARGET_SELECT; otherwise (self-target, or exactly one alive
-   * enemy) it validates MP cost at the spell's current level, deducts it,
-   * and applies that level's effects immediately, landing on the
-   * RESULT_APPLY resting phase (no question → no 正誤 → no EXPLANATION).
+   * Starts the active spell's five-question preparation sequence. `spellId`
+   * must be one the current actor currently knows. Enemy-targeted spells use
+   * TARGET_SELECT only when more than one enemy is alive; otherwise the target
+   * is auto-resolved and the flow continues to SPELL_SUBJECT_SELECT.
+   * The UI always lets the player inspect/select the spell first, even when
+   * only one spell is known; that presentation choice stays outside the engine.
    */
   useSpell(spellId: string): void;
   /** Same flow as useSpell(), consuming one use of the named item from the party-shared pool. */
@@ -265,6 +260,7 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
     timeline: initialTimeline,
     pendingCommand: null,
     pendingSpellSequence: null,
+    pendingSpellQuestionOutcome: null,
     preparedSpellsByPlayerId: {},
     pendingTargetSelection: null,
     pendingOutcome: null,
@@ -304,8 +300,9 @@ export function restoreBattleEngine(snapshot: BattleEngineSnapshot, options: Res
   const { questionEngine, config, random, spellsById, playerCommandModifiers } = options;
 
   const state: BattleState = JSON.parse(JSON.stringify(snapshot.state));
-  // Save compatibility: snapshots created before the prepared-spell system have neither field.
+  // Save compatibility: snapshots created before the prepared-spell/explanation system have neither field.
   state.pendingSpellSequence ??= null;
+  state.pendingSpellQuestionOutcome ??= null;
   state.preparedSpellsByPlayerId ??= {};
   const enemyPlannedActions: Record<string, PlannedEnemyAction[]> = JSON.parse(
     JSON.stringify(snapshot.enemyPlannedActions),
@@ -506,6 +503,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
   }
 
   function beginSpellPreparation(sourceActorId: string, spellId: string, targetId: string) {
+    state.pendingSpellQuestionOutcome = null;
     state.pendingSpellSequence = {
       spellId,
       sourceActorId,
@@ -541,6 +539,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       return;
     }
     state.pendingSpellSequence = null;
+    state.pendingSpellQuestionOutcome = null;
     state.pendingTargetSelection = null;
     state.phase = 'COMMAND_SELECT';
   }
@@ -551,20 +550,51 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       warnRejected('submitSpellAnswer');
       return;
     }
+
     const question = pending.question;
     const correct = isQuestionAnswerCorrect(question, answer);
     const correctCount = pending.correctCount + (correct ? 1 : 0);
-    const nextIndex = pending.questionIndex + 1;
 
+    // Keep the answered question in state until the player reads its
+    // explanation. The next question (or turn progression after question 5)
+    // is deliberately deferred to advance(), so save/resume cannot skip the
+    // explanation screen.
+    state.pendingSpellSequence = { ...pending, correctCount };
+    state.pendingSpellQuestionOutcome = {
+      spellId: pending.spellId,
+      sourceActorId: pending.sourceActorId,
+      targetId: pending.targetId,
+      questionIndex: pending.questionIndex,
+      correct,
+      correctCount,
+      question,
+      submittedAnswer: answer,
+    };
+    state.phase = 'SPELL_EXPLANATION';
+  }
+
+  function advanceSpellExplanation() {
+    const pending = state.pendingSpellSequence;
+    const outcome = state.pendingSpellQuestionOutcome;
+    if (state.phase !== 'SPELL_EXPLANATION' || !pending?.subject || !outcome) {
+      warnRejected('advanceSpellExplanation');
+      return;
+    }
+
+    const nextIndex = pending.questionIndex + 1;
     if (nextIndex < 5) {
       const spell = spellsById[pending.spellId];
-      const nextQuestion = questionEngine.pickQuestion(pending.subject, (spell.questionStars ?? [1, 2, 3, 4, 5])[nextIndex]);
+      const nextQuestion = questionEngine.pickQuestion(
+        pending.subject,
+        (spell.questionStars ?? [1, 2, 3, 4, 5])[nextIndex],
+      );
       state.pendingSpellSequence = {
         ...pending,
         questionIndex: nextIndex,
-        correctCount,
         question: nextQuestion,
       };
+      state.pendingSpellQuestionOutcome = null;
+      state.phase = 'SPELL_QUESTION';
       return;
     }
 
@@ -572,9 +602,10 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       spellId: pending.spellId,
       sourceActorId: pending.sourceActorId,
       targetId: pending.targetId,
-      correctCount,
+      correctCount: pending.correctCount,
     };
     state.pendingSpellSequence = null;
+    state.pendingSpellQuestionOutcome = null;
     proceedToNextAction();
   }
 
@@ -949,6 +980,11 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
   }
 
   function advance() {
+    if (state.phase === 'SPELL_EXPLANATION') {
+      advanceSpellExplanation();
+      return;
+    }
+
     if (state.phase === 'COMMAND_ANIMATION') {
       applyPendingResult();
       return;

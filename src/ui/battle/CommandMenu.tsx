@@ -5,30 +5,25 @@ interface CommandMenuProps {
   knownSpells: KnownSpell[];
   items: ItemBattleSlot[];
   onSelectCommand: (command: QuestionCommandKind) => void;
-  onUseSpell: (spellId: string) => void;
   onOpenSpellSelect: () => void;
   onUseItem: (itemId: string) => void;
 }
 
 /**
  * The 5 official commands (spec §5.1), all usable from COMMAND_SELECT. With
- * exactly one known spell (MVP-1〜3's only case) the Spell button uses it
- * directly, same as before; with more than one (spec §4.5, up to 3 via
- * roguelite NEW_SPELL rewards) it instead opens SpellSelectView — this is a
- * UI-only branch, never a new BattleEngine phase (CLAUDE.md §9). Each item
- * is disabled once its battle-local uses run out.
+ * Spell always opens SpellSelectView, even when exactly one spell is known,
+ * so the player can inspect its effect before committing. This is a UI-only
+ * choice step, never a new BattleEngine phase (CLAUDE.md §9). Each item is
+ * disabled once its battle-local uses run out.
  */
 export function CommandMenu({
   enabled,
   knownSpells,
   items,
   onSelectCommand,
-  onUseSpell,
   onOpenSpellSelect,
   onUseItem,
 }: CommandMenuProps) {
-  const onlySpell = knownSpells.length === 1 ? knownSpells[0] : null;
-
   return (
     <div className="command-menu">
       <button className="command-menu__button command-menu__button--attack" type="button" disabled={!enabled} onClick={() => onSelectCommand('attack')}>
@@ -40,20 +35,14 @@ export function CommandMenu({
       <button className="command-menu__button" type="button" disabled={!enabled} onClick={() => onSelectCommand('search')}>
         サーチ
       </button>
-      {onlySpell ? (
-        <button
-          className="command-menu__button"
-          type="button"
-          disabled={!enabled}
-          onClick={() => onUseSpell(onlySpell.spellId)}
-        >
-          スペル
-        </button>
-      ) : (
-        <button className="command-menu__button" type="button" disabled={!enabled || knownSpells.length === 0} onClick={onOpenSpellSelect}>
-          スペル
-        </button>
-      )}
+      <button
+        className="command-menu__button"
+        type="button"
+        disabled={!enabled || knownSpells.length === 0}
+        onClick={onOpenSpellSelect}
+      >
+        スペル
+      </button>
       {items.map((slot) => (
         <button
           className="command-menu__button"

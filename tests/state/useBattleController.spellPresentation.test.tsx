@@ -69,6 +69,8 @@ describe('useBattleController spell preparation presentation signal', () => {
 
     act(() => result.current.submitSpellAnswer({ type: 'multiple_choice', selectedIndex: 1 }));
 
+    expect(result.current.state.phase).toBe('SPELL_EXPLANATION');
+    expect(result.current.state.pendingSpellQuestionOutcome?.question.id).toBe('spell_feedback_q1');
     expect(result.current.spellAnswerFeedback).toMatchObject({
       sourceActorId: 'player',
       correct: true,
@@ -84,8 +86,12 @@ describe('useBattleController spell preparation presentation signal', () => {
     act(() => result.current.useSpell(spell.id));
     act(() => result.current.selectSpellSubject('数学'));
     act(() => result.current.submitSpellAnswer({ type: 'multiple_choice', selectedIndex: 1 }));
+    expect(result.current.state.phase).toBe('SPELL_EXPLANATION');
+    act(() => result.current.advance());
+    expect(result.current.state.phase).toBe('SPELL_QUESTION');
     act(() => result.current.submitSpellAnswer({ type: 'multiple_choice', selectedIndex: 0 }));
 
+    expect(result.current.state.phase).toBe('SPELL_EXPLANATION');
     expect(result.current.spellAnswerFeedback).toMatchObject({
       sourceActorId: 'player',
       correct: false,

@@ -7,6 +7,7 @@ import { CommandMenu } from './CommandMenu';
 import { SpellSelectView } from './SpellSelectView';
 import { SubjectStarSelect } from './SubjectStarSelect';
 import { SpellSubjectSelect } from './SpellSubjectSelect';
+import { SpellQuestionExplanationView } from './SpellQuestionExplanationView';
 import { QuestionView } from './QuestionView';
 import { CommandAnimationView } from './CommandAnimationView';
 import { ExplanationView } from './ExplanationView';
@@ -135,7 +136,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
             const showSpellCorrectEffect =
               controller.spellAnswerFeedback?.correct === true &&
               controller.spellAnswerFeedback.sourceActorId === player.id &&
-              (state.phase === 'SPELL_QUESTION' || finalSpellZoom?.sourceActorId === player.id);
+              (state.phase === 'SPELL_QUESTION' || state.phase === 'SPELL_EXPLANATION' || finalSpellZoom?.sourceActorId === player.id);
 
             return (
               <div
@@ -237,6 +238,7 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
           {isSpellSelectOpen ? (
             <SpellSelectView
               knownSpells={currentKnownSpells}
+              getSpellDefinition={controller.getSpellDefinition}
               onSelect={(spellId) => {
                 setSpellSelectOpen(false);
                 controller.useSpell(spellId);
@@ -249,7 +251,6 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
               knownSpells={currentKnownSpells}
               items={state.battleItems}
               onSelectCommand={controller.selectCommand}
-              onUseSpell={controller.useSpell}
               onOpenSpellSelect={() => setSpellSelectOpen(true)}
               onUseItem={controller.useItem}
             />
@@ -291,6 +292,14 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
           key={state.pendingSpellSequence.question.id}
           question={state.pendingSpellSequence.question}
           onSubmit={controller.submitSpellAnswer}
+        />
+      )}
+
+      {state.phase === 'SPELL_EXPLANATION' && state.pendingSpellQuestionOutcome && (
+        <SpellQuestionExplanationView
+          key={`${state.pendingSpellQuestionOutcome.question.id}-${state.pendingSpellQuestionOutcome.questionIndex}`}
+          outcome={state.pendingSpellQuestionOutcome}
+          onAdvance={controller.advance}
         />
       )}
 

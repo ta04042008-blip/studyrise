@@ -5,6 +5,7 @@ export const sampleSpell: SpellDefinition = {
   id: 'spell_firebolt_placeholder',
   name: 'ブレイク',
   targetType: 'enemy',
+  effectDescription: '敵1体にダメージ。正答数1〜5で威力12 / 22 / 34 / 48 / 65。Lv2でガード解除、Lv3でHP40%以下の敵へのダメージが1.3倍。',
   questionStars: [1, 2, 3, 4, 5],
   powerByCorrect: [0, 12, 22, 34, 48, 65],
   maxLevel: 3,

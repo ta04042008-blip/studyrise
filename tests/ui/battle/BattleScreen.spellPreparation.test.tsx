@@ -55,7 +55,7 @@ function stateFor(correctCount: number, phase: BattleState['phase'] = 'SPELL_QUE
     upcomingActorIds: [],
     timeline: {} as BattleState['timeline'],
     pendingCommand: null,
-    pendingSpellSequence: phase === 'SPELL_QUESTION' ? {
+    pendingSpellSequence: phase === 'SPELL_QUESTION' || phase === 'SPELL_EXPLANATION' ? {
       spellId: 'spell_test',
       sourceActorId: 'p1',
       targetId: 'e1',
@@ -63,6 +63,16 @@ function stateFor(correctCount: number, phase: BattleState['phase'] = 'SPELL_QUE
       questionIndex: 2,
       correctCount,
       question,
+    } : null,
+    pendingSpellQuestionOutcome: phase === 'SPELL_EXPLANATION' ? {
+      spellId: 'spell_test',
+      sourceActorId: 'p1',
+      targetId: 'e1',
+      questionIndex: 2,
+      correct: true,
+      correctCount,
+      question,
+      submittedAnswer: { type: 'multiple_choice', selectedIndex: 1 },
     } : null,
     preparedSpellsByPlayerId: {},
     pendingTargetSelection: null,
@@ -84,6 +94,7 @@ function controllerFor(state: BattleState, feedback: SpellAnswerFeedback | null)
     listSubjects: () => ['数学'],
     listStars: () => [1],
     listSpellSubjects: () => ['数学'],
+    getSpellDefinition: () => undefined,
     selectCommand: () => {},
     selectTarget: () => {},
     selectSubjectAndStar: () => {},
