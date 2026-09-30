@@ -17,6 +17,7 @@ import type { ItemBattleSlot, BattleEngineSnapshot } from '../engine/battle/Batt
 import type { RewardPhaseSnapshot, RunState } from '../engine/roguelite/RogueliteEngine.types';
 import type { StageLaunchConfig } from '../base/base.types';
 import type { QuestionResult } from '../engine/learningHistory/LearningHistory.types';
+import type { EnemyBestiaryState, EnemyObservationEvent } from '../engine/bestiary/BestiarySystem';
 
 export type { StageLaunchConfig } from '../base/base.types';
 
@@ -109,6 +110,8 @@ export function useStageController(
   onReturnToBase: (endContext: StageEndContext) => void,
   onQuestionResult?: (result: QuestionResult) => void,
   saveHooks?: UseStageControllerSaveHooks,
+  enemyBestiary: EnemyBestiaryState = {},
+  onEnemyObservation?: (event: EnemyObservationEvent) => void,
 ) {
   const { party, stage, questions, battleItems, runSeed: initialRunSeed } = config;
 
@@ -213,6 +216,8 @@ export function useStageController(
             initialItems={initialItems}
             seed={battleSeed}
             onQuestionResult={onQuestionResult}
+            enemyBestiary={enemyBestiary}
+            onEnemyObservation={onEnemyObservation}
             restoreSnapshot={battleRestoreSnapshot}
             onSnapshotChange={(snapshot) => notifyProgress(stageState, { liveBattleSnapshot: snapshot })}
             onWin={(survivorHp, remainingItems) => {
