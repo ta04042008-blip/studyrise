@@ -386,6 +386,15 @@ describe('StageEngine — final Zone / lap looping', () => {
       maxHp: Math.ceil(firstLapEnemy.definition.baseStats.maxHp * 1.5),
     });
     expect(stageEngine.deriveZoneBattleSeed(oneZoneStage, state)).not.toBe(firstLapBattleSeed);
+
+    const thirdLapState = { ...state, completedLaps: 2 };
+    const thirdLapEnemy = stageEngine.resolveZoneEnemies(oneZoneStage, thirdLapState, enemyDefinitionsById)[0];
+    expect(thirdLapEnemy.definition.baseStats).toEqual({
+      attack: Math.ceil(firstLapEnemy.definition.baseStats.attack * 2.25),
+      defense: Math.ceil(firstLapEnemy.definition.baseStats.defense * 2.25),
+      speed: Math.ceil(firstLapEnemy.definition.baseStats.speed * 2.25),
+      maxHp: Math.ceil(firstLapEnemy.definition.baseStats.maxHp * 2.25),
+    });
   });
 
   it('return after a completed lap records a CLEARED result with the lap and total cleared-zone count', () => {
