@@ -177,7 +177,7 @@ button {
   bottom: max(10px, env(safe-area-inset-bottom));
   z-index: 4;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 7px;
   width: auto;
   min-width: 0;
@@ -2181,122 +2181,5 @@ button, input, select, textarea {
   .battle-screen__spell-correct-effect,
   .battle-screen__spell-correct-ring {
     animation-duration: 1ms !important;
-  }
-}
-
-
-/* --- Persistent Base memo --- */
-.memo-screen {
-  max-width: 920px;
-  margin: 0 auto;
-  padding: 24px;
-  box-sizing: border-box;
-}
-
-.memo-screen__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.memo-screen__header h1 {
-  margin: 0;
-}
-
-.memo-screen__eyebrow {
-  margin: 0 0 4px;
-  color: #65707b;
-  font-size: .78rem;
-  font-weight: 900;
-  letter-spacing: .14em;
-}
-
-.memo-screen__lead {
-  margin: 0 0 16px;
-  color: #59636e;
-}
-
-.memo-screen__editor {
-  display: block;
-}
-
-.memo-screen__label {
-  display: block;
-  margin-bottom: 7px;
-  font-weight: 800;
-}
-
-.memo-screen__editor textarea {
-  width: 100%;
-  min-height: min(52vh, 460px);
-  resize: vertical;
-  box-sizing: border-box;
-  padding: 16px;
-  border: 1px solid #cfd7df;
-  border-radius: 12px;
-  background: #fff;
-  color: #17212b;
-  font-size: 1rem;
-  line-height: 1.65;
-  box-shadow: inset 0 1px 3px rgba(10, 25, 40, .06);
-}
-
-.memo-screen__editor textarea:focus {
-  outline: 3px solid rgba(65, 145, 215, .26);
-  border-color: #4b91ca;
-}
-
-.memo-screen__footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.memo-screen__count {
-  margin-right: auto;
-  color: #65707b;
-  font-size: .86rem;
-}
-
-.memo-screen__saved {
-  color: #236f3c;
-  font-weight: 800;
-}
-
-.memo-screen__save {
-  min-width: 170px;
-  min-height: 46px;
-  font-weight: 850;
-}
-
-@media (max-width: 620px) {
-  .memo-screen {
-    padding: 16px;
-  }
-
-  .memo-screen__header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .memo-screen__editor textarea {
-    min-height: 44vh;
-  }
-
-  .memo-screen__footer {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .memo-screen__count {
-    margin-right: 0;
-  }
-
-  .memo-screen__save {
-    width: 100%;
   }
 }
