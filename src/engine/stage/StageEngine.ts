@@ -283,13 +283,14 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
 
   function selfReturn(state: StageRunState, party: CharacterDefinition[], runResolver: RunResolver): StageRunState {
     if (state.phase !== 'INTER_ZONE_CHOICE') return state; // no-op: self-return is only ever possible between zones (spec §2.5)
+    const hasCompletedLap = (state.completedLaps ?? 0) > 0;
     return {
       ...state,
       phase: 'STAGE_RESULT',
       runState: runResolver.resetRunBuild(state.runState, party),
       result: {
         stageId: state.stageId,
-        outcome: 'SELF_RETURNED',
+        outcome: hasCompletedLap ? 'CLEARED' : 'SELF_RETURNED',
         zonesCleared: state.clearedZoneIds.length,
         completedLaps: state.completedLaps ?? 0,
         clearedZoneIds: state.clearedZoneIds,
