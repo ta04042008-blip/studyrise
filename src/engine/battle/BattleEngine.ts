@@ -132,6 +132,8 @@ export interface BattleEngine {
   selectSubjectAndStar(subject: string, star: StarLevel): void;
   /** SPELL_SUBJECT_SELECT → first spell question. ★ is selected automatically by SpellDefinition. */
   selectSpellSubject(subject: string): void;
+  /** Cancels spell preparation before its first question is confirmed. */
+  cancelSpellSubjectSelection(): void;
   /** Answers one of the spell's five consecutive questions. */
   submitSpellAnswer(answer: MultipleChoiceAnswer): void;
   /**
@@ -533,6 +535,16 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
     state.phase = 'SPELL_QUESTION';
   }
 
+  function cancelSpellSubjectSelection() {
+    if (state.phase !== 'SPELL_SUBJECT_SELECT' || !state.pendingSpellSequence) {
+      warnRejected('cancelSpellSubjectSelection');
+      return;
+    }
+    state.pendingSpellSequence = null;
+    state.pendingTargetSelection = null;
+    state.phase = 'COMMAND_SELECT';
+  }
+
   function submitSpellAnswer(answer: MultipleChoiceAnswer) {
     const pending = state.pendingSpellSequence;
     if (state.phase !== 'SPELL_QUESTION' || !pending?.question || !pending.subject) {
@@ -586,6 +598,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       correct,
       question,
       selectedAnswerIndex: selectedIndex,
+      submittedAnswer: answer,
     };
 
     let outcome: QuestionCommandOutcome;
@@ -990,6 +1003,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
     selectTarget,
     selectSubjectAndStar,
     selectSpellSubject,
+    cancelSpellSubjectSelection,
     submitAnswer,
     submitSpellAnswer,
     useSpell,

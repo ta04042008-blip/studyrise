@@ -9,6 +9,7 @@ interface QuestionViewProps {
 /** Renders every format present in the attached official StudyRise banks. */
 export function QuestionView({ question, onSubmit }: QuestionViewProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedBoolean, setSelectedBoolean] = useState<boolean | null>(null);
   const [ordering, setOrdering] = useState<number[]>([]);
   const [shortAnswer, setShortAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -65,10 +66,35 @@ export function QuestionView({ question, onSubmit }: QuestionViewProps) {
       )}
 
       {question.format === 'true_false' && (
-        <div className="question-view__actions">
-          <button type="button" disabled={submitted} onClick={() => confirm({ type: 'true_false', value: true })}>正</button>
-          <button type="button" disabled={submitted} onClick={() => confirm({ type: 'true_false', value: false })}>誤</button>
-        </div>
+        <>
+          <div className="question-view__choices">
+            <button
+              type="button"
+              disabled={submitted}
+              aria-pressed={selectedBoolean === true}
+              onClick={() => setSelectedBoolean(true)}
+            >
+              正
+            </button>
+            <button
+              type="button"
+              disabled={submitted}
+              aria-pressed={selectedBoolean === false}
+              onClick={() => setSelectedBoolean(false)}
+            >
+              誤
+            </button>
+          </div>
+          <div className="question-view__actions">
+            <button
+              type="button"
+              disabled={submitted || selectedBoolean == null}
+              onClick={() => confirm({ type: 'true_false', value: selectedBoolean! })}
+            >
+              回答する
+            </button>
+          </div>
+        </>
       )}
 
       {question.format === 'ordering' && (
