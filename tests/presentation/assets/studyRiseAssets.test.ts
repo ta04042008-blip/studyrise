@@ -121,6 +121,6 @@ describe('resolveStageBackgroundPath', () => {
 
 describe('resolveBaseHomeBackgroundPath', () => {
   it('always resolves the fixed 拠点 background path', () => {
-    expect(resolveBaseHomeBackgroundPath()).toBe('/assets/studyrise/backgrounds/base/base_home.png');
+    expect(resolveBaseHomeBackgroundPath()).toBe('/assets/studyrise/backgrounds/base/base_home.jpg');
   });
 });

@@ -92,7 +92,7 @@ export const stageBackgroundById: Record<string, BackgroundArtDefinition> = {
 };
 
 /** Fixed BaseHome background (BaseHome has no Definition ID of its own). */
-export const baseHomeBackgroundArt: BackgroundArtDefinition = { runtimeFilename: 'base_home.png' };
+export const baseHomeBackgroundArt: BackgroundArtDefinition = { runtimeFilename: 'base_home.jpg' };
 
 /** Resolves full-body detail/profile art for a playable character. */
 export function resolveCharacterDetailArtPath(definitionId: string | undefined): string | undefined {
