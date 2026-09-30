@@ -324,10 +324,11 @@ describe('useBaseController — additional real-scenario coverage (MVP-9 audit i
     clickIfPresent('.target-select-view button');
     clickIfPresent('.subject-star-select button');
     answerCurrentOfficialQuestionCorrectly();
-    // submitAnswer() enters COMMAND_ANIMATION. The presentation now advances
-    // automatically; wait for EXPLANATION, then confirm it.
-    await waitFor(() => expect(document.querySelector('.explanation-view')).not.toBeNull(), { timeout: 1000 });
-    fireEvent.click(screen.getByRole('button', { name: '次へ' }));
+    // submitAnswer() enters COMMAND_ANIMATION and then automatically reaches
+    // EXPLANATION. Search is already applied there; inspect/save that stable
+    // state BEFORE pressing 次へ, because the following enemy turn may consume
+    // part (or all) of the revealed queue.
+    await waitFor(() => expect(document.querySelector('.explanation-view')).not.toBeNull(), { timeout: 1200 });
 
     const searchPanelBefore = document.querySelector('.search-info-panel')?.textContent;
     const turnOrderBefore = document.querySelector('.turn-order-view')?.textContent;
