@@ -31,6 +31,8 @@ export type BattlePhase =
   | 'TARGET_SELECT'
   | 'SUBJECT_DIFFICULTY_SELECT'
   | 'QUESTION'
+  | 'SPELL_SUBJECT_SELECT'
+  | 'SPELL_QUESTION'
   | 'COMMAND_ANIMATION'
   | 'RESULT_APPLY'
   | 'EXPLANATION'
@@ -44,10 +46,25 @@ export interface SpellLevelData {
   effects: Effect[];
 }
 
+export type SpellLevelBonus =
+  | { type: 'NONE' }
+  | { type: 'BREAK_GUARD' }
+  | { type: 'EXECUTE'; hpThreshold: number; damageMultiplier: number }
+  | { type: 'SEARCH_TARGETS'; count: number }
+  | { type: 'REFLECT_GUARD'; mitigationPercent: number };
+
 export interface SpellDefinition {
   id: string;
   name: string;
   targetType: 'enemy' | 'self';
+  /** Five automatic ★ values used by the spell sequence. The player selects only the subject. */
+  questionStars: readonly [StarLevel, StarLevel, StarLevel, StarLevel, StarLevel];
+  /** Index = number correct (0..5). 0 must be zero: complete failure. */
+  powerByCorrect: readonly [0, number, number, number, number, number];
+  /** Optional Search depth by correct count. Used by 解析パルス; 0 means no Search. */
+  searchDepthByCorrect?: readonly [0, number, number, number, number, number];
+  /** Level 1..maxLevel attached effects. Basic power never scales directly with level. */
+  levelBonuses: readonly SpellLevelBonus[];
   /**
    * Highest level a SPELL_UPGRADE roguelite reward can raise this spell to
    * (spec §4.5). Set per spell, not globally.
@@ -162,7 +179,7 @@ export interface KnownSpell {
   spellId: string;
   level: number;
   name: string;
-  /** Resolved for `level` (SpellLevelData.mpCost at that level). */
+  /** Legacy field retained only for Save/type compatibility during MP removal. Always 0 in the new spell system. */
   mpCost: number;
 }
 
@@ -192,6 +209,23 @@ export interface PlayerCommandModifiers {
  * this field — Guard/Charge always have targetId === sourceActorId (self);
  * Attack/Search target a chosen enemy.
  */
+export interface PendingSpellSequence {
+  spellId: string;
+  sourceActorId: string;
+  targetId: string;
+  subject?: string;
+  questionIndex: number;
+  correctCount: number;
+  question?: QuestionDefinition;
+}
+
+export interface PreparedSpell {
+  spellId: string;
+  sourceActorId: string;
+  targetId: string;
+  correctCount: number;
+}
+
 export interface PendingQuestionCommand {
   command: QuestionCommandKind;
   sourceActorId: string;
@@ -265,7 +299,9 @@ export interface SpellOutcome {
   sourceActorId: string;
   targetId: string;
   spellId: string;
+  correctCount: number;
   effects: Effect[];
+  searchedEnemyIds?: string[];
 }
 
 export interface ItemOutcome {
@@ -301,6 +337,10 @@ export interface BattleState {
   upcomingActorIds: string[];
   timeline: TimelineState;
   pendingCommand: PendingQuestionCommand | null;
+  /** Five-question spell preparation currently being answered. */
+  pendingSpellSequence: PendingSpellSequence | null;
+  /** Prepared spell per player, auto-resolved when that player next receives an action. */
+  preparedSpellsByPlayerId: Record<string, PreparedSpell>;
   pendingTargetSelection: PendingTargetSelection | null;
   /** Set by submitAnswer (correctness/effect precomputed); consumed by RESULT_APPLY. Actor state is untouched while this is set. */
   pendingOutcome: QuestionCommandOutcome | null;
