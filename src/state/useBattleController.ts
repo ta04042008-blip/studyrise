@@ -19,6 +19,7 @@ import type { StarLevel } from '../types/stats';
 import type { QuestionResult } from '../engine/learningHistory/LearningHistory.types';
 import { questionResultFromAnswer } from '../engine/learningHistory/questionResultFromAnswer';
 import type { EnemyObservationEvent } from '../engine/bestiary/BestiarySystem';
+import type { SkillDefinition } from '../engine/battle/skills';
 
 export interface UseBattleControllerArgs {
   /** 1〜3 characters (spec §4.1). */
@@ -27,6 +28,8 @@ export interface UseBattleControllerArgs {
   enemies: (EnemyDefinition | EnemyBattleInstance)[];
   questions: readonly QuestionDefinition[];
   spellsById: Record<string, SpellDefinition>;
+  /** Passive-skill registry. Optional while production character effects remain undecided. */
+  skillsById?: Record<string, SkillDefinition>;
   initialItems: ItemBattleSlot[];
   seed: number;
   /** Run-provided known-spells-and-levels per player (spec §4.5). Omit for the MVP-1〜3 single-initial-spell default. */
@@ -104,6 +107,7 @@ export function useBattleController({
   enemies,
   questions,
   spellsById,
+  skillsById,
   initialItems,
   seed,
   knownSpellsByPlayerId,
@@ -141,6 +145,7 @@ export function useBattleController({
       config: battleConfig,
       random,
       spellsById,
+      skillsById,
       initialItems,
       knownSpellsByPlayerId,
       playerCommandModifiers,
