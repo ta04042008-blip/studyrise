@@ -14,7 +14,7 @@ import {
   testSpellsById,
 } from '../roguelite/fixtures';
 
-const testStageConfig: StageConfig = { officialZoneCount: 10, enemyStatGrowthPerLap: 0.2, koReviveHpPercent: 0.3 };
+const testStageConfig: StageConfig = { officialZoneCount: 10, enemyStatGrowthPerLap: 0.5, koReviveHpPercent: 0.3 };
 const stageEngine = createStageEngine({ config: testStageConfig });
 
 /** No departure items needed for these fixtures — StageEngine's item-pool threading is covered by its own dedicated test file. */
@@ -380,10 +380,10 @@ describe('StageEngine — final Zone / lap looping', () => {
     expect(state.phase).toBe('ZONE_BATTLE');
     const secondLapEnemy = stageEngine.resolveZoneEnemies(oneZoneStage, state, enemyDefinitionsById)[0];
     expect(secondLapEnemy.definition.baseStats).toEqual({
-      attack: Math.ceil(firstLapEnemy.definition.baseStats.attack * 1.2),
-      defense: Math.ceil(firstLapEnemy.definition.baseStats.defense * 1.2),
-      speed: Math.ceil(firstLapEnemy.definition.baseStats.speed * 1.2),
-      maxHp: Math.ceil(firstLapEnemy.definition.baseStats.maxHp * 1.2),
+      attack: Math.ceil(firstLapEnemy.definition.baseStats.attack * 1.5),
+      defense: Math.ceil(firstLapEnemy.definition.baseStats.defense * 1.5),
+      speed: Math.ceil(firstLapEnemy.definition.baseStats.speed * 1.5),
+      maxHp: Math.ceil(firstLapEnemy.definition.baseStats.maxHp * 1.5),
     });
     expect(stageEngine.deriveZoneBattleSeed(oneZoneStage, state)).not.toBe(firstLapBattleSeed);
   });
