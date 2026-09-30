@@ -1,6 +1,7 @@
 import type { RunSavePayload } from '../engine/save/RunSave';
 import type { StageDefinition } from '../engine/stage/StageEngine.types';
 import type { EnemyDefinition } from '../engine/battle/BattleEngine.types';
+import type { QuestionDefinition } from '../engine/question/QuestionEngine.types';
 
 /**
  * Bug fix (MVP-10 acceptance audit item 1): `RunSavePayload.stageRunState.
@@ -28,6 +29,7 @@ export function isRunSaveCompatibleWithCurrentContent(
   payload: RunSavePayload,
   stagesById: Record<string, StageDefinition>,
   enemyDefinitionsById: Record<string, EnemyDefinition>,
+  questionPool?: readonly QuestionDefinition[],
 ): boolean {
   const stage = stagesById[payload.stageId];
   if (!stage) return false;
@@ -39,6 +41,15 @@ export function isRunSaveCompatibleWithCurrentContent(
   const zoneIds = new Set(stage.zones.map((z) => z.id));
   for (const clearedId of clearedZoneIds) {
     if (!zoneIds.has(clearedId)) return false;
+  }
+
+  if (questionPool) {
+    const unitKey = (subject: string, field: string, unit: string) => `${subject}\u0000${field}\u0000${unit}`;
+    const currentUnits = new Set(questionPool.map((q) => unitKey(q.subject, q.field, q.unit)));
+    if (payload.questionScope.length === 0) return false;
+    for (const ref of payload.questionScope) {
+      if (!currentUnits.has(unitKey(ref.subject, ref.field, ref.unit))) return false;
+    }
   }
 
   const liveBattleSnapshot = payload.liveBattleSnapshot;
