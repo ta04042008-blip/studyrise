@@ -574,6 +574,7 @@ body:has(.battle-screen) {
   .question-view,
   .command-animation-view,
   .explanation-view,
+  .spell-question-explanation-view,
   .spell-item-result-view,
   .battle-end-view {
     position: absolute;
@@ -598,6 +599,7 @@ body:has(.battle-screen) {
   .question-view__text,
   .command-animation-view p:first-child,
   .explanation-view__text,
+  .spell-question-explanation-view__text,
   .spell-item-result-view p:first-child,
   .battle-end-view p:first-child { margin-top: 0; }
 
@@ -633,27 +635,85 @@ body:has(.battle-screen) {
     left: 50%;
     bottom: max(12px, env(safe-area-inset-bottom));
     transform: translateX(-50%);
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 8px;
-    width: min(760px, calc(100vw - 64px));
-    padding: 10px;
+    width: min(860px, calc(100vw - 64px));
+    max-height: min(58vh, 470px);
+    overflow: auto;
+    padding: 12px;
     box-sizing: border-box;
     border: 2px solid rgba(255,255,255,.9);
     border-radius: 8px;
-    background: rgba(8,20,34,.94);
+    background: rgba(8,20,34,.96);
+    color: #fff;
     box-shadow: 0 4px 0 rgba(0,0,0,.5);
     z-index: 7;
   }
 
+  .spell-select-view__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .spell-select-view__header strong {
+    font-size: 1.1rem;
+  }
+
+  .spell-select-view__header span {
+    opacity: .78;
+    font-size: .82rem;
+  }
+
+  .spell-select-view__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 8px;
+  }
+
   .spell-select-view button {
-    min-height: 58px;
     border: 2px solid rgba(255,255,255,.82);
     border-radius: 5px;
     background: rgba(10,27,45,.96);
     color: #fff;
     font-weight: 750;
     touch-action: manipulation;
+  }
+
+  .spell-select-view__spell {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    min-height: 138px;
+    padding: 10px 12px;
+    text-align: left;
+  }
+
+  .spell-select-view__spell-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 1.05rem;
+  }
+
+  .spell-select-view__effect {
+    line-height: 1.45;
+  }
+
+  .spell-select-view__bonus,
+  .spell-select-view__stars {
+    color: rgba(225,242,255,.86);
+    font-size: .8rem;
+    line-height: 1.35;
+  }
+
+  .spell-select-view__cancel {
+    display: block;
+    min-width: 160px;
+    min-height: 46px;
+    margin: 10px auto 0;
   }
 
   .spell-select-view button:active:not(:disabled) {
@@ -844,6 +904,70 @@ body:has(.battle-screen) {
   .explanation-view__result-detail--miss { opacity: .82; }
   .explanation-view__verdict { text-align: center; font-size: 1.35rem; font-weight: 900; margin-block: 8px 4px !important; }
   .explanation-view button { display: block; min-width: 220px; margin: 8px auto 0; }
+
+
+  .spell-question-explanation-view {
+    width: min(780px, calc(100vw - 64px));
+    max-height: min(52vh, 400px);
+    bottom: max(8px, env(safe-area-inset-bottom));
+    padding: 10px 14px;
+  }
+
+  .spell-question-explanation-view__progress {
+    width: fit-content;
+    margin: 0 auto 6px;
+    padding: 3px 10px;
+    border: 1px solid rgba(145,210,255,.72);
+    border-radius: 999px;
+    background: rgba(12,55,90,.72);
+    font-size: .78rem;
+    font-weight: 900;
+  }
+
+  .spell-question-explanation-view__meta {
+    opacity: .78;
+    font-size: .82rem;
+  }
+
+  .spell-question-explanation-view__text {
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .spell-question-explanation-view p {
+    margin-block: 5px;
+  }
+
+  .spell-question-explanation-view__choices {
+    margin: 4px 0 6px;
+    padding-left: 22px;
+  }
+
+  .spell-question-explanation-view__verdict {
+    margin-block: 8px 4px !important;
+    text-align: center;
+    font-size: 1.35rem;
+    font-weight: 900;
+  }
+
+  .spell-question-explanation-view__verdict--correct {
+    text-shadow: 0 0 10px rgba(90,190,255,.65);
+  }
+
+  .spell-question-explanation-view__verdict--incorrect {
+    opacity: .86;
+  }
+
+  .spell-question-explanation-view__score {
+    text-align: center;
+    font-weight: 850;
+  }
+
+  .spell-question-explanation-view button {
+    display: block;
+    min-width: 220px;
+    margin: 8px auto 0;
+  }
 
   .battle-screen__damage-pop--miss strong {
     font-size: 1.35rem;
