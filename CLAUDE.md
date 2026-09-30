@@ -105,8 +105,9 @@ Skill
 Spell
 
 • active special move
-• manually selected
-• consumes MP for player characters
+• manually selected to begin a five-question preparation sequence
+• does not use MP
+• automatically resolves on that character's next action
 • may be acquired/upgraded during the current stage run
 • extra spells and run upgrades reset after the run
 
@@ -122,7 +123,6 @@ hp
 attack
 defense
 speed
-mp
 
 UI labels:
 
@@ -130,7 +130,8 @@ HP
 学力
 忍耐力
 思考速度
-MP
+
+Legacy MP fields may remain only at Save-compatibility boundaries while migration is in progress; they are not active gameplay stats.
 
 Do not reintroduce old stats such as:
 
@@ -254,7 +255,6 @@ Random systems include:
 • damage variance
 • critical
 • guard great success
-• charge great success
 • enemy AI
 • question selection
 • reward rarity
@@ -396,7 +396,6 @@ During development, provide a development-only panel or equivalent tools for tes
 Useful controls may include:
 
 • set HP
-• set MP
 • choose enemy
 • jump to zone
 • force a question result
@@ -431,7 +430,7 @@ Prioritize:
 1. action timeline
 2. damage
 3. guard
-4. MP
+4. spell preparation/auto-resolution
 5. spell validation/resolution
 6. skill triggers
 7. KO

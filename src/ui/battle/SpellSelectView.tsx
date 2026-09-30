@@ -2,7 +2,6 @@ import type { KnownSpell } from '../../engine/battle/BattleEngine.types';
 
 interface SpellSelectViewProps {
   knownSpells: KnownSpell[];
-  playerMp: number;
   onSelect: (spellId: string) => void;
   onCancel: () => void;
 }
@@ -14,17 +13,16 @@ interface SpellSelectViewProps {
  * simply calls useSpell(spellId) the same way the single-spell case always
  * has (CLAUDE.md §9 — no calculation happens here).
  */
-export function SpellSelectView({ knownSpells, playerMp, onSelect, onCancel }: SpellSelectViewProps) {
+export function SpellSelectView({ knownSpells, onSelect, onCancel }: SpellSelectViewProps) {
   return (
     <div className="spell-select-view">
       {knownSpells.map((spell) => (
         <button
           key={spell.spellId}
           type="button"
-          disabled={playerMp < spell.mpCost}
           onClick={() => onSelect(spell.spellId)}
         >
-          {spell.name}（Lv{spell.level} / MP{spell.mpCost}）
+          {spell.name}（Lv{spell.level}）
         </button>
       ))}
       <button type="button" onClick={onCancel}>

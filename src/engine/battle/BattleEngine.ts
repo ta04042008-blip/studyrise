@@ -128,8 +128,12 @@ export interface BattleEngine {
    * lands on RESULT_APPLY). Only valid while phase === 'TARGET_SELECT'.
    */
   selectTarget(targetId: string): void;
-  /** SUBJECT_DIFFICULTY_SELECT → QUESTION. */
+  /** SUBJECT_DIFFICULTY_SELECT → QUESTION for ordinary commands. */
   selectSubjectAndStar(subject: string, star: StarLevel): void;
+  /** SPELL_SUBJECT_SELECT → first spell question. ★ is selected automatically by SpellDefinition. */
+  selectSpellSubject(subject: string): void;
+  /** Answers one of the spell's five consecutive questions. */
+  submitSpellAnswer(answer: MultipleChoiceAnswer): void;
   /**
    * QUESTION → COMMAND_ANIMATION. Correctness/effect are computed here, but
    * actor state is NOT mutated yet (that happens at RESULT_APPLY, triggered
@@ -229,7 +233,7 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
       entries.map(({ spellId, level }) => {
         const spell = spellsById[spellId];
         const levelData = spellLevelData(spell, level);
-        return { spellId, level, name: spell.name, mpCost: levelData.mpCost };
+        return { spellId, level, name: spell.name, mpCost: 0 };
       }),
     ]),
   );
@@ -258,6 +262,8 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
     upcomingActorIds: [],
     timeline: initialTimeline,
     pendingCommand: null,
+    pendingSpellSequence: null,
+    preparedSpellsByPlayerId: {},
     pendingTargetSelection: null,
     pendingOutcome: null,
     lastPlayerOutcome: null,
@@ -296,6 +302,9 @@ export function restoreBattleEngine(snapshot: BattleEngineSnapshot, options: Res
   const { questionEngine, config, random, spellsById, playerCommandModifiers } = options;
 
   const state: BattleState = JSON.parse(JSON.stringify(snapshot.state));
+  // Save compatibility: snapshots created before the prepared-spell system have neither field.
+  state.pendingSpellSequence ??= null;
+  state.preparedSpellsByPlayerId ??= {};
   const enemyPlannedActions: Record<string, PlannedEnemyAction[]> = JSON.parse(
     JSON.stringify(snapshot.enemyPlannedActions),
   );
@@ -478,7 +487,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
 
     state.pendingTargetSelection = null;
     if (pending.for === 'spell') {
-      resolveSpell(pending.sourceActorId, pending.spellId, targetId);
+      beginSpellPreparation(pending.sourceActorId, pending.spellId, targetId);
     } else {
       resolveItem(pending.sourceActorId, pending.itemId, targetId);
     }
@@ -492,6 +501,66 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
     const question = questionEngine.pickQuestion(subject, star);
     state.pendingCommand = { ...state.pendingCommand, subject, star, question };
     state.phase = 'QUESTION';
+  }
+
+  function beginSpellPreparation(sourceActorId: string, spellId: string, targetId: string) {
+    state.pendingSpellSequence = {
+      spellId,
+      sourceActorId,
+      targetId,
+      questionIndex: 0,
+      correctCount: 0,
+    };
+    state.phase = 'SPELL_SUBJECT_SELECT';
+  }
+
+  function selectSpellSubject(subject: string) {
+    const pending = state.pendingSpellSequence;
+    if (state.phase !== 'SPELL_SUBJECT_SELECT' || !pending) {
+      warnRejected('selectSpellSubject');
+      return;
+    }
+    const spell = spellsById[pending.spellId];
+    const star = (spell.questionStars ?? [1, 2, 3, 4, 5])[0];
+    const question = questionEngine.pickQuestion(subject, star);
+    state.pendingSpellSequence = { ...pending, subject, question };
+    state.phase = 'SPELL_QUESTION';
+  }
+
+  function submitSpellAnswer(answer: MultipleChoiceAnswer) {
+    const pending = state.pendingSpellSequence;
+    if (state.phase !== 'SPELL_QUESTION' || !pending?.question || !pending.subject) {
+      warnRejected('submitSpellAnswer');
+      return;
+    }
+    const question = pending.question;
+    const correct =
+      answer.type === 'multiple_choice' &&
+      question.format === 'multiple_choice' &&
+      answer.selectedIndex === question.correctIndex;
+    const correctCount = pending.correctCount + (correct ? 1 : 0);
+    const nextIndex = pending.questionIndex + 1;
+
+    if (nextIndex < 5) {
+      const spell = spellsById[pending.spellId];
+      const nextQuestion = questionEngine.pickQuestion(pending.subject, (spell.questionStars ?? [1, 2, 3, 4, 5])[nextIndex]);
+      state.pendingSpellSequence = {
+        ...pending,
+        questionIndex: nextIndex,
+        correctCount,
+        question: nextQuestion,
+      };
+      return;
+    }
+
+    state.preparedSpellsByPlayerId![pending.sourceActorId] = {
+      spellId: pending.spellId,
+      sourceActorId: pending.sourceActorId,
+      targetId: pending.targetId,
+      correctCount,
+    };
+    state.pendingSpellSequence = null;
+    proceedToNextAction();
   }
 
   function submitAnswer(answer: MultipleChoiceAnswer) {
@@ -643,13 +712,6 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       warnRejected('useSpell (spell not known by this actor)');
       return;
     }
-    const levelData = spellLevelData(spell, known.level);
-    const sourceActor = actorById(sourceActorId);
-    if (sourceActor.currentMp < levelData.mpCost) {
-      warnRejected('useSpell (insufficient MP)');
-      return;
-    }
-
     const decision = decideSpellOrItemTargeting(
       spell.targetType,
       sourceActorId,
@@ -660,29 +722,76 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       state.phase = 'TARGET_SELECT';
       return;
     }
-    resolveSpell(sourceActorId, spell.id, decision.autoTargetId!);
+    beginSpellPreparation(sourceActorId, spell.id, decision.autoTargetId!);
   }
 
-  function resolveSpell(sourceActorId: string, spellId: string, targetId: string) {
-    const spell = spellsById[spellId];
-    const known = knownSpellsByPlayerId[sourceActorId].find((k) => k.spellId === spellId)!;
-    const levelData = spellLevelData(spell, known.level);
-    const sourceActor = actorById(sourceActorId);
-    sourceActor.currentMp -= levelData.mpCost;
-    for (const effect of levelData.effects) {
-      applyEffectToActor(actorById(targetId), effect);
+  function resolvePreparedSpell(sourceActorId: string) {
+    const prepared = state.preparedSpellsByPlayerId?.[sourceActorId];
+    if (!prepared) return false;
+    const spell = spellsById[prepared.spellId];
+    const known = knownSpellsByPlayerId[sourceActorId]?.find((k) => k.spellId === prepared.spellId);
+    if (!spell || !known) {
+      if (state.preparedSpellsByPlayerId) delete state.preparedSpellsByPlayerId[sourceActorId];
+      return false;
     }
 
+    const correctCount = Math.max(0, Math.min(5, prepared.correctCount));
+    const effects: Parameters<typeof applyEffect>[1][] = [];
+    const searchedEnemyIds: string[] = [];
+
+    if (correctCount > 0) {
+      const power = spell.powerByCorrect?.[correctCount] ?? 0;
+      const levelBonus = spell.levelBonuses?.[Math.min(known.level, spell.maxLevel) - 1] ?? { type: 'NONE' as const };
+
+      if (spell.id === 'spell_firebolt_placeholder') {
+        const target = actorById(prepared.targetId);
+        if (levelBonus.type === 'BREAK_GUARD') target.guard = null;
+        let damage = power;
+        if (levelBonus.type === 'EXECUTE' && target.currentHp > 0 && target.currentHp / target.maxHp <= levelBonus.hpThreshold) {
+          damage = Math.round(damage * levelBonus.damageMultiplier);
+        }
+        effects.push({ type: 'DAMAGE', amount: damage });
+        applyEffectToActor(target, effects[0]);
+      } else if (spell.id === 'spell_ice_shard_placeholder') {
+        const target = actorById(prepared.targetId);
+        effects.push({ type: 'DAMAGE', amount: power });
+        if (target.currentHp > 0) applyEffectToActor(target, effects[0]);
+
+        const depth = spell.searchDepthByCorrect?.[correctCount] ?? 0;
+        const targetCount = levelBonus.type === 'SEARCH_TARGETS' ? levelBonus.count : 1;
+        const candidates = [
+          ...aliveEnemies().filter((e) => e.id === prepared.targetId),
+          ...aliveEnemies().filter((e) => e.id !== prepared.targetId),
+        ].slice(0, targetCount);
+        for (const enemy of candidates) {
+          ensureEnemyQueueLength(enemy.id, depth);
+          revealedCountByEnemyId[enemy.id] = depth;
+          searchedEnemyIds.push(enemy.id);
+        }
+      } else if (spell.id === 'spell_heal_placeholder') {
+        const target = actorById(sourceActorId);
+        effects.push({ type: 'HEAL', amount: power });
+        applyEffectToActor(target, effects[0]);
+        if (levelBonus.type === 'REFLECT_GUARD') {
+          const guardEffect = { type: 'GUARD' as const, mitigationPercent: levelBonus.mitigationPercent };
+          effects.push(guardEffect);
+          applyEffectToActor(target, guardEffect);
+        }
+      }
+    }
+
+    if (state.preparedSpellsByPlayerId) delete state.preparedSpellsByPlayerId[sourceActorId];
     state.lastNonQuestionOutcome = {
       command: 'spell',
       sourceActorId,
-      targetId,
+      targetId: prepared.targetId,
       spellId: spell.id,
-      effects: levelData.effects,
+      correctCount,
+      effects,
+      searchedEnemyIds,
     };
-    // No question was involved, so there is no 正誤/EXPLANATION step (spec
-    // §5.3's short flow) — RESULT_APPLY is the resting phase here.
     state.phase = 'RESULT_APPLY';
+    return true;
   }
 
   function useItem(itemId: string) {
@@ -752,7 +861,11 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       const actor = actorById(result.actorId);
       if (actor.kind === 'player') {
         state.currentActorId = actor.id;
-        state.phase = 'COMMAND_SELECT';
+        if (state.preparedSpellsByPlayerId?.[actor.id]) {
+          resolvePreparedSpell(actor.id);
+        } else {
+          state.phase = 'COMMAND_SELECT';
+        }
         return;
       }
 
@@ -876,7 +989,9 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
     selectCommand,
     selectTarget,
     selectSubjectAndStar,
+    selectSpellSubject,
     submitAnswer,
+    submitSpellAnswer,
     useSpell,
     useItem,
     advance,

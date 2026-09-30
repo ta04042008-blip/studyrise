@@ -70,7 +70,9 @@ export interface BattleController {
   selectCommand: (command: QuestionCommandKind) => void;
   selectTarget: (targetId: string) => void;
   selectSubjectAndStar: (subject: string, star: StarLevel) => void;
+  selectSpellSubject: (subject: string) => void;
   submitAnswer: (answer: MultipleChoiceAnswer) => void;
+  submitSpellAnswer: (answer: MultipleChoiceAnswer) => void;
   useSpell: (spellId: string) => void;
   useItem: (itemId: string) => void;
   advance: () => void;
@@ -184,6 +186,14 @@ export function useBattleController({
     [engines, sync],
   );
 
+  const selectSpellSubject = useCallback(
+    (subject: string) => {
+      engines.battleEngine.selectSpellSubject(subject);
+      sync();
+    },
+    [engines, sync],
+  );
+
   const submitAnswer = useCallback(
     (answer: MultipleChoiceAnswer) => {
       // Learning-history dedup boundary (user's explicit MVP-8 instruction):
@@ -212,6 +222,30 @@ export function useBattleController({
         if (outcome) {
           onQuestionResult(questionResultFromAnswer(answer, outcome));
         }
+      }
+      sync();
+    },
+    [engines, sync, onQuestionResult],
+  );
+
+  const submitSpellAnswer = useCallback(
+    (answer: MultipleChoiceAnswer) => {
+      const before = engines.battleEngine.getState();
+      const question = before.pendingSpellSequence?.question;
+      engines.battleEngine.submitSpellAnswer(answer);
+      if (before.phase === 'SPELL_QUESTION' && question && onQuestionResult) {
+        const correct = answer.type === 'multiple_choice' && question.format === 'multiple_choice' && answer.selectedIndex === question.correctIndex;
+        onQuestionResult({
+          questionId: question.id,
+          subject: question.subject,
+          field: question.field,
+          unit: question.unit,
+          star: question.star,
+          answerResult: answer.type === 'dont_know' ? 'UNKNOWN' : correct ? 'CORRECT' : 'INCORRECT',
+          recordedAnswer: answer.type === 'dont_know'
+            ? { type: 'UNKNOWN' }
+            : { type: 'MULTIPLE_CHOICE', selectedIndex: answer.selectedIndex },
+        });
       }
       sync();
     },
@@ -249,7 +283,9 @@ export function useBattleController({
     selectCommand,
     selectTarget,
     selectSubjectAndStar,
+    selectSpellSubject,
     submitAnswer,
+    submitSpellAnswer,
     useSpell,
     useItem,
     advance,
