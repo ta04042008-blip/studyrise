@@ -9,6 +9,8 @@ import {
   resolveEnemyArtPath,
   resolveStageBackgroundPath,
   resolveBaseHomeBackgroundPath,
+  resolveCoinIconPath,
+  resolveSagesStoneIconPath,
 } from '../../../src/presentation/assets/studyRiseAssets';
 
 describe('studyRiseAssets registries', () => {
@@ -122,5 +124,13 @@ describe('resolveStageBackgroundPath', () => {
 describe('resolveBaseHomeBackgroundPath', () => {
   it('always resolves the fixed 拠点 background path', () => {
     expect(resolveBaseHomeBackgroundPath()).toBe('/assets/studyrise/backgrounds/base/base_home.jpg');
+  });
+});
+
+
+describe('Base resource icon resolvers', () => {
+  it('resolves the coin and Sages Stone assets', () => {
+    expect(resolveCoinIconPath()).toBe('/assets/studyrise/ui/currency/coin.png');
+    expect(resolveSagesStoneIconPath()).toBe('/assets/studyrise/ui/currency/sages_stone.png');
   });
 });
