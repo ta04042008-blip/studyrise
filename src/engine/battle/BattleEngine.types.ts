@@ -58,13 +58,13 @@ export interface SpellDefinition {
   name: string;
   targetType: 'enemy' | 'self';
   /** Five automatic ★ values used by the spell sequence. The player selects only the subject. */
-  questionStars: readonly [StarLevel, StarLevel, StarLevel, StarLevel, StarLevel];
+  questionStars?: readonly [StarLevel, StarLevel, StarLevel, StarLevel, StarLevel];
   /** Index = number correct (0..5). 0 must be zero: complete failure. */
-  powerByCorrect: readonly [0, number, number, number, number, number];
+  powerByCorrect?: readonly [0, number, number, number, number, number];
   /** Optional Search depth by correct count. Used by 解析パルス; 0 means no Search. */
   searchDepthByCorrect?: readonly [0, number, number, number, number, number];
   /** Level 1..maxLevel attached effects. Basic power never scales directly with level. */
-  levelBonuses: readonly SpellLevelBonus[];
+  levelBonuses?: readonly SpellLevelBonus[];
   /**
    * Highest level a SPELL_UPGRADE roguelite reward can raise this spell to
    * (spec §4.5). Set per spell, not globally.
@@ -338,9 +338,9 @@ export interface BattleState {
   timeline: TimelineState;
   pendingCommand: PendingQuestionCommand | null;
   /** Five-question spell preparation currently being answered. */
-  pendingSpellSequence: PendingSpellSequence | null;
+  pendingSpellSequence?: PendingSpellSequence | null;
   /** Prepared spell per player, auto-resolved when that player next receives an action. */
-  preparedSpellsByPlayerId: Record<string, PreparedSpell>;
+  preparedSpellsByPlayerId?: Record<string, PreparedSpell>;
   pendingTargetSelection: PendingTargetSelection | null;
   /** Set by submitAnswer (correctness/effect precomputed); consumed by RESULT_APPLY. Actor state is untouched while this is set. */
   pendingOutcome: QuestionCommandOutcome | null;
