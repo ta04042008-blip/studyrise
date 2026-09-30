@@ -12,10 +12,10 @@ import type { QuestionEngineSnapshot } from '../question/QuestionEngine';
  * within the same call — never externally observed at rest, even when it
  * KOs the last enemy (MVP-3 correction 6: RESULT_APPLY → 正誤表示 →
  * EXPLANATION → 次へ → BATTLE_END is preserved regardless of outcome). For
- * Spell/Item (spec §5.3's shorter コマンド→対象/選択→条件確認→即時処理 flow,
- * which has no コマンド演出/解説 steps) it IS the resting phase the player
- * sees the result on, since there is no question and therefore no 正誤 to
- * explain. TARGET_SELECT is only entered when a command's target must be
+ * Item uses RESULT_APPLY as its visible resting result phase. Spell
+ * preparation is separate: SPELL_QUESTION → SPELL_EXPLANATION repeats for
+ * each of the five questions, then the prepared spell resolves automatically
+ * on that actor's next action. TARGET_SELECT is only entered when a command's target must be
  * chosen among more than one alive candidate (see targetSelection.ts) —
  * with a single alive enemy it auto-resolves and this phase is skipped
  * entirely, same as MVP-1/2's 1v1 behavior. ZONE_CLEAR/REWARD (roguelite)
