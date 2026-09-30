@@ -130,6 +130,7 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
       stageId: stage.id,
       runSeed,
       currentZoneIndex: 0,
+      completedLaps: 0,
       phase: 'ZONE_BATTLE',
       runState: runResolver.createInitialRunState(party),
       clearedZoneIds: [],
@@ -143,18 +144,41 @@ export function createStageEngine(deps: { config: StageConfig }): StageEngine {
     state: StageRunState,
     enemyDefinitionsById: Record<string, EnemyDefinition>,
   ): EnemyBattleInstance[] {
-    return currentZone(stage, state).enemies.map((e) => ({
-      instanceId: e.instanceId,
-      definition: enemyDefinitionsById[e.enemyDefinitionId],
-    }));
+    const completedLaps = state.completedLaps ?? 0;
+    const multiplier = 1 + completedLaps * deps.config.enemyStatGrowthPerLap;
+
+    return currentZone(stage, state).enemies.map((e) => {
+      const definition = enemyDefinitionsById[e.enemyDefinitionId];
+      if (completedLaps === 0) return { instanceId: e.instanceId, definition };
+
+      return {
+        instanceId: e.instanceId,
+        definition: {
+          ...definition,
+          baseStats: {
+            attack: Math.ceil(definition.baseStats.attack * multiplier),
+            defense: Math.ceil(definition.baseStats.defense * multiplier),
+            speed: Math.ceil(definition.baseStats.speed * multiplier),
+            maxHp: Math.ceil(definition.baseStats.maxHp * multiplier),
+          },
+        },
+      };
+    });
+  }
+
+  function lapSeedKey(stage: StageDefinition, state: StageRunState): string {
+    const zoneId = currentZone(stage, state).id;
+    const completedLaps = state.completedLaps ?? 0;
+    // Preserve first-lap RNG exactly; later laps must not replay the same rolls.
+    return completedLaps === 0 ? zoneId : zoneId + ':lap:' + (completedLaps + 1);
   }
 
   function deriveZoneBattleSeed(stage: StageDefinition, state: StageRunState): number {
-    return deriveSeed(state.runSeed, currentZone(stage, state).id, 'battle');
+    return deriveSeed(state.runSeed, lapSeedKey(stage, state), 'battle');
   }
 
   function deriveZoneRewardSeed(stage: StageDefinition, state: StageRunState): number {
-    return deriveSeed(state.runSeed, currentZone(stage, state).id, 'reward');
+    return deriveSeed(state.runSeed, lapSeedKey(stage, state), 'reward');
   }
 
   function recordZoneWin(
