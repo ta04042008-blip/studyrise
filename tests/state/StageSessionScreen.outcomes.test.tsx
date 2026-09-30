@@ -87,7 +87,7 @@ describe('StageSessionScreen — run endings return to Base via onReturnToBase',
     expect(onReturnToBase).toHaveBeenCalledTimes(1);
   });
 
-  it('Defeat → 拠点へ戻る', () => {
+  it('Defeat → 拠点へ戻る', async () => {
     const config: StageLaunchConfig = {
       party: [fragileCharacter],
       stage: oneZoneFinalStage('stage_test_defeat'),
@@ -100,7 +100,7 @@ describe('StageSessionScreen — run endings return to Base via onReturnToBase',
 
     // sampleEnemy (speed 8) vastly outpaces the fragile character (speed 1)
     // and one-shots its 1 HP — the loss resolves without any player input.
-    expect(driveZoneBattleToEnd()).toBe('lost');
+    expect(await driveSampleZoneBattleToWin()).toBe('lost');
     fireEvent.click(screen.getByRole('button', { name: /敗北/ }));
 
     expect(screen.getByRole('heading', { name: '敗北……' })).toBeTruthy();
