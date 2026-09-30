@@ -3,7 +3,7 @@ import type { BattleConfig } from '../../config/battleConfig';
 import type { RandomService } from '../random/RandomService';
 import { exportRandomState } from '../random/RandomService';
 import type { QuestionEngine } from '../question/QuestionEngine';
-import type { MultipleChoiceAnswer } from '../question/QuestionEngine.types';
+import { isQuestionAnswerCorrect, type MultipleChoiceAnswer } from '../question/QuestionEngine.types';
 import { calculateAttackDamage } from './damage';
 import { applyEffect } from './effects';
 import { spellLevelData } from './spellLevel';
