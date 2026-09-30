@@ -4,6 +4,7 @@ import type { QuestionCommandOutcome } from '../../engine/battle/BattleEngine.ty
 interface CommandAnimationViewProps {
   outcome: QuestionCommandOutcome;
   onAdvance: () => void;
+  paused?: boolean;
 }
 
 /**
@@ -36,15 +37,16 @@ function getAnimationText(outcome: QuestionCommandOutcome): string {
   }
 }
 
-export function CommandAnimationView({ outcome, onAdvance }: CommandAnimationViewProps) {
-  // Command presentation flows directly into result/explanation. This keeps
-  // the battle rhythm consistent and does not alter BattleEngine outcomes.
+export function CommandAnimationView({ outcome, onAdvance, paused = false }: CommandAnimationViewProps) {
+  // Opening battle detail must pause automatic progression. Closing the
+  // detail restarts this presentation delay from a stable resting phase.
   useEffect(() => {
+    if (paused) return;
     const timer = window.setTimeout(() => {
       onAdvance();
     }, outcome.command === 'attack' ? 760 : 680);
     return () => window.clearTimeout(timer);
-  }, [outcome, onAdvance]);
+  }, [outcome, onAdvance, paused]);
 
   return (
     <div className="command-animation-view">
