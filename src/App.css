@@ -1789,3 +1789,91 @@ button, input, select, textarea {
     max-height: calc(100dvh - 24px);
   }
 }
+
+
+/* --- Spell preparation feedback: correct pulse + cumulative caster zoom --- */
+@media (orientation: landscape) {
+  .battle-screen__player-slot--spell-preparing {
+    --spell-prep-scale: 1;
+    z-index: 5;
+    scale: var(--spell-prep-scale);
+    transform-origin: 50% 100%;
+    transition: scale 260ms cubic-bezier(.2,.8,.2,1);
+  }
+
+  .battle-screen__player-slot--spell-preparing[data-spell-prep-zoom="1"] { --spell-prep-scale: 1.04; }
+  .battle-screen__player-slot--spell-preparing[data-spell-prep-zoom="2"] { --spell-prep-scale: 1.08; }
+  .battle-screen__player-slot--spell-preparing[data-spell-prep-zoom="3"] { --spell-prep-scale: 1.12; }
+  .battle-screen__player-slot--spell-preparing[data-spell-prep-zoom="4"] { --spell-prep-scale: 1.16; }
+  .battle-screen__player-slot--spell-preparing[data-spell-prep-zoom="5"] { --spell-prep-scale: 1.20; }
+
+  .battle-screen__player-slot--spell-preparing .battle-screen__actor-art--player {
+    animation: none !important;
+    filter: brightness(1.06) drop-shadow(0 0 9px rgba(122, 202, 255, .62));
+    transition: filter 260ms ease;
+  }
+
+  .battle-screen__spell-correct-effect {
+    position: absolute;
+    left: 50%;
+    top: 18%;
+    z-index: 9;
+    display: grid;
+    place-items: center;
+    width: 116px;
+    height: 116px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: studyrise-spell-correct-pop 700ms ease-out 1 both;
+  }
+
+  .battle-screen__spell-correct-ring {
+    position: absolute;
+    inset: 12px;
+    border: 4px solid rgba(178, 237, 255, .94);
+    border-radius: 50%;
+    box-shadow:
+      0 0 12px rgba(116, 205, 255, .9),
+      inset 0 0 10px rgba(213, 248, 255, .7);
+    animation: studyrise-spell-correct-ring 700ms ease-out 1 both;
+  }
+
+  .battle-screen__spell-correct-effect strong {
+    position: relative;
+    z-index: 1;
+    padding: 5px 10px;
+    border: 1px solid rgba(224, 250, 255, .9);
+    border-radius: 999px;
+    background: rgba(9, 38, 61, .86);
+    color: #f4fdff;
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .72);
+    box-shadow: 0 0 14px rgba(108, 205, 255, .58);
+  }
+}
+
+@keyframes studyrise-spell-correct-pop {
+  0% { opacity: 0; transform: translate(-50%, -40%) scale(.72); }
+  20% { opacity: 1; transform: translate(-50%, -54%) scale(1.08); }
+  62% { opacity: 1; transform: translate(-50%, -62%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -78%) scale(.94); }
+}
+
+@keyframes studyrise-spell-correct-ring {
+  0% { opacity: 0; transform: scale(.55); }
+  25% { opacity: 1; transform: scale(.92); }
+  100% { opacity: 0; transform: scale(1.42); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-screen__player-slot--spell-preparing {
+    transition: none;
+  }
+
+  .battle-screen__spell-correct-effect,
+  .battle-screen__spell-correct-ring {
+    animation-duration: 1ms !important;
+  }
+}

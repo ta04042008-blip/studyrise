@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createBattleEngine, restoreBattleEngine, type BattleEngine } from '../engine/battle/BattleEngine';
 import type {
   BattleEngineSnapshot,
@@ -63,8 +63,18 @@ export interface UseBattleControllerArgs {
   onSnapshotChange?: (snapshot: BattleEngineSnapshot) => void;
 }
 
+export interface SpellAnswerFeedback {
+  sequence: number;
+  sourceActorId: string;
+  correct: boolean;
+  correctCount: number;
+  answeredCount: number;
+}
+
 export interface BattleController {
   state: BattleState;
+  /** Presentation-only signal emitted after each accepted spell-preparation answer. */
+  spellAnswerFeedback: SpellAnswerFeedback | null;
   listSubjects: () => string[];
   listStars: (subject: string) => StarLevel[];
   listSpellSubjects: () => string[];
@@ -140,6 +150,8 @@ export function useBattleController({
   }, [seed]);
 
   const [state, setState] = useState<BattleState>(() => engines.battleEngine.getState());
+  const [spellAnswerFeedback, setSpellAnswerFeedback] = useState<SpellAnswerFeedback | null>(null);
+  const spellAnswerFeedbackSequenceRef = useRef(0);
 
   // `engines` only changes when `seed` changes (a brand-new battle, e.g.
   // MVP-4's Battle → Reward → Battle harness re-seeding this hook without
@@ -150,6 +162,7 @@ export function useBattleController({
   // the UI would never render its actual initial state.
   useEffect(() => {
     setState(engines.battleEngine.getState());
+    setSpellAnswerFeedback(null);
     // MVP-9: this fires exactly once per newly (re)constructed engine — a
     // fresh battle's initial state (Zone開始) or a resumed battle's restored
     // state — mirroring the existing "sync once per engine construction"
@@ -238,27 +251,42 @@ export function useBattleController({
   const submitSpellAnswer = useCallback(
     (answer: MultipleChoiceAnswer) => {
       const before = engines.battleEngine.getState();
-      const question = before.pendingSpellSequence?.question;
+      const pending = before.pendingSpellSequence;
+      const question = pending?.question;
+      const accepted = before.phase === 'SPELL_QUESTION' && Boolean(question && pending?.subject);
+      const correct = accepted && question ? isQuestionAnswerCorrect(question, answer) : false;
+
       engines.battleEngine.submitSpellAnswer(answer);
-      if (before.phase === 'SPELL_QUESTION' && question && onQuestionResult) {
-        const correct = isQuestionAnswerCorrect(question, answer);
-        onQuestionResult({
-          questionId: question.id,
-          subject: question.subject,
-          field: question.field,
-          unit: question.unit,
-          star: question.star,
-          answerResult: answer.type === 'dont_know' ? 'UNKNOWN' : correct ? 'CORRECT' : 'INCORRECT',
-          recordedAnswer: answer.type === 'dont_know'
-            ? { type: 'UNKNOWN' }
-            : answer.type === 'multiple_choice'
-              ? { type: 'MULTIPLE_CHOICE', selectedIndex: answer.selectedIndex }
-              : answer.type === 'true_false'
-                ? { type: 'TRUE_FALSE', value: answer.value }
-                : answer.type === 'ordering'
-                  ? { type: 'ORDERING', order: answer.order }
-                  : { type: 'SHORT_ANSWER', value: answer.value },
+
+      if (accepted && pending && question) {
+        spellAnswerFeedbackSequenceRef.current += 1;
+        setSpellAnswerFeedback({
+          sequence: spellAnswerFeedbackSequenceRef.current,
+          sourceActorId: pending.sourceActorId,
+          correct,
+          correctCount: pending.correctCount + (correct ? 1 : 0),
+          answeredCount: pending.questionIndex + 1,
         });
+
+        if (onQuestionResult) {
+          onQuestionResult({
+            questionId: question.id,
+            subject: question.subject,
+            field: question.field,
+            unit: question.unit,
+            star: question.star,
+            answerResult: answer.type === 'dont_know' ? 'UNKNOWN' : correct ? 'CORRECT' : 'INCORRECT',
+            recordedAnswer: answer.type === 'dont_know'
+              ? { type: 'UNKNOWN' }
+              : answer.type === 'multiple_choice'
+                ? { type: 'MULTIPLE_CHOICE', selectedIndex: answer.selectedIndex }
+                : answer.type === 'true_false'
+                  ? { type: 'TRUE_FALSE', value: answer.value }
+                  : answer.type === 'ordering'
+                    ? { type: 'ORDERING', order: answer.order }
+                    : { type: 'SHORT_ANSWER', value: answer.value },
+          });
+        }
       }
       sync();
     },
@@ -301,6 +329,7 @@ export function useBattleController({
 
   return {
     state,
+    spellAnswerFeedback,
     listSubjects,
     listStars,
     listSpellSubjects,
