@@ -81,7 +81,7 @@ Zone 10報酬確定後:
 3. 「次の周回へ」の場合、同じStageのZone 1へ戻る
 4. HP / RunBuild / 持ち込みアイテム残数を維持する
 5. 次周の敵を強化する
-6. 「帰還する」の場合、Stage Resultへ進む
+6. Zone 10直後に「帰還する」場合は `CLEARED` としてStage Resultへ進む
 
 敵強化は線形とし、全Enemy BaseStatsへ以下を適用する。
 
@@ -94,7 +94,9 @@ Zone 10報酬確定後:
 - `attack / defense / speed / maxHp` をそれぞれceilで整数化
 - EnemyDefinition自体は変更せず、その戦闘用instance解決時だけ補正する
 
-1周以上踏破したRunは、その後に自主帰還または敗北してもStage Clear実績を成立させる。
+1周以上踏破したRunは、その後に途中帰還または敗北してもStage Clear実績を成立させる。
+Zone 10直後の帰還はStage Result上も `CLEARED` とする。
+次周途中で自主帰還した場合は `SELF_RETURNED`、敗北した場合は `DEFEATED` の表示を維持するが、クリア実績は失わない。
 初回Stage Clear / 次Stage解放はStage Resultを拠点へ確定する時点で反映する。
 
 ### 2.4 再挑戦
@@ -110,7 +112,8 @@ Zone 10報酬確定後:
 
 - ゾーンとゾーンの間でのみ自主帰還可能。
 - 0周のまま帰還した場合はステージ未クリア扱い。
-- 1周以上踏破済みならStage Clear実績は保持する。
+- Zone 10直後の帰還は `CLEARED` とする。
+- 次周途中で自主帰還した場合もStage Clear実績は保持する。
 - 次回の新規出撃はZone 1・1周目から開始。
 - その挑戦で得た経験値、通常通貨、素材、装備は保持。
 - ローグライト一時強化はすべて消滅。
@@ -3017,7 +3020,8 @@ MVP-10はMVP-9で成立したSave V1を可能な限り維持する。
 #### 旧3Zone Stage1 RunSave
 
 MVP-9時点のStage1は3Zone、
-MVP-10正式Stage1は4Zoneである。
+MVP-10時点では4Zone、
+2026-09-30以降の正式Stage1は10Zoneである。
 
 旧RunSaveの `currentZoneIndex = 2` は、
 旧構造ではFinal JANUS、
