@@ -31,22 +31,10 @@ function legacyEffectFallback(definition: SpellDefinition | undefined, level: nu
         return `${effect.amount}ダメージ`;
       case 'HEAL':
         return `HPを${effect.amount}回復`;
-      case 'BUFF':
-        return `${effect.stat}+${effect.amount}`;
-      case 'DEBUFF':
-        return `${effect.stat}-${effect.amount}`;
-      case 'STATUS':
-        return effect.status;
       case 'MP_GAIN':
         return `MP+${effect.amount}`;
-      case 'MP_LOSS':
-        return `MP-${effect.amount}`;
-      case 'SPEED_MODIFY':
-        return `思考速度${effect.amount >= 0 ? '+' : ''}${effect.amount}`;
       case 'GUARD':
         return `ガード${Math.round(effect.mitigationPercent * 100)}%`;
-      case 'ACTION_ADVANCE':
-        return `行動順+${effect.amount}`;
     }
   }).join(' / ');
 }
