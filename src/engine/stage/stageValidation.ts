@@ -1,5 +1,6 @@
 import type { EnemyDefinition } from '../battle/BattleEngine.types';
 import type { StageDefinition } from './StageEngine.types';
+import { stageConfig } from '../../config/stageConfig';
 
 export interface ValidationResult {
   valid: boolean;
@@ -20,6 +21,10 @@ export function validateStageDefinition(
   if (!stage.zones || stage.zones.length === 0) {
     errors.push('stage has no zones');
     return { valid: false, errors };
+  }
+
+  if (stage.zones.length !== stageConfig.officialZoneCount) {
+    errors.push(`stage must have exactly ${stageConfig.officialZoneCount} zones (found ${stage.zones.length})`);
   }
 
   const zoneIds = new Set<string>();
