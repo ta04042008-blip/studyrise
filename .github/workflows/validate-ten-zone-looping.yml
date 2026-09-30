@@ -34,3 +34,5 @@ jobs:
           tests/state/StageSessionScreen.strictMode.test.tsx
           tests/state/useStageController.selfReturn.test.tsx
           tests/state/useStageController.multiZone.test.tsx
+          tests/engine/stage/stageHaruka02.balance.test.tsx
+          tests/engine/stage/stageHaruka03.balance.test.tsx
