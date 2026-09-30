@@ -67,8 +67,9 @@ describe('useBaseController — Base → Area → Stage → 出撃準備 → 出
     expect(screen.getByText(`ステージ: ${sampleStage.name}`)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: '出撃' }));
 
-    // Stage mounted.
-    expect(screen.getByRole('heading', { name: 'StudyRise — Stage攻略' })).toBeTruthy();
+    // Stage mounted: the battle command UI is the stable player-visible
+    // marker; StageSessionScreen no longer renders the old dev heading.
+    expect(document.querySelector('.zone-battle-panel')).toBeTruthy();
     expect(document.querySelector('.command-menu')).toBeTruthy();
   });
 });
