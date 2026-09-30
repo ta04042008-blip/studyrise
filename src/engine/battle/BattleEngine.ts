@@ -232,7 +232,7 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
       playerId,
       entries.map(({ spellId, level }) => {
         const spell = spellsById[spellId];
-        const levelData = spellLevelData(spell, level);
+        spellLevelData(spell, level); // validates/clamps the retained roguelite spell level payload
         return { spellId, level, name: spell.name, mpCost: 0 };
       }),
     ]),
