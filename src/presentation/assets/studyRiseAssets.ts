@@ -46,6 +46,7 @@ const APP_BASE_PATH = import.meta.env.BASE_URL;
 const CHARACTERS_BASE_PATH = `${APP_BASE_PATH}assets/studyrise/characters/`;
 const ENEMIES_BASE_PATH = `${APP_BASE_PATH}assets/studyrise/enemies/`;
 const BASE_HOME_BASE_PATH = `${APP_BASE_PATH}assets/studyrise/backgrounds/base/`;
+const UI_CURRENCY_BASE_PATH = `${APP_BASE_PATH}assets/studyrise/ui/currency/`;
 const STAGE_BACKGROUNDS_BASE_PATH = `${APP_BASE_PATH}assets/studyrise/backgrounds/stages/`;
 
 /**
@@ -147,4 +148,13 @@ export function resolveStageBackgroundPath(stageId: string | undefined): string 
 /** Resolves the fixed BaseHome background path. */
 export function resolveBaseHomeBackgroundPath(): string {
   return BASE_HOME_BASE_PATH + baseHomeBackgroundArt.runtimeFilename;
+}
+
+/** Presentation-only resource icons shown on BaseHome. */
+export function resolveCoinIconPath(): string {
+  return UI_CURRENCY_BASE_PATH + 'coin.png';
+}
+
+export function resolveSagesStoneIconPath(): string {
+  return UI_CURRENCY_BASE_PATH + 'sages_stone.png';
 }
