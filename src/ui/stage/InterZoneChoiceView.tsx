@@ -34,7 +34,7 @@ export function InterZoneChoiceView({
           {isLapBoundary ? `${nextLapNumber}周目へ` : '次のゾーンへ'}
         </button>
         <button type="button" onClick={onSelfReturn}>
-          帰還する（自主帰還）
+          {isLapBoundary ? 'クリアして拠点へ帰還' : '帰還する（自主帰還）'}
         </button>
       </div>
     </div>
