@@ -21,21 +21,24 @@ const enemyDefinitionsById: Record<string, EnemyDefinition> = {
   [bossEnemy.id]: bossEnemy,
 };
 
+const FINAL_ZONE_INDEX = 9;
+
 function validStage(overrides: Partial<StageDefinition> = {}): StageDefinition {
+  const normalZones = Array.from({ length: 9 }, (_, index) => ({
+    id: `zone_${index + 1}`,
+    enemies: [{ enemyDefinitionId: normalEnemy.id, instanceId: `z${index + 1}_e1` }],
+    isRareRewardEvent: false,
+    permanentRewardProfileId: 'NORMAL_ZONE',
+    isFinalZone: false,
+  }));
   return {
     id: 'stage_1',
     name: 'Stage 1',
     zones: [
+      ...normalZones,
       {
-        id: 'zone_1',
-        enemies: [{ enemyDefinitionId: normalEnemy.id, instanceId: 'z1_e1' }],
-        isRareRewardEvent: false,
-        permanentRewardProfileId: 'NORMAL_ZONE',
-        isFinalZone: false,
-      },
-      {
-        id: 'zone_2_final',
-        enemies: [{ enemyDefinitionId: bossEnemy.id, instanceId: 'z2_boss' }],
+        id: 'zone_10_final',
+        enemies: [{ enemyDefinitionId: bossEnemy.id, instanceId: 'z10_boss' }],
         isRareRewardEvent: false,
         permanentRewardProfileId: 'BOSS_ZONE',
         isFinalZone: true,
@@ -54,6 +57,13 @@ describe('validateStageDefinition', () => {
     const result = validateStageDefinition(validStage({ zones: [] }), enemyDefinitionsById);
     expect(result.valid).toBe(false);
     expect(result.errors).toContain('stage has no zones');
+  });
+
+  it('rejects a stage that does not contain exactly 10 zones', () => {
+    const stage = validStage({ zones: validStage().zones.slice(0, 9) });
+    const result = validateStageDefinition(stage, enemyDefinitionsById);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('exactly 10 zones'))).toBe(true);
   });
 
   it('rejects duplicate zone ids', () => {
@@ -111,7 +121,7 @@ describe('validateStageDefinition', () => {
 
   it('rejects zero final zones', () => {
     const stage = validStage();
-    stage.zones[1] = { ...stage.zones[1], isFinalZone: false };
+    stage.zones[FINAL_ZONE_INDEX] = { ...stage.zones[FINAL_ZONE_INDEX], isFinalZone: false };
     const result = validateStageDefinition(stage, enemyDefinitionsById);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes('exactly one final zone'))).toBe(true);
@@ -151,8 +161,8 @@ describe('validateStageDefinition', () => {
 
   it('rejects a stage with zero bosses', () => {
     const stage = validStage();
-    stage.zones[1] = {
-      ...stage.zones[1],
+    stage.zones[FINAL_ZONE_INDEX] = {
+      ...stage.zones[FINAL_ZONE_INDEX],
       enemies: [{ enemyDefinitionId: normalEnemy.id, instanceId: 'z2_e1' }],
     };
     const result = validateStageDefinition(stage, enemyDefinitionsById);
@@ -162,8 +172,8 @@ describe('validateStageDefinition', () => {
 
   it('rejects a stage with more than one boss', () => {
     const stage = validStage();
-    stage.zones[1] = {
-      ...stage.zones[1],
+    stage.zones[FINAL_ZONE_INDEX] = {
+      ...stage.zones[FINAL_ZONE_INDEX],
       enemies: [
         { enemyDefinitionId: bossEnemy.id, instanceId: 'boss_1' },
         { enemyDefinitionId: bossEnemy.id, instanceId: 'boss_2' },
@@ -181,8 +191,8 @@ describe('validateStageDefinition', () => {
       enemies: [{ enemyDefinitionId: bossEnemy.id, instanceId: 'boss_early' }],
     };
     // zone_2_final still also has the boss removed so total boss count stays 1, isolating "wrong zone" from "wrong count".
-    stage.zones[1] = {
-      ...stage.zones[1],
+    stage.zones[FINAL_ZONE_INDEX] = {
+      ...stage.zones[FINAL_ZONE_INDEX],
       enemies: [{ enemyDefinitionId: normalEnemy.id, instanceId: 'z2_e1' }],
     };
     const result = validateStageDefinition(stage, enemyDefinitionsById);
@@ -192,8 +202,8 @@ describe('validateStageDefinition', () => {
 
   it('allows a normal enemy alongside the boss in the final zone', () => {
     const stage = validStage();
-    stage.zones[1] = {
-      ...stage.zones[1],
+    stage.zones[FINAL_ZONE_INDEX] = {
+      ...stage.zones[FINAL_ZONE_INDEX],
       enemies: [
         { enemyDefinitionId: normalEnemy.id, instanceId: 'z2_e1' },
         { enemyDefinitionId: bossEnemy.id, instanceId: 'z2_boss' },
