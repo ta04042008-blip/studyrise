@@ -1,0 +1,24 @@
+name: Validate scratchpad iOS selection fix
+
+on:
+  push:
+    branches:
+      - 'fix/scratchpad-ios-text-selection'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build and typecheck
+        run: npm run build -- --base=/studyrise/
+      - name: Run scratchpad regression tests
+        run: npx vitest run tests/ui/battle/QuestionView.scratchpad.test.tsx tests/ui/battle/QuestionView.formats.test.tsx
