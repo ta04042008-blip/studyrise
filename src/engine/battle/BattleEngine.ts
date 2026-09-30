@@ -580,6 +580,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       correct,
       question,
       selectedAnswerIndex: selectedIndex,
+      submittedAnswer: answer,
     };
 
     let outcome: QuestionCommandOutcome;
