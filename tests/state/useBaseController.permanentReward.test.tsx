@@ -111,7 +111,7 @@ describe('useBaseController — permanent-reward reconciliation end-to-end (MVP-
     fireEvent.click(screen.getByRole('button', { name: '拠点へ戻る' }));
 
     // キャラクター: the deployed character leveled EXP (20, still Lv1 since Lv1→2 needs 30).
-    fireEvent.click(screen.getByRole('button', { name: 'キャラクター' }));
+    fireEvent.click(screen.getByRole('button', { name: '仲間' }));
     fireEvent.click(screen.getByRole('button', { name: sampleParty[0].name }));
     expect(screen.getByText('20 / 次Lvまで 30')).toBeTruthy();
   });
