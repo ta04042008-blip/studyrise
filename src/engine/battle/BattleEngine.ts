@@ -946,6 +946,7 @@ function buildEngine(params: BuildEngineParams): BattleEngine {
       state.enemyActionLog.push({
         sourceActorId: enemy.id,
         targetId,
+        actionName: plannedAction.actionName,
         damage,
         isCritical: dmgResult.isCritical,
       });

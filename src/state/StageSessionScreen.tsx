@@ -2,6 +2,7 @@ import { useStageController, type UseStageControllerSaveHooks } from './useStage
 import type { StageLaunchConfig } from '../base/base.types';
 import type { StageEndContext } from '../engine/progression/ProgressionSystem.types';
 import type { QuestionResult } from '../engine/learningHistory/LearningHistory.types';
+import type { EnemyBestiaryState, EnemyObservationEvent } from '../engine/bestiary/BestiarySystem';
 
 interface StageSessionScreenProps {
   config: StageLaunchConfig;
@@ -10,6 +11,8 @@ interface StageSessionScreenProps {
   onQuestionResult?: (result: QuestionResult) => void;
   /** MVP-9: threaded straight through to `useStageController` — see its own doc. */
   saveHooks?: UseStageControllerSaveHooks;
+  enemyBestiary?: EnemyBestiaryState;
+  onEnemyObservation?: (event: EnemyObservationEvent) => void;
 }
 
 /**
@@ -22,6 +25,13 @@ interface StageSessionScreenProps {
  * shown some of the time — conditionally mounting a component is fine,
  * conditionally calling a hook inside one is not.
  */
-export function StageSessionScreen({ config, onReturnToBase, onQuestionResult, saveHooks }: StageSessionScreenProps) {
-  return useStageController(config, onReturnToBase, onQuestionResult, saveHooks);
+export function StageSessionScreen({
+  config,
+  onReturnToBase,
+  onQuestionResult,
+  saveHooks,
+  enemyBestiary,
+  onEnemyObservation,
+}: StageSessionScreenProps) {
+  return useStageController(config, onReturnToBase, onQuestionResult, saveHooks, enemyBestiary, onEnemyObservation);
 }

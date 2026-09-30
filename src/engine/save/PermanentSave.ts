@@ -27,6 +27,21 @@ export function validatePermanentPayload(payload: unknown): payload is Permanent
     p.savedPartyCharacterIds !== undefined &&
     (!Array.isArray(p.savedPartyCharacterIds) || p.savedPartyCharacterIds.some((id) => typeof id !== 'string'))
   ) return false;
+  if (p.enemyBestiary !== undefined) {
+    if (typeof p.enemyBestiary !== 'object' || p.enemyBestiary === null) return false;
+    for (const entry of Object.values(p.enemyBestiary)) {
+      if (
+        typeof entry !== 'object' ||
+        entry === null ||
+        typeof entry.encountered !== 'boolean' ||
+        typeof entry.defeated !== 'boolean' ||
+        !Array.isArray(entry.observedActionNames) ||
+        entry.observedActionNames.some((name) => typeof name !== 'string')
+      ) {
+        return false;
+      }
+    }
+  }
   if (typeof p.inventory !== 'object' || p.inventory === null) return false;
   if (!Array.isArray(p.inventory.equipment)) return false;
   if (typeof p.inventory.consumables !== 'object' || p.inventory.consumables === null) return false;

@@ -15,6 +15,8 @@ import { SpellItemResultView } from './SpellItemResultView';
 import { EnemyActionLog } from './EnemyActionLog';
 import { BattleEndView } from './BattleEndView';
 import { GameImage } from '../../presentation/assets/GameImage';
+import type { EnemyBestiaryState } from '../../engine/bestiary/BestiarySystem';
+import { BattleActorDetailModal } from './BattleActorDetailModal';
 import {
   resolveCharacterBattleArtPath,
   resolveEnemyArtPath,
@@ -26,6 +28,7 @@ interface BattleScreenProps {
   controller: BattleController;
   /** Presentation-only StageDefinition.id used to resolve the battle background. */
   stageId?: string;
+  enemyBestiary?: EnemyBestiaryState;
 }
 
 /**
@@ -33,7 +36,7 @@ interface BattleScreenProps {
  * only reads `state` and dispatches to the controller. No damage/crit/HP
  * calculation happens in this component.
  */
-export function BattleScreen({ controller, stageId }: BattleScreenProps) {
+export function BattleScreen({ controller, stageId, enemyBestiary = {} }: BattleScreenProps) {
   const { state } = controller;
   const stageBackgroundPath = resolveStageBackgroundPath(stageId);
   const allActors = [...state.players, ...state.enemies];
@@ -66,6 +69,15 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
   // survives into someone else's turn.
   const [isSpellSelectOpen, setSpellSelectOpen] = useState(false);
   const [finalSpellZoom, setFinalSpellZoom] = useState<{ sourceActorId: string; level: number } | null>(null);
+  const [detailActorId, setDetailActorId] = useState<string | null>(null);
+  const detailActor = detailActorId ? (allActors.find((actor) => actor.id === detailActorId) ?? null) : null;
+  const detailEnemyObservation =
+    detailActor?.kind === 'enemy' && detailActor.definitionId
+      ? enemyBestiary[detailActor.definitionId]
+      : undefined;
+  const detailKnownSpells =
+    detailActor?.kind === 'player' ? (state.knownSpellsByPlayerId[detailActor.id] ?? []) : [];
+  const battleDetailOpen = detailActor !== null;
 
   useEffect(() => {
     setSpellSelectOpen(false);
@@ -154,11 +166,18 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
                 data-actor-id={player.id}
                 data-spell-prep-zoom={playerSpellZoomLevel > 0 ? playerSpellZoomLevel : undefined}
               >
-                <GameImage
-                  src={resolveCharacterBattleArtPath(player.definitionId)}
-                  alt={`${player.name} 戦闘`}
-                  className="battle-screen__actor-art battle-screen__actor-art--player"
-                />
+                <button
+                  type="button"
+                  className="battle-screen__actor-inspect"
+                  aria-label={`${player.name}の詳細`}
+                  onClick={() => setDetailActorId(player.id)}
+                >
+                  <GameImage
+                    src={resolveCharacterBattleArtPath(player.definitionId)}
+                    alt={`${player.name} 戦闘`}
+                    className="battle-screen__actor-art battle-screen__actor-art--player"
+                  />
+                </button>
                 {showSpellCorrectEffect && controller.spellAnswerFeedback && (
                   <div
                     key={controller.spellAnswerFeedback.sequence}
@@ -202,7 +221,14 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
               ].filter(Boolean).join(' ')}
               style={{ '--enemy-display-scale': visual?.displayScale ?? 1 } as CSSProperties}
             >
-              <GameImage src={resolveEnemyArtPath(enemy.definitionId)} alt={`${enemy.name} 戦闘`} className="battle-screen__actor-art battle-screen__actor-art--enemy" />
+              <button
+                type="button"
+                className="battle-screen__actor-inspect"
+                aria-label={`${enemy.name}の詳細`}
+                onClick={() => setDetailActorId(enemy.id)}
+              >
+                <GameImage src={resolveEnemyArtPath(enemy.definitionId)} alt={`${enemy.name} 戦闘`} className="battle-screen__actor-art battle-screen__actor-art--enemy" />
+              </button>
               {attackAnimationOutcome?.targetId === enemy.id && (
                 <div className={[
                   'battle-screen__damage-pop',
@@ -304,11 +330,11 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
       )}
 
       {state.phase === 'COMMAND_ANIMATION' && state.pendingOutcome && (
-        <CommandAnimationView outcome={state.pendingOutcome} onAdvance={controller.advance} />
+        <CommandAnimationView outcome={state.pendingOutcome} onAdvance={controller.advance} paused={battleDetailOpen} />
       )}
 
       {state.phase === 'EXPLANATION' && state.lastPlayerOutcome && (
-        <ExplanationView outcome={state.lastPlayerOutcome} onAdvance={controller.advance} />
+        <ExplanationView outcome={state.lastPlayerOutcome} onAdvance={controller.advance} paused={battleDetailOpen} />
       )}
 
       {state.phase === 'RESULT_APPLY' && state.lastNonQuestionOutcome && (
@@ -316,6 +342,13 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
       )}
 
       {state.phase === 'BATTLE_END' && state.outcome && <BattleEndView outcome={state.outcome} />}
+
+      <BattleActorDetailModal
+        actor={detailActor}
+        knownSpells={detailKnownSpells}
+        enemyObservation={detailEnemyObservation}
+        onClose={() => setDetailActorId(null)}
+      />
     </div>
   );
 }

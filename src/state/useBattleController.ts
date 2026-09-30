@@ -18,6 +18,7 @@ import { battleConfig } from '../config/battleConfig';
 import type { StarLevel } from '../types/stats';
 import type { QuestionResult } from '../engine/learningHistory/LearningHistory.types';
 import { questionResultFromAnswer } from '../engine/learningHistory/questionResultFromAnswer';
+import type { EnemyObservationEvent } from '../engine/bestiary/BestiarySystem';
 
 export interface UseBattleControllerArgs {
   /** 1〜3 characters (spec §4.1). */
@@ -61,6 +62,8 @@ export interface UseBattleControllerArgs {
    * hook's own `sync()`, right after each command it actually dispatches.
    */
   onSnapshotChange?: (snapshot: BattleEngineSnapshot) => void;
+  /** Persistent enemy-observation event boundary for Bestiary/detail unlocks. */
+  onEnemyObservation?: (event: EnemyObservationEvent) => void;
 }
 
 export interface SpellAnswerFeedback {
@@ -109,6 +112,7 @@ export function useBattleController({
   onQuestionResult,
   restoreSnapshot,
   onSnapshotChange,
+  onEnemyObservation,
 }: UseBattleControllerArgs): BattleController {
   const engines = useMemo(() => {
     if (restoreSnapshot) {
@@ -154,6 +158,42 @@ export function useBattleController({
   const [spellAnswerFeedback, setSpellAnswerFeedback] = useState<SpellAnswerFeedback | null>(null);
   const spellAnswerFeedbackSequenceRef = useRef(0);
 
+  const reportEnemyObservations = useCallback(
+    (nextState: BattleState) => {
+      if (!onEnemyObservation) return;
+
+      const enemyDefinitionIdByActorId = new Map(
+        nextState.enemies
+          .filter((enemy) => Boolean(enemy.definitionId))
+          .map((enemy) => [enemy.id, enemy.definitionId!]),
+      );
+
+      for (const enemy of nextState.enemies) {
+        if (!enemy.definitionId) continue;
+        onEnemyObservation({ type: 'ENCOUNTERED', enemyDefinitionId: enemy.definitionId });
+        if (enemy.currentHp <= 0) {
+          onEnemyObservation({ type: 'DEFEATED', enemyDefinitionId: enemy.definitionId });
+        }
+      }
+
+      for (const [enemyActorId, actions] of Object.entries(nextState.searchByEnemyId)) {
+        const enemyDefinitionId = enemyDefinitionIdByActorId.get(enemyActorId);
+        if (!enemyDefinitionId) continue;
+        for (const action of actions) {
+          onEnemyObservation({ type: 'ACTION_OBSERVED', enemyDefinitionId, actionName: action.actionName });
+        }
+      }
+
+      for (const action of nextState.enemyActionLog) {
+        if (!action.actionName) continue;
+        const enemyDefinitionId = enemyDefinitionIdByActorId.get(action.sourceActorId);
+        if (!enemyDefinitionId) continue;
+        onEnemyObservation({ type: 'ACTION_OBSERVED', enemyDefinitionId, actionName: action.actionName });
+      }
+    },
+    [onEnemyObservation],
+  );
+
   // `engines` only changes when `seed` changes (a brand-new battle, e.g.
   // MVP-4's Battle → Reward → Battle harness re-seeding this hook without
   // unmounting it). The lazy useState initializer above only ever runs on
@@ -162,8 +202,10 @@ export function useBattleController({
   // engine would be constructed and immediately usable via its methods, but
   // the UI would never render its actual initial state.
   useEffect(() => {
-    setState(engines.battleEngine.getState());
+    const nextState = engines.battleEngine.getState();
+    setState(nextState);
     setSpellAnswerFeedback(null);
+    reportEnemyObservations(nextState);
     // MVP-9: this fires exactly once per newly (re)constructed engine — a
     // fresh battle's initial state (Zone開始) or a resumed battle's restored
     // state — mirroring the existing "sync once per engine construction"
@@ -174,9 +216,11 @@ export function useBattleController({
   }, [engines]);
 
   const sync = useCallback(() => {
-    setState(engines.battleEngine.getState());
+    const nextState = engines.battleEngine.getState();
+    setState(nextState);
+    reportEnemyObservations(nextState);
     onSnapshotChange?.(engines.battleEngine.exportSnapshot());
-  }, [engines, onSnapshotChange]);
+  }, [engines, onSnapshotChange, reportEnemyObservations]);
 
   const selectCommand = useCallback(
     (command: QuestionCommandKind) => {

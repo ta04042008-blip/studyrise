@@ -5,6 +5,7 @@ import type { QuestionAnswer, QuestionDefinition } from '../../engine/question/Q
 interface ExplanationViewProps {
   outcome: QuestionCommandOutcome;
   onAdvance: () => void;
+  paused?: boolean;
 }
 
 /** Command-specific result line, shown alongside the 正解！/不正解 verdict. */
@@ -69,16 +70,16 @@ function correctAnswerText(question: QuestionDefinition): string {
 }
 
 /** 解説画面 (spec §12.8). */
-export function ExplanationView({ outcome, onAdvance }: ExplanationViewProps) {
+export function ExplanationView({ outcome, onAdvance, paused = false }: ExplanationViewProps) {
   const [advanced, setAdvanced] = useState(false);
   const [showVerdict, setShowVerdict] = useState(outcome.command !== 'attack');
   const { question } = outcome;
 
   useEffect(() => {
-    if (outcome.command !== 'attack') return;
+    if (outcome.command !== 'attack' || paused) return;
     const timer = window.setTimeout(() => setShowVerdict(true), 480);
     return () => window.clearTimeout(timer);
-  }, [outcome]);
+  }, [outcome, paused]);
 
   function handleAdvance() {
     if (advanced) return;
