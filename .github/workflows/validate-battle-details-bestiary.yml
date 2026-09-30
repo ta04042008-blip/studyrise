@@ -31,3 +31,4 @@ jobs:
           tests/ui/base/BaseHomeScreen.test.tsx
           tests/ui/base/responsive.test.tsx
           tests/state/useBaseController.saveResume.test.tsx
+          tests/state/useBaseController.bestiary.test.tsx
