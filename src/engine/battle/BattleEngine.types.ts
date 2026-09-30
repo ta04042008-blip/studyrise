@@ -4,6 +4,7 @@ import type { TimelineState } from './actionTimeline';
 import type { Effect } from './effects';
 import type { RandomState } from '../random/RandomService';
 import type { QuestionEngineSnapshot } from '../question/QuestionEngine';
+import type { KnownSkill, SkillActivationEvent } from './skills';
 
 /**
  * Battle phase state machine (CLAUDE.md §6). RESULT_APPLY is shared by two
@@ -99,6 +100,12 @@ export interface CharacterDefinition {
   id: string;
   name: string;
   baseStats: PlayerBaseStats;
+  /**
+   * Stable passive-skill id. Optional while the initial three concrete
+   * effects remain formally undecided; once content is fixed, production
+   * characters can opt in without changing BattleEngine structure.
+   */
+  skillId?: string;
   /**
    * Stable ID reference (CLAUDE.md §15 — never embed content or use a
    * display name as a persistence key) to the character's one starting
@@ -390,6 +397,16 @@ export interface BattleState {
    * than one item; with exactly one (MVP-1〜3's only case) it auto-selects.
    */
   knownSpellsByPlayerId: Record<string, KnownSpell[]>;
+  /**
+   * Resolved passive-skill metadata for each player. Optional only for
+   * backward compatibility with pre-skill Battle snapshots.
+   */
+  knownSkillByPlayerId?: Record<string, KnownSkill | null>;
+  /**
+   * Automatic passive activations emitted during the most recently resolved
+   * action. Kept empty until a concrete SkillDefinition effect is adopted.
+   */
+  skillActivationLog?: SkillActivationEvent[];
   outcome: 'win' | 'lose' | null;
 }
 
