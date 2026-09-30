@@ -507,7 +507,14 @@ export function useBaseController(options?: UseBaseControllerOptions) {
     }
 
     case 'BASE_HOME':
-      return <BaseHomeScreen leader={baseLeader} onSelect={handleBaseNavSelect} />;
+      return (
+        <BaseHomeScreen
+          leader={baseLeader}
+          currency={permanentState.currency}
+          sagesStone={permanentState.rareUnlockResource}
+          onSelect={handleBaseNavSelect}
+        />
+      );
 
     case 'AREA_SELECT':
       return <AreaSelectScreen areas={sampleAreas} onSelect={handleSelectArea} onBack={goHome} />;
@@ -607,7 +614,16 @@ export function useBaseController(options?: UseBaseControllerOptions) {
       // launchConfig is always set together with this phase (handleConfirmDeparture/handleResumeRun); this
       // fallback exists only as a defensive guard against an unreachable state, never as a
       // silent production fallback to sample data (user's explicit MVP-6 instruction).
-      if (!launchConfig) return <BaseHomeScreen leader={baseLeader} onSelect={handleBaseNavSelect} />;
+      if (!launchConfig) {
+        return (
+          <BaseHomeScreen
+            leader={baseLeader}
+            currency={permanentState.currency}
+            sagesStone={permanentState.rareUnlockResource}
+            onSelect={handleBaseNavSelect}
+          />
+        );
+      }
       return (
         <StageSessionScreen
           config={launchConfig}

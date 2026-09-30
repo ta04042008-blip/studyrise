@@ -84,6 +84,9 @@ public/assets/studyrise/
     base/
     stages/
   ui/
+    currency/
+      coin.png
+      sages_stone.png
 ```
 
 master/source画像はrepositoryへ入れず、runtime用書き出し画像のみ配置する。
@@ -322,3 +325,18 @@ Background:
 が画像を縮小しても区別できることを確認する。
 
 シルエット確定後に個別の正式ピクセルアートへ進む。
+
+
+## 18. 拠点リソースアイコン
+
+拠点右上の所持数HUDはpresentation専用UIとして扱う。
+
+| 表示 | PermanentState source | runtime filename |
+|---|---|---|
+| コイン | `currency` | `ui/currency/coin.png` |
+| 賢者の石 | `rareUnlockResource` | `ui/currency/sages_stone.png` |
+
+- Saveには画像filenameを保存しない。
+- アイコンは透過PNG。
+- HUDは所持数を参照表示するだけで、資源計算や付与ロジックを持たない。
+- iPad / smartphone landscapeともsafe-area内の右上へ配置する。
