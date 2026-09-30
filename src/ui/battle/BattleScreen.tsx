@@ -89,13 +89,14 @@ export function BattleScreen({ controller, stageId }: BattleScreenProps) {
     : null;
   const spellZoom = pendingSpellZoom ?? finalSpellZoom;
   const spellZoomLevel = spellZoom ? Math.max(0, Math.min(5, spellZoom.level)) : 0;
-  const spellCasterIndex = spellZoom
-    ? state.players.findIndex((player) => player.id === spellZoom.sourceActorId)
+  const spellCameraSourceActorId = spellZoom?.sourceActorId ?? controller.spellAnswerFeedback?.sourceActorId;
+  const spellCasterIndex = spellCameraSourceActorId
+    ? state.players.findIndex((player) => player.id === spellCameraSourceActorId)
     : -1;
   const spellCameraX = spellCasterIndex >= 0
     ? 31 + (spellCasterIndex - (state.players.length - 1) / 2) * 8
     : 31;
-  const spellCameraStyle = spellZoomLevel > 0
+  const spellCameraStyle = spellCasterIndex >= 0
     ? ({ '--spell-camera-x': `${spellCameraX}%` } as CSSProperties)
     : undefined;
 
