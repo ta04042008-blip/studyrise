@@ -27,7 +27,6 @@ import { CharacterDetailView } from '../ui/base/CharacterDetailView';
 import { EquipmentListScreen } from '../ui/base/EquipmentListScreen';
 import { InventoryListScreen } from '../ui/base/InventoryListScreen';
 import { RecordScreen } from '../ui/base/RecordScreen';
-import { MemoScreen } from '../ui/base/MemoScreen';
 import { BootLoadingScreen } from '../ui/base/BootLoadingScreen';
 import { RunResumeChoiceScreen } from '../ui/base/RunResumeChoiceScreen';
 import { createEmptyPermanentCharacterState, createProgressionSystem, expRequiredForLevel } from '../engine/progression/ProgressionSystem';
@@ -297,15 +296,6 @@ export function useBaseController(options?: UseBaseControllerOptions) {
   function handleOpenPartyEditFromPrep() {
     setPartyEditReturnPhase('DEPARTURE_PREP');
     setPhase('PARTY_EDIT');
-  }
-
-  function handleSaveMemo(memo: string) {
-    const nextPermanentState: PermanentState = {
-      ...permanentState,
-      baseMemo: memo,
-    };
-    setPermanentState(nextPermanentState);
-    void saveSystem.commit({ permanent: nextPermanentState });
   }
 
   function handleSaveParty(party: CharacterDefinition[]) {
@@ -612,9 +602,6 @@ export function useBaseController(options?: UseBaseControllerOptions) {
 
     case 'RECORD_LIST':
       return <RecordScreen records={learningHistoryState.records} questionsById={questionsById} onBack={goHome} />;
-
-    case 'MEMO':
-      return <MemoScreen initialMemo={permanentState.baseMemo ?? ''} onSave={handleSaveMemo} onBack={goHome} />;
 
     case 'IN_STAGE':
       // launchConfig is always set together with this phase (handleConfirmDeparture/handleResumeRun); this
