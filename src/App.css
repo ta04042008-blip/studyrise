@@ -119,13 +119,15 @@ button {
 .base-home__leader {
   position: absolute;
   left: 50%;
-  bottom: max(94px, calc(env(safe-area-inset-bottom) + 94px));
+  bottom: max(102px, calc(env(safe-area-inset-bottom) + 102px));
   z-index: 1;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  width: min(42vw, 430px);
-  height: min(59vh, 610px);
+  width: min(36vw, 370px);
+  height: min(52vh, 530px);
+  padding-bottom: 30px;
+  box-sizing: border-box;
   transform: translateX(-50%);
   pointer-events: none;
 }
@@ -134,8 +136,8 @@ button {
   content: '';
   position: absolute;
   left: 50%;
-  bottom: 0;
-  width: min(54%, 210px);
+  bottom: 30px;
+  width: min(54%, 190px);
   height: 24px;
   border-radius: 50%;
   background: rgba(5, 15, 24, .36);
@@ -146,7 +148,7 @@ button {
 
 .base-home__leader-art {
   width: 100%;
-  height: 100%;
+  height: calc(100% - 30px);
   object-fit: contain;
   object-position: 50% 100%;
   filter: drop-shadow(0 9px 11px rgba(0, 0, 0, .38));
@@ -155,7 +157,7 @@ button {
 .base-home__leader-name {
   position: absolute;
   left: 50%;
-  bottom: 3px;
+  bottom: 0;
   transform: translateX(-50%);
   padding: 4px 10px;
   border: 1px solid rgba(255, 255, 255, .64);
@@ -170,13 +172,15 @@ button {
 
 .base-home__nav {
   position: absolute;
-  left: 50%;
+  left: max(14px, env(safe-area-inset-left));
+  right: max(14px, env(safe-area-inset-right));
   bottom: max(10px, env(safe-area-inset-bottom));
   z-index: 4;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 7px;
-  width: min(1040px, calc(100vw - 28px));
+  width: auto;
+  min-width: 0;
   padding: 7px;
   box-sizing: border-box;
   border: 2px solid rgba(255, 255, 255, .82);
@@ -217,15 +221,17 @@ button {
   }
 
   .base-home__leader {
-    bottom: max(158px, calc(env(safe-area-inset-bottom) + 158px));
-    width: min(70vw, 370px);
-    height: min(51vh, 500px);
+    bottom: max(164px, calc(env(safe-area-inset-bottom) + 164px));
+    width: min(64vw, 340px);
+    height: min(47vh, 460px);
   }
 
   .base-home__nav {
+    left: max(10px, env(safe-area-inset-left));
+    right: max(10px, env(safe-area-inset-right));
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
-    width: min(94vw, 560px);
+    width: auto;
   }
 
   .base-home__nav-button {
