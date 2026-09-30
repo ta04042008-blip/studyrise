@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { useBaseController } from '../../src/state/useBaseController';
+import { sampleQuestions } from '../../src/data/questions/sampleQuestions';
 import { sampleArea } from '../../src/data/areas/sampleArea';
 import { sampleStage } from '../../src/data/stages/sampleStage';
 import { sampleParty } from '../../src/data/characters/sampleCharacters';
@@ -9,7 +10,7 @@ import { FULL_QUESTION_ANSWER_KEY } from '../fixtures/questionAnswerKey';
 afterEach(cleanup);
 
 function Harness() {
-  return <>{useBaseController()}</>;
+  return <>{useBaseController({ questionPool: sampleQuestions })}</>;
 }
 
 const CORRECT_INDEX_BY_TEXT = FULL_QUESTION_ANSWER_KEY;
