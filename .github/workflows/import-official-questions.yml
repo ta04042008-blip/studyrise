@@ -1,0 +1,45 @@
+name: Import official 9573 questions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'StudyRise_official_questions_9573.zip'
+      - '.github/workflows/import-official-questions.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Import question sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARCHIVE="StudyRise_official_questions_9573.zip"
+          if [[ ! -f "$ARCHIVE" ]]; then
+            echo "Staging archive already consumed; nothing to import."
+            exit 0
+          fi
+
+          unzip -o "$ARCHIVE" -d src/data/questions/
+
+          for file in             officialQuestions.ts             officialQuestionsMathIA.ts             officialQuestionsMathIIB.ts             officialQuestionsMathIIIC.ts             officialQuestionsEnglish.ts
+          do
+            test -s "src/data/questions/$file"
+          done
+
+          COUNT=$(grep -h -o '"id":'             src/data/questions/officialQuestionsMathIA.ts             src/data/questions/officialQuestionsMathIIB.ts             src/data/questions/officialQuestionsMathIIIC.ts             src/data/questions/officialQuestionsEnglish.ts | wc -l | tr -d ' ')
+          test "$COUNT" = "9573"
+
+          rm "$ARCHIVE"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/questions/officialQuestions*.ts "$ARCHIVE"
+          git commit -m "Import official 9573 question definitions"
+          git push
