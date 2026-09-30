@@ -7,10 +7,10 @@ export interface StageConfig {
   officialZoneCount: number;
   /**
    * User-confirmed 2026-09-30: after clearing all 10 zones, continuing starts
-   * the same stage's next lap. Enemy base stats gain this LINEAR fraction per
-   * completed lap: multiplier = 1 + completedLaps * enemyStatGrowthPerLap.
+   * the same stage's next lap. Enemy strength accelerates multiplicatively:
+   * multiplier = enemyStatMultiplierPerLap ** completedLaps.
    */
-  enemyStatGrowthPerLap: number;
+  enemyStatMultiplierPerLap: number;
   /**
    * Confirmed MVP-5 baseline (user-confirmed, not yet in the written spec,
    * which leaves the number unconfirmed — spec §8/§9.13): a KO'd
@@ -25,6 +25,6 @@ export interface StageConfig {
 
 export const stageConfig: StageConfig = {
   officialZoneCount: 10,
-  enemyStatGrowthPerLap: 0.5,
+  enemyStatMultiplierPerLap: 1.5,
   koReviveHpPercent: 0.3,
 };
