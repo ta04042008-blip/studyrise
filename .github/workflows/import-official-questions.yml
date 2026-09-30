@@ -1,0 +1,47 @@
+name: Import official StudyRise question bank
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'StudyRise_official_questions_9573.zip'
+      - '.github/workflows/import-official-questions.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract generated question modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f StudyRise_official_questions_9573.zip
+          rm -rf /tmp/studyrise-official
+          mkdir -p /tmp/studyrise-official
+          unzip -oq StudyRise_official_questions_9573.zip -d /tmp/studyrise-official
+          echo "Archive contents:"
+          find /tmp/studyrise-official -maxdepth 3 -type f -print
+          rm -rf src/data/questions/generated
+          mkdir -p src/data/questions/generated
+          find /tmp/studyrise-official -type f -name '*.ts' -exec cp {} src/data/questions/generated/ \;
+          module_count="$(find src/data/questions/generated -maxdepth 1 -type f -name '*.ts' | wc -l)"
+          test "$module_count" -ge 4
+          echo "Copied $module_count generated TypeScript modules"
+      - name: Commit extracted modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/questions/generated
+          if git diff --cached --quiet; then
+            echo "Generated modules are already current."
+            exit 0
+          fi
+          git commit -m "Import official 9573-question bank"
+          git push
