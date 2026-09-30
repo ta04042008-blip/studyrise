@@ -7,7 +7,7 @@ import { createSaveSystem, type SaveSystem } from '../../src/engine/save/SaveSys
 import { sampleArea } from '../../src/data/areas/sampleArea';
 import { sampleStage } from '../../src/data/stages/sampleStage';
 import { sampleParty } from '../../src/data/characters/sampleCharacters';
-import { FULL_QUESTION_ANSWER_KEY } from '../fixtures/questionAnswerKey';
+import { answerCurrentOfficialQuestionCorrectly } from '../fixtures/officialQuestionDriver';
 
 afterEach(cleanup);
 
@@ -43,8 +43,6 @@ function reload(saveSystem: SaveSystem, strict = false) {
   render(strict ? <StrictHarness saveSystem={saveSystem} /> : <Harness saveSystem={saveSystem} />);
 }
 
-const CORRECT_INDEX_BY_TEXT = FULL_QUESTION_ANSWER_KEY;
-
 function clickIfPresent(selector: string): boolean {
   const el = document.querySelector<HTMLButtonElement>(selector);
   if (el && !el.disabled) {
@@ -54,17 +52,21 @@ function clickIfPresent(selector: string): boolean {
   return false;
 }
 
-/** Drives exactly one question-based command to completion (COMMAND_SELECT -> EXPLANATION), answering correctly. */
-function answerOneCorrectQuestion(): boolean {
+/** Drives exactly one question-based command to its explanation, answering correctly. */
+async function answerOneCorrectQuestion(): Promise<boolean> {
   if (!clickIfPresent('.command-menu button')) return false;
   clickIfPresent('.target-select-view button');
   clickIfPresent('.subject-star-select button');
-  const questionText = document.querySelector('.question-view__text');
-  if (!questionText) return false;
-  const idx = CORRECT_INDEX_BY_TEXT[questionText.textContent?.trim() ?? ''] ?? 0;
-  const radios = document.querySelectorAll<HTMLInputElement>('.question-view input[type=radio]');
-  fireEvent.click(radios[idx]);
-  fireEvent.click(screen.getByRole('button', { name: '回答する' }));
+  if (!document.querySelector('.question-view')) return false;
+
+  answerCurrentOfficialQuestionCorrectly();
+
+  if (document.querySelector('.command-animation-view')) {
+    await waitFor(
+      () => expect(document.querySelector('.explanation-view')).not.toBeNull(),
+      { timeout: 1200, interval: 20 },
+    );
+  }
   return true;
 }
 
@@ -76,12 +78,8 @@ async function driveZoneBattleToWin(maxSteps = 1500): Promise<'won' | 'lost' | '
     if (clickIfPresent('.target-select-view button')) continue;
     if (clickIfPresent('.subject-star-select button')) continue;
 
-    const questionText = document.querySelector('.question-view__text');
-    if (questionText) {
-      const idx = CORRECT_INDEX_BY_TEXT[questionText.textContent?.trim() ?? ''] ?? 0;
-      const radios = document.querySelectorAll<HTMLInputElement>('.question-view input[type=radio]');
-      fireEvent.click(radios[idx]);
-      fireEvent.click(screen.getByRole('button', { name: '回答する' }));
+    if (document.querySelector('.question-view')) {
+      answerCurrentOfficialQuestionCorrectly();
       continue;
     }
 
@@ -139,7 +137,7 @@ describe('useBaseController — Run resume across a simulated reload (MVP-9)', (
     await driveToStageStart();
 
     // Take exactly one confirmed action so there is real mid-battle progress.
-    expect(answerOneCorrectQuestion()).toBe(true);
+    expect(await answerOneCorrectQuestion()).toBe(true);
     // Land back on a stable resting phase (EXPLANATION) before "reloading".
     const hpBefore = currentHpText();
 
@@ -160,7 +158,7 @@ describe('useBaseController — Run resume across a simulated reload (MVP-9)', (
     const saveSystem = newSaveSystem();
     render(<Harness saveSystem={saveSystem} />);
     await driveToStageStart();
-    answerOneCorrectQuestion();
+    await answerOneCorrectQuestion();
 
     reload(saveSystem);
     fireEvent.click(await screen.findByRole('button', { name: '中断データを破棄して拠点へ' }));
@@ -210,7 +208,7 @@ describe('useBaseController — Run resume across a simulated reload (MVP-9)', (
     const saveSystem = newSaveSystem();
     render(<StrictHarness saveSystem={saveSystem} />);
     await driveToStageStart();
-    answerOneCorrectQuestion();
+    await answerOneCorrectQuestion();
     const hpBefore = currentHpText();
 
     reload(saveSystem, true);
@@ -240,7 +238,7 @@ describe('useBaseController — restore-order safety (MVP-9 audit item 2)', () =
     const saveSystem = newSaveSystem();
     render(<Harness saveSystem={saveSystem} />);
     await driveToStageStart();
-    answerOneCorrectQuestion();
+    await answerOneCorrectQuestion();
 
     reload(saveSystem);
     fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
@@ -325,10 +323,7 @@ describe('useBaseController — additional real-scenario coverage (MVP-9 audit i
     fireEvent.click(screen.getByRole('button', { name: 'サーチ' }));
     clickIfPresent('.target-select-view button');
     clickIfPresent('.subject-star-select button');
-    const questionText = document.querySelector('.question-view__text')!.textContent!.trim();
-    const idx = CORRECT_INDEX_BY_TEXT[questionText] ?? 0;
-    fireEvent.click(document.querySelectorAll('.question-view input[type=radio]')[idx]);
-    fireEvent.click(screen.getByRole('button', { name: '回答する' }));
+    answerCurrentOfficialQuestionCorrectly();
     // submitAnswer() enters COMMAND_ANIMATION. The presentation now advances
     // automatically; wait for EXPLANATION, then confirm it.
     await waitFor(() => expect(document.querySelector('.explanation-view')).not.toBeNull(), { timeout: 1000 });
@@ -374,10 +369,10 @@ describe('useBaseController — additional real-scenario coverage (MVP-9 audit i
     await waitFor(() => expect(document.querySelector('.zone-battle-panel')).not.toBeNull());
 
     // Take a couple of confirmed actions in Zone 2 so HP/MP/timeline/items are non-trivial.
-    answerOneCorrectQuestion();
+    await answerOneCorrectQuestion();
     await waitFor(() => expect(document.querySelector('.explanation-view')).not.toBeNull(), { timeout: 1200 });
     fireEvent.click(await screen.findByRole('button', { name: '次へ' }, { timeout: 800 }));
-    answerOneCorrectQuestion();
+    await answerOneCorrectQuestion();
 
     const bootBefore = await saveSystem.loadBoot();
     const before = bootBefore.run?.payload;
