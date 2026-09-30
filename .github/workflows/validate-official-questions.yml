@@ -1,0 +1,22 @@
+name: Validate official question activation
+
+on:
+  push:
+    branches:
+      - 'feature/activate-official-question-bank'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build -- --base=/studyrise/
+      - run: npm test -- --run
