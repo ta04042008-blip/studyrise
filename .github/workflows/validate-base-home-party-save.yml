@@ -1,0 +1,34 @@
+name: Validate Base home and party save
+
+on:
+  push:
+    branches:
+      - 'feature/base-home-nav-party-save'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build and typecheck
+        run: npm run build -- --base=/studyrise/
+      - name: Run focused Base tests
+        run: >
+          npx vitest run
+          tests/presentation/assets/studyRiseAssets.test.ts
+          tests/ui/base/BaseHomeScreen.test.tsx
+          tests/ui/base/baseHomeNavigation.test.ts
+          tests/ui/base/responsive.test.tsx
+          tests/ui/base/PartyEditView.test.tsx
+          tests/state/useBaseController.flow.test.tsx
+          tests/state/useBaseController.partySave.test.tsx
+          tests/state/useBaseController.saveResume.test.tsx
+          tests/engine/save/SaveSystem.test.ts
