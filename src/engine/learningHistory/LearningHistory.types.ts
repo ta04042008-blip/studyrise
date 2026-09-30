@@ -14,7 +14,12 @@ export type AnswerResult = 'CORRECT' | 'INCORRECT' | 'UNKNOWN';
  * `MULTIPLE_CHOICE` (the only format BattleEngine's `submitAnswer` currently
  * accepts) or `UNKNOWN` (「わからない」).
  */
-export type RecordedAnswer =\n  | { type: 'MULTIPLE_CHOICE'; selectedIndex: number }\n  | { type: 'TRUE_FALSE'; value: boolean }\n  | { type: 'ORDERING'; order: number[] }\n  | { type: 'SHORT_ANSWER'; value: string }\n  | { type: 'UNKNOWN' };
+export type RecordedAnswer =
+  | { type: 'MULTIPLE_CHOICE'; selectedIndex: number }
+  | { type: 'TRUE_FALSE'; value: boolean }
+  | { type: 'ORDERING'; order: number[] }
+  | { type: 'SHORT_ANSWER'; value: string }
+  | { type: 'UNKNOWN' };
 
 /**
  * Boundary DTO from Battle layer → LearningHistorySystem (user's explicit
