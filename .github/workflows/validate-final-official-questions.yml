@@ -15,10 +15,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - name: Build and test TypeScript
         run: npm run build -- --base=/studyrise/
       - name: Run focused question tests
-        run: npx vitest run tests/engine/question tests/engine/learningHistory/questionResultFromAnswer.test.ts tests/state/useBattleController.learningHistory.test.tsx tests/base/runSaveCompatibility.test.ts tests/ui/battle/QuestionView.formats.test.tsx tests/ui/battle/ExplanationView.formats.test.tsx
+        run: npx vitest run tests/engine/question tests/engine/learningHistory/questionResultFromAnswer.test.ts tests/state/useBattleController.learningHistory.test.tsx tests/base/runSaveCompatibility.test.ts tests/ui/battle/QuestionView.formats.test.tsx tests/ui/battle/ExplanationView.formats.test.tsx tests/content/validateContent.test.ts
