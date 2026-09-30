@@ -7,6 +7,7 @@ import { isQuestionAnswerCorrect, type MultipleChoiceAnswer } from '../question/
 import { calculateAttackDamage } from './damage';
 import { applyEffect } from './effects';
 import { spellLevelData } from './spellLevel';
+import { resolveKnownSkill, type SkillDefinition } from './skills';
 import {
   createTimelineRandomService,
   createTimelineRandomServiceFromState,
@@ -55,6 +56,11 @@ export interface CreateBattleEngineOptions {
   random: RandomService;
   /** Lookup for each player's `initialSpellId` (CLAUDE.md §15: stable IDs, not embedded content). */
   spellsById: Record<string, SpellDefinition>;
+  /**
+   * Stable passive-skill registry. Optional until concrete production skill
+   * effects are formally adopted; omitted means no character skill metadata.
+   */
+  skillsById?: Record<string, SkillDefinition>;
   /** Party-shared battle-local item stock (spec §5.10; MVP-3 correction 5 — never per-player). */
   initialItems: ItemBattleSlot[];
   /**
@@ -213,6 +219,7 @@ function actorFromEnemy(instance: EnemyBattleInstance): BattleActor {
 export function createBattleEngine(options: CreateBattleEngineOptions): BattleEngine {
   const { players: playerDefs, enemies: enemyDefs, questionEngine, config, random, spellsById, initialItems } =
     options;
+  const skillsById = options.skillsById ?? {};
 
   const players: BattleActor[] = playerDefs.map((d) => actorFromCharacter(d, options.initialHpByPlayerId?.[d.id]));
   const enemies: BattleActor[] = enemyDefs.map(normalizeEnemyInput).map(actorFromEnemy);
@@ -233,6 +240,10 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
         return { spellId, level, name: spell.name, mpCost: 0 };
       }),
     ]),
+  );
+
+  const knownSkillByPlayerId = Object.fromEntries(
+    playerDefs.map((player) => [player.id, resolveKnownSkill(player.skillId, skillsById)]),
   );
 
   // Timeline gauge persists for the whole battle (MVP-3 correction 1). At
@@ -270,6 +281,8 @@ export function createBattleEngine(options: CreateBattleEngineOptions): BattleEn
     searchByEnemyId: {},
     battleItems: initialItems,
     knownSpellsByPlayerId,
+    knownSkillByPlayerId,
+    skillActivationLog: [],
     outcome: null,
   };
 
@@ -304,6 +317,8 @@ export function restoreBattleEngine(snapshot: BattleEngineSnapshot, options: Res
   state.pendingSpellSequence ??= null;
   state.pendingSpellQuestionOutcome ??= null;
   state.preparedSpellsByPlayerId ??= {};
+  state.knownSkillByPlayerId ??= {};
+  state.skillActivationLog ??= [];
   const enemyPlannedActions: Record<string, PlannedEnemyAction[]> = JSON.parse(
     JSON.stringify(snapshot.enemyPlannedActions),
   );
