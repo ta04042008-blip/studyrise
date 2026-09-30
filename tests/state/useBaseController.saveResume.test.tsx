@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useBaseController } from '../../src/state/useBaseController';
 import { createInMemorySaveRepository } from '../../src/engine/save/InMemorySaveRepository';
 import { createSaveSystem, type SaveSystem } from '../../src/engine/save/SaveSystem';
@@ -68,13 +68,14 @@ function answerOneCorrectQuestion(): boolean {
   return true;
 }
 
-function driveZoneBattleToWin(maxSteps = 1500): 'won' | 'lost' | 'stuck' | 'timeout' {
+async function driveZoneBattleToWin(maxSteps = 1500): Promise<'won' | 'lost' | 'stuck' | 'timeout'> {
   for (let i = 0; i < maxSteps; i++) {
     if (screen.queryByRole('button', { name: 'ゾーンクリア → 報酬へ' })) return 'won';
     if (screen.queryByRole('button', { name: /敗北/ })) return 'lost';
     if (clickIfPresent('.command-menu button')) continue;
     if (clickIfPresent('.target-select-view button')) continue;
     if (clickIfPresent('.subject-star-select button')) continue;
+
     const questionText = document.querySelector('.question-view__text');
     if (questionText) {
       const idx = CORRECT_INDEX_BY_TEXT[questionText.textContent?.trim() ?? ''] ?? 0;
@@ -83,11 +84,29 @@ function driveZoneBattleToWin(maxSteps = 1500): 'won' | 'lost' | 'stuck' | 'time
       fireEvent.click(screen.getByRole('button', { name: '回答する' }));
       continue;
     }
-    const nextBtn = screen.queryByRole('button', { name: '次へ' });
-    if (nextBtn) {
+
+    if (document.querySelector('.command-animation-view')) {
+      await waitFor(
+        () => {
+          if (document.querySelector('.command-animation-view')) throw new Error('command animation still running');
+        },
+        { timeout: 1200, interval: 20 },
+      );
+      continue;
+    }
+
+    if (document.querySelector('.explanation-view')) {
+      const nextBtn = await screen.findByRole('button', { name: '次へ' }, { timeout: 800 });
       fireEvent.click(nextBtn);
       continue;
     }
+
+    const spellNext = screen.queryByRole('button', { name: /^(次の問題へ|準備完了)$/ });
+    if (spellNext) {
+      fireEvent.click(spellNext);
+      continue;
+    }
+
     return 'stuck';
   }
   return 'timeout';
@@ -133,7 +152,7 @@ describe('useBaseController — Run resume across a simulated reload (MVP-9)', (
     fireEvent.click(screen.getByRole('button', { name: '途中から再開' }));
 
     // Resumed straight back into the Stage, at the same HP.
-    await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+    await waitFor(() => expect(document.querySelector('.zone-battle-panel')).not.toBeNull());
     expect(currentHpText()).toBe(hpBefore);
   });
 
@@ -159,7 +178,7 @@ describe('useBaseController — Run resume across a simulated reload (MVP-9)', (
     render(<Harness saveSystem={saveSystem} />);
     await driveToStageStart();
 
-    expect(driveZoneBattleToWin()).toBe('won');
+    expect(await driveZoneBattleToWin()).toBe('won');
     fireEvent.click(screen.getByRole('button', { name: 'ゾーンクリア → 報酬へ' }));
     const card = document.querySelector<HTMLElement>('.reward-card')!;
     fireEvent.click(card);
@@ -196,12 +215,12 @@ describe('useBaseController — Run resume across a simulated reload (MVP-9)', (
 
     reload(saveSystem, true);
     fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
-    await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+    await waitFor(() => expect(document.querySelector('.zone-battle-panel')).not.toBeNull());
     expect(currentHpText()).toBe(hpBefore);
 
     // Finish the run and confirm the permanent reward is still granted
     // exactly once under StrictMode's double-invoked effects/updaters.
-    expect(driveZoneBattleToWin()).toBe('won');
+    expect(await driveZoneBattleToWin()).toBe('won');
     fireEvent.click(screen.getByRole('button', { name: 'ゾーンクリア → 報酬へ' }));
     const card = document.querySelector<HTMLElement>('.reward-card')!;
     fireEvent.click(card);
@@ -225,7 +244,7 @@ describe('useBaseController — restore-order safety (MVP-9 audit item 2)', () =
 
     reload(saveSystem);
     fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
-    await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+    await waitFor(() => expect(document.querySelector('.zone-battle-panel')).not.toBeNull());
     const hpAfterFirstResume = currentHpText();
 
     // White-box check: read what SaveSystem actually has stored right after
@@ -240,7 +259,7 @@ describe('useBaseController — restore-order safety (MVP-9 audit item 2)', () =
     for (let i = 0; i < 2; i++) {
       reload(saveSystem);
       fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
-      await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+      await waitFor(() => expect(document.querySelector('.zone-battle-panel')).not.toBeNull());
       expect(currentHpText()).toBe(hpAfterFirstResume);
 
       const boot = await saveSystem.loadBoot();
@@ -252,7 +271,7 @@ describe('useBaseController — restore-order safety (MVP-9 audit item 2)', () =
     const saveSystem = newSaveSystem();
     render(<Harness saveSystem={saveSystem} />);
     await driveToStageStart();
-    expect(driveZoneBattleToWin()).toBe('won');
+    expect(await driveZoneBattleToWin()).toBe('won');
     fireEvent.click(screen.getByRole('button', { name: 'ゾーンクリア → 報酬へ' }));
     const candidatesBefore = Array.from(document.querySelectorAll('.reward-card__name')).map((el) => el.textContent);
 
@@ -310,9 +329,9 @@ describe('useBaseController — additional real-scenario coverage (MVP-9 audit i
     const idx = CORRECT_INDEX_BY_TEXT[questionText] ?? 0;
     fireEvent.click(document.querySelectorAll('.question-view input[type=radio]')[idx]);
     fireEvent.click(screen.getByRole('button', { name: '回答する' }));
-    // submitAnswer() only computes the outcome (COMMAND_ANIMATION); the
-    // actual searchByEnemyId/revealedCount mutation happens in
-    // applyPendingResult(), triggered by the next advance() call.
+    // submitAnswer() enters COMMAND_ANIMATION. The presentation now advances
+    // automatically; wait for EXPLANATION, then confirm it.
+    await waitFor(() => expect(document.querySelector('.explanation-view')).not.toBeNull(), { timeout: 1000 });
     fireEvent.click(screen.getByRole('button', { name: '次へ' }));
 
     const searchPanelBefore = document.querySelector('.search-info-panel')?.textContent;
@@ -326,7 +345,7 @@ describe('useBaseController — additional real-scenario coverage (MVP-9 audit i
 
     reload(saveSystem);
     fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
-    await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+    await waitFor(() => expect(document.querySelector('.zone-battle-panel')).not.toBeNull());
 
     // Player-visible: identical revealed actions and identical turn order.
     expect(document.querySelector('.search-info-panel')?.textContent).toBe(searchPanelBefore);
@@ -345,18 +364,19 @@ describe('useBaseController — additional real-scenario coverage (MVP-9 audit i
     render(<Harness saveSystem={saveSystem} />);
     await driveToStageStart();
 
-    expect(driveZoneBattleToWin()).toBe('won');
+    expect(await driveZoneBattleToWin()).toBe('won');
     fireEvent.click(screen.getByRole('button', { name: 'ゾーンクリア → 報酬へ' }));
     const card = document.querySelector<HTMLElement>('.reward-card')!;
     fireEvent.click(card);
     fireEvent.click(screen.getByRole('button', { name: '決定' })); // grants a RunBuild entry
     fireEvent.click(document.querySelector<HTMLElement>('.reward-screen__complete button')!);
     fireEvent.click(screen.getByRole('button', { name: '次のゾーンへ' }));
-    await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+    await waitFor(() => expect(document.querySelector('.zone-battle-panel')).not.toBeNull());
 
     // Take a couple of confirmed actions in Zone 2 so HP/MP/timeline/items are non-trivial.
     answerOneCorrectQuestion();
-    clickIfPresent('.command-animation-view button, .explanation-view button');
+    await waitFor(() => expect(document.querySelector('.explanation-view')).not.toBeNull(), { timeout: 1200 });
+    fireEvent.click(await screen.findByRole('button', { name: '次へ' }, { timeout: 800 }));
     answerOneCorrectQuestion();
 
     const bootBefore = await saveSystem.loadBoot();
@@ -365,7 +385,7 @@ describe('useBaseController — additional real-scenario coverage (MVP-9 audit i
 
     reload(saveSystem);
     fireEvent.click(await screen.findByRole('button', { name: '途中から再開' }));
-    await screen.findByRole('heading', { name: 'StudyRise — Stage攻略' });
+    await waitFor(() => expect(document.querySelector('.zone-battle-panel')).not.toBeNull());
 
     const bootAfter = await saveSystem.loadBoot();
     const after = bootAfter.run?.payload;
