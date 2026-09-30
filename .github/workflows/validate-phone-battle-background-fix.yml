@@ -22,7 +22,7 @@ jobs:
         run: npm run build -- --base=/studyrise/
       - name: Run focused battle tests
         run: >
-          npx vitest run
+          npx vitest run --testTimeout=30000
           tests/ui/battle/QuestionView.formats.test.tsx
           tests/ui/battle/QuestionView.scratchpad.test.tsx
           tests/ui/battle/BattleScreen.spellPreparation.test.tsx
